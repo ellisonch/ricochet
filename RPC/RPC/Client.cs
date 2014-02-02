@@ -68,10 +68,10 @@ namespace RPC {
 
         private void WriteQueries() {
             while (true) {
-                //if (!outgoingQueries.TryCallingFunOnElement(shouldDequeue)) {
-                //    System.Threading.Thread.Sleep(connectionTimeout);
-                //}
-                Query query = outgoingQueries.Dequeue();
+                Query query;
+                if (!outgoingQueries.TryDequeue(out query)) {
+                    continue;
+                }
                 if (query.SW.ElapsedMilliseconds > softQueryTimeout) {
                     l.Log(Logger.Flag.Warning, "Soft timeout reached");
                     continue;

@@ -10,6 +10,7 @@ namespace RPC {
         // protected Queue<T> queue = new Queue<T>();
         protected LinkedList<T> queue = new LinkedList<T>();
         private readonly int maxSize;
+        bool closing;
 
         public BlockingQueue(int maxSize) {
             this.maxSize = maxSize;
@@ -24,20 +25,6 @@ namespace RPC {
             }
             return true;
         }
-        //public bool TryCallingFunOnElement(Func<T, bool> fun) {
-        //    bool ret;
-        //    lock (queue) {
-        //        while (queue.Count == 0) {
-        //            Monitor.Wait(queue);
-        //        }
-        //        T query = queue.Peek();
-        //        ret = fun(query);
-        //        if (ret) {
-        //            queue.Dequeue();
-        //        }
-        //    }
-        //    return ret;
-        //}
 
         public bool EnqueueIfRoom(T item) {
             lock (queue) {
@@ -51,15 +38,26 @@ namespace RPC {
             return true;
         }
 
-        public T Dequeue() {
+        public bool TryDequeue(out T value) {
             lock (queue) {
                 while (queue.Count == 0) {
+                    if (closing) {
+                        value = default(T);
+                        return false;
+                    }
                     Monitor.Wait(queue);
                 }
                 // T item = queue.Dequeue();
-                T item = queue.First();
+                value = queue.First();
                 queue.RemoveFirst();
-                return item;
+                return true;
+            }
+        }
+
+        internal void Close() {
+            lock (queue) {
+                closing = true;
+                Monitor.PulseAll(queue);
             }
         }
     }

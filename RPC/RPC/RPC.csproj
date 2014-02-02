@@ -55,6 +55,7 @@
     <Compile Include="Package.cs" />
     <Compile Include="PendingRequests.cs" />
     <Compile Include="Query.cs" />
+    <Compile Include="QueryWithDestination.cs" />
     <Compile Include="QueuedQuery.cs" />
     <Compile Include="Response.cs" />
     <Compile Include="RPCException.cs" />
