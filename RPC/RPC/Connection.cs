@@ -93,6 +93,10 @@ namespace RPC {
                 try {
                     if (!connected) { return false; }
                     s = reader.ReadLine();
+                    if (s == null) {
+                        RequestReconnect();
+                        return false;
+                    }
                 } catch (IOException e) {
                     l.Log(Logger.Flag.Info, "Error reading: {0}", e.Message);
                     RequestReconnect();
@@ -135,6 +139,8 @@ namespace RPC {
                 sender.Close();
             }
             sender = new TcpClient();
+            //sender.ReceiveBufferSize = 1024 * 32;
+            //sender.SendBufferSize = 1024 * 32;
             l.Log(Logger.Flag.Info, "Connecting to {0}:{1}...", hostname, port);
             // await sender.ConnectAsync(hostname, port);
             try {

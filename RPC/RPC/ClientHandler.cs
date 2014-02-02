@@ -83,6 +83,14 @@ namespace RPC {
                     }
                     l.Log(Logger.Flag.Debug, "Server Received {0}", s);
                     Query query = JsonSerializer.DeserializeFromString<Query>(s);
+                    //var pieces = s.Split(new char[]{'|'});
+                    //Query query = new Query() {
+                    //    Handler = pieces[0],
+                    //    Dispatch = Convert.ToInt32(pieces[1]),
+                    //    MessageType = Type.GetType(pieces[2]),
+                    //    MessageData = pieces[3],
+                    //};
+
                     if (query == null) {
                         l.Log(Logger.Flag.Warning, "Invalid query received, ignoring it: {0}", s);
                         continue;
