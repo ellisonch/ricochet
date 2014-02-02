@@ -61,14 +61,27 @@ namespace RPC {
             if (this.TrySendQuery(query)) {
                 return true;
             } else {
-                System.Threading.Thread.Sleep(connectionTimeout);
+                // System.Threading.Thread.Sleep(connectionTimeout);
                 return false;
             }
         }
 
         private void WriteQueries() {
             while (true) {
-                outgoingQueries.TryCallingFunOnElement(shouldDequeue);
+                //if (!outgoingQueries.TryCallingFunOnElement(shouldDequeue)) {
+                //    System.Threading.Thread.Sleep(connectionTimeout);
+                //}
+                Query query = outgoingQueries.Dequeue();
+                if (query.SW.ElapsedMilliseconds > softQueryTimeout) {
+                    l.Log(Logger.Flag.Warning, "Soft timeout reached");
+                    continue;
+                }
+                if (this.TrySendQuery(query)) {
+                    continue;
+                } else {
+                    System.Threading.Thread.Sleep(connectionTimeout);
+                    outgoingQueries.EnqueueIfRoom(query);
+                }
             }
         }
 
@@ -130,7 +143,10 @@ namespace RPC {
             //}
             if (!outgoingQueries.EnqueueIfRoom(query)) {
                 l.Log(Logger.Flag.Warning, "Reached maximum queue size!  Query dropped.");
-            }
+            } 
+            //else {
+            //    l.Log(Logger.Flag.Warning, "Query queued");
+            //}
         }
     }
 }

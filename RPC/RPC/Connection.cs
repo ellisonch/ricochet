@@ -64,7 +64,6 @@ namespace RPC {
             }
         }
 
-
         public bool Write(string msg) {
             try {
                 rwl.AcquireReaderLock(lockTimeout);

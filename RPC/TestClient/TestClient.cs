@@ -34,7 +34,7 @@ namespace TestClient {
             // while (true) {
             // Parallel.For(0, numToDo, i => {
             ParallelOptions po = new ParallelOptions();
-            po.MaxDegreeOfParallelism = 16;
+            po.MaxDegreeOfParallelism = 8;
             Parallel.ForEach(IterateUntilFalse(() => { return true; }), po, i => {
                 // for (int i = 0; i < numToDo; i++) {
                 // Thread.Sleep(1000);
@@ -56,7 +56,9 @@ namespace TestClient {
                 }
                 var mydone = Interlocked.Increment(ref done);
                 if (mydone % 10000 == 0) {
-                    Console.WriteLine("{0:#,###.} tps (done: {1}, failures: {2})", (mydone / (sw.ElapsedMilliseconds / 1000.0)), mydone, myfailures);
+                    double tps = (mydone / (sw.ElapsedMilliseconds / 1000.0));
+                    double avg = sw.ElapsedMilliseconds / (double)mydone;
+                    Console.WriteLine("{0:0,###.} tps (avg time {3:0.000 ms}) (done: {1}, failures: {2})", tps, mydone, myfailures, avg);
                     // sw.Reset();
                 }
             });
