@@ -6,8 +6,8 @@ using System.Threading;
 using System.Threading.Tasks;
 
 namespace RPC {
-    public class BlockingQueue<T> {
-        // protected Queue<T> queue = new Queue<T>();
+    // TODO can maybe be replaced with BlockingCollection<T>
+    internal class BlockingQueue<T> {
         protected LinkedList<T> queue = new LinkedList<T>();
         private readonly int maxSize;
         bool closing;

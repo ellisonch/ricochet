@@ -11,23 +11,32 @@ using System.IO;
 using System.Collections.Concurrent;
 
 namespace RPC {
+    /// <summary>
+    /// An RPC Client represents a client through which RPC requests can be
+    /// sent.  The client maintains a connection to an RPC server, and 
+    /// sends the requests to that server.
+    /// </summary>
     public class Client {
         Logger l = new Logger(Logger.Flag.Default);
-        const int maxQueueSize = 2000;
 
+        const int maxQueueSize = 2000;
         const int connectionTimeout = 50;
         static int softQueryTimeout = 500; // time (ms) before it gets sent
-        public static int HardQueryTimeout = 2000; // total time of round trip (still takes this long to give up even if soft is hit)
+        internal static int HardQueryTimeout = 2000; // total time of round trip (still takes this long to give up even if soft is hit)
 
-        protected BlockingQueue<Query> outgoingQueries = new BlockingQueue<Query>(maxQueueSize);
-        // protected Semaphore outgoingCount = new Semaphore(0, maxQueueSize);
-        protected PendingRequests pendingRequests = new PendingRequests();
+        private BlockingQueue<Query> outgoingQueries = new BlockingQueue<Query>(maxQueueSize);
+        private PendingRequests pendingRequests = new PendingRequests();
 
         Thread readerThread;
         Thread writerThread;
 
         readonly Connection connection;
 
+        /// <summary>
+        /// Create a new RPC Client.
+        /// </summary>
+        /// <param name="hostname">The hostname of the server</param>
+        /// <param name="port">The port of the server</param>
         public Client(string hostname, int port) {
             this.connection = new Connection(hostname, port);
 
@@ -40,18 +49,18 @@ namespace RPC {
             // Ping();
         }
         
-        private void Ping() {
-            Query msg = Query.CreateQuery<int>("ping", 9001);
-            Response r = this.Call(msg);
-            if (r.OK) {
-                int ar = JsonSerializer.DeserializeFromString<int>(r.MessageData);
-                if (ar != 9001) {
-                    throw new RPCException("Didn't get good response from server");
-                }
-            } else {
-                throw new RPCException("Didn't get good response from server");
-            }
-        }
+        //private void Ping() {
+        //    Query msg = Query.CreateQuery<int>("ping", 9001);
+        //    Response r = this.Call(msg);
+        //    if (r.OK) {
+        //        int ar = JsonSerializer.DeserializeFromString<int>(r.MessageData);
+        //        if (ar != 9001) {
+        //            throw new RPCException("Didn't get good response from server");
+        //        }
+        //    } else {
+        //        throw new RPCException("Didn't get good response from server");
+        //    }
+        //}
 
         private bool shouldDequeue(Query query) {
             if (query.SW.ElapsedMilliseconds > softQueryTimeout) {
@@ -97,7 +106,7 @@ namespace RPC {
             return connection.Write(msg);
         }
 
-        public void ReadResponses() {
+        private void ReadResponses() {
             while (true) {
                 string res;
                 if (!connection.Read(out res)) {
@@ -117,36 +126,40 @@ namespace RPC {
                 }
                 int dispatch = response.Dispatch;
                 this.pendingRequests.Set(dispatch, response);
-                // l.Info("Got response {0}", response.MessageData);
-
-                // sw.Stop();
-                // response.sw = sw;
-                // System.IO.File.WriteAllText("c:\\temp\\ResponseEncoded.txt", res);
-                // return response;
             }
         }
         
-        public Response Call(Query query) {
+        /// <summary>
+        /// Tries to make an RPC call.  May timeout or otherwise fail.
+        /// </summary>
+        /// <typeparam name="T1">Type of input.</typeparam>
+        /// <typeparam name="T2">Type of output.</typeparam>
+        /// <param name="name">Name of function call</param>
+        /// <param name="input">Input to function</param>
+        /// <param name="ret">Output from function</param>
+        /// <returns>True if the call was successful, false otherwise.</returns>
+        public bool TryCall<T1, T2>(string name, T1 input, out T2 ret) {
+            Query query = Query.CreateQuery<T1>(name, input);
             pendingRequests.Add(query);
             enqueueMessage(query);
-            return pendingRequests.Get(query.Dispatch);
+            Response response = pendingRequests.Get(query.Dispatch);
+            if (!response.OK) {
+                ret = default(T2);
+                return false;
+            }
+
+            if (response.MessageData == null) {
+                ret = default(T2);
+                return false;
+            }
+            ret = JsonSerializer.DeserializeFromString<T2>(response.MessageData);
+            return true;
         }
         
         private void enqueueMessage(Query query) {
-            //lock (outgoingQueries) {
-            //    if (outgoingQueries.Count < maxQueueSize) {
-            //        outgoingQueries.Enqueue(query);
-            //    } else {
-            //        l.Log(Logger.Flag.Info, "Reached maximum queue size!  Query dropped.");
-            //    }
-            //    Monitor.Pulse(outgoingQueries);
-            //}
             if (!outgoingQueries.EnqueueIfRoom(query)) {
                 l.Log(Logger.Flag.Warning, "Reached maximum queue size!  Query dropped.");
-            } 
-            //else {
-            //    l.Log(Logger.Flag.Warning, "Query queued");
-            //}
+            }
         }
     }
 }

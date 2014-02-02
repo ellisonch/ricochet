@@ -7,10 +7,13 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace RPC {
-    public class Response : Message {
+    /// <summary>
+    /// The actual package that is returned from a server representing an RPC 
+    /// result.
+    /// </summary>
+    internal class Response : Message {
         public bool OK { get; set; }
         public Exception Error { get; set; }
-        // public Stopwatch sw { get; set; }
 
         public Response(Exception e) {
             OK = false;
@@ -27,8 +30,6 @@ namespace RPC {
             };
         }
 
-
-        // serializer doesn't use most specific type?
         public string Serialize() {
             return JsonSerializer.SerializeToString(this);
         }

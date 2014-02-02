@@ -6,10 +6,10 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace RPC {
-    public class QueuedQuery {
-        public Stopwatch SW = Stopwatch.StartNew();
-        public Query Query;
-        public QueuedQuery(Query q) {
+    internal class QueuedQuery {
+        internal Stopwatch SW = Stopwatch.StartNew();
+        internal Query Query;
+        internal QueuedQuery(Query q) {
             Query = q;
         }
     }

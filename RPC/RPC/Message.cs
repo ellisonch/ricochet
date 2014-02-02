@@ -2,12 +2,26 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace RPC {
-    public class Message {
+    /// <summary>
+    /// Any kind of packet sent to or from an RPC server.
+    /// </summary>
+    internal class Message {
+        /// <summary>
+        /// The ticket number of the query.  Uniquely identifies a query
+        /// for a client.
+        /// </summary>
         public int Dispatch { get; set; }
+
+        /// <summary>
+        /// The type of the payload
+        /// </summary>
         public Type MessageType { get; set; }
+
+        /// <summary>
+        /// The actual payload
+        /// </summary>
         public string MessageData { get; set; }
     }
 }

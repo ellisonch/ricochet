@@ -21,6 +21,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <PlatformTarget>AnyCPU</PlatformTarget>
+    <DocumentationFile>bin\Debug\RPC.XML</DocumentationFile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -48,7 +49,7 @@
   <ItemGroup>
     <Compile Include="BlockingQueue.cs" />
     <Compile Include="Client.cs" />
-    <Compile Include="ClientHandler.cs" />
+    <Compile Include="ClientManager.cs" />
     <Compile Include="Connection.cs" />
     <Compile Include="Logger.cs" />
     <Compile Include="Message.cs" />

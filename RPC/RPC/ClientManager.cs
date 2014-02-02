@@ -6,38 +6,46 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net.Sockets;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 
 namespace RPC {
     // TODO: the readers and writer die if any exception is throw, not only actually being disconnected
     // TODO: worker threads aren't being cleaned up
-    public class ClientHandler {
-        Logger l = new Logger(Logger.Flag.Default);
-        // static int softQueryTimeout = 500; // time (ms) before it gets sent
-        const int maxQueueSize = 2000;
-        private bool running = true;
 
-        private ConcurrentDictionary<string, Func<Query, Response>> handlers;
-        private TcpClient client;
+    /// <summary>
+    /// A ClientManager is in charge of receiving queries and sending responses
+    /// to a single client.
+    /// </summary>
+    internal class ClientManager {
+        Logger l = new Logger(Logger.Flag.Default);
+        const int maxQueueSize = 2000;
+
+        private bool running = true;
         private object clientLock = new object();
 
-        Thread readerThread;
-        Thread writerThread;
-        // Thread workerThread;
-
+        private TcpClient client;
         StreamReader reader;
         StreamWriter writer;
-
         readonly BlockingQueue<QueryWithDestination> incomingQueries;
         protected BlockingQueue<Response> outgoingResponses = new BlockingQueue<Response>(maxQueueSize);
 
-        public ClientHandler(TcpClient client, ConcurrentDictionary<string, Func<Query, Response>> handlers, BlockingQueue<QueryWithDestination> incomingQueries) {
-            this.client = client;
-            this.handlers = handlers;
-            this.incomingQueries = incomingQueries;
+        Thread readerThread;
+        Thread writerThread;
 
+        /// <summary>
+        /// Creates a new ClientManager that is not yet running.
+        /// </summary>
+        /// <param name="client">TcpClient to handle.</param>
+        /// <param name="incomingQueries">Global queue in which to insert incoming queries.</param>
+        public ClientManager(TcpClient client, BlockingQueue<QueryWithDestination> incomingQueries) {
+            this.client = client;
+            this.incomingQueries = incomingQueries;
+        }
+
+        /// <summary>
+        /// Starts managing the client using new threads.  Returns immediately.
+        /// </summary>
+        public void Start() {
             this.readerThread = new Thread(this.ReadQueries);
             readerThread.Start();
             this.writerThread = new Thread(this.WriteResponses);
@@ -59,7 +67,7 @@ namespace RPC {
             } finally {
                 Cleanup();
             }
-            l.Log(Logger.Flag.Warning, "Finishing Writer");
+            // l.Log(Logger.Flag.Warning, "Finishing Writer");
         }
 
         private void ReadQueries() {
@@ -97,12 +105,13 @@ namespace RPC {
             } finally {
                 Cleanup();
             }
-            l.Log(Logger.Flag.Warning, "Finishing Reader");
+            // l.Log(Logger.Flag.Warning, "Finishing Reader");
         }
 
         private void Cleanup() {
             lock (clientLock) {
                 // l.Log(Logger.Flag.Warning, "Cleaning up ClientHandler");
+                // l.Log(Logger.Flag.Warning, "Client disconnected.");
                 running = false;
                 outgoingResponses.Close();
                 if (reader != null) { reader.Close(); }

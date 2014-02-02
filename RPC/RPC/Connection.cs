@@ -11,7 +11,7 @@ namespace RPC {
     // TODO should worry about cleaning up thread
     // TODO i think i saw this mess up once; need reporting for weird cases.  i think getting write lock was timing out
     // TODO i think sometimes it's still trying to reconnect twice
-    public class Connection {
+    internal class Connection {
         const int lockTimeout = 50;
         const int reconnectTimer = 500;
 
@@ -62,6 +62,7 @@ namespace RPC {
                     shouldReconnect.Set();
                 }
             }
+            // l.Log(Logger.Flag.Warning, "Connection closing");
         }
 
         public bool Write(string msg) {

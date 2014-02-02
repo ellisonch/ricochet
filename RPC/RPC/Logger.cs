@@ -5,7 +5,8 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace RPC {
-    public class Logger {
+    // TODO should be replaced with real logger
+    internal class Logger {
         [FlagsAttribute]
         public enum Flag : int {
             None = 0,

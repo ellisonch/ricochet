@@ -1,30 +1,35 @@
 ﻿using System;
-using System.Net;
-using System.Net.Sockets;
 using System.Text;
-using System.Threading;
-// using NLog;
-using System.Threading.Tasks;
 using System.IO;
-using ServiceStack.Text;
+using System.Net;
 using System.Collections.Concurrent;
-using System.Diagnostics;
-using System.Collections.Generic;
+using System.Threading;
+using System.Net.Sockets;
+using ServiceStack.Text;
 
 
 namespace RPC {
+    /// <summary>
+    /// An RPC Server represents a server capable of handling RPC requests.  
+    /// A server can be made to understand different kinds of queries (through
+    /// the use of <see cref="Register{T1, T2}(string, Func{T1, T2})"/>).
+    /// </summary>
     public class Server {
         const int maxQueueSize = 2000;
         const int numWorkerThreads = 8;
 
-        // private readonly Logger log = LogManager.GetCurrentClassLogger();
         private readonly IPAddress address;
         private readonly int port;
-        ConcurrentDictionary<string, Func<Query, Response>> handlers = new ConcurrentDictionary<string, Func<Query, Response>>();
+        private ConcurrentDictionary<string, Func<Query, Response>> handlers = new ConcurrentDictionary<string, Func<Query, Response>>();
         Logger l = new Logger(Logger.Flag.Default);
 
-        protected BlockingQueue<QueryWithDestination> incomingQueries = new BlockingQueue<QueryWithDestination>(maxQueueSize);
+        private BlockingQueue<QueryWithDestination> incomingQueries = new BlockingQueue<QueryWithDestination>(maxQueueSize);
 
+        /// <summary>
+        /// Creates a new server that is not yet running.
+        /// </summary>
+        /// <param name="address">The IPAddress on which to start the server</param>
+        /// <param name="port">The port to use</param>
         public Server(IPAddress address, int port) {
             this.address = address;
             this.port = port;
@@ -55,7 +60,7 @@ namespace RPC {
             try {
                 l.Log(Logger.Flag.Info, "Data is: {0}", query.MessageData);
                 if (query.Handler == null) {
-                    l.Log(Logger.Flag.Warning, "No query name given");
+                    l.Log(Logger.Flag.Warning, "No query name given: {0}", query.MessageData);
                     throw new Exception(String.Format("Do not handle query {0}", query.Handler));
                 }
                 if (!handlers.ContainsKey(query.Handler)) {
@@ -73,6 +78,9 @@ namespace RPC {
             return response;
         }
 
+        /// <summary>
+        /// Starts the server.  Blocks while server is running.
+        /// </summary>
         public void Start() {
             try {
                 TcpListener listener = new TcpListener(address, port);
@@ -81,8 +89,9 @@ namespace RPC {
                     Console.WriteLine("Waiting for new client...");
 
                     var client = listener.AcceptTcpClient();
-                    var clientHandler = new ClientHandler(client, handlers, incomingQueries);
-                    // clientHandlers.Add(clientHandler);
+                    Console.WriteLine("Client connected.");
+                    var clientHandler = new ClientManager(client, incomingQueries);
+                    clientHandler.Start();
                 }
             } catch (AggregateException e) {
                 Console.WriteLine("Exception thrown: {0}", e.InnerException.Message);
@@ -91,6 +100,13 @@ namespace RPC {
             }
         }
 
+        /// <summary>
+        /// Register a new RPC function.
+        /// </summary>
+        /// <typeparam name="T1">Input type</typeparam>
+        /// <typeparam name="T2">Output type</typeparam>
+        /// <param name="name">External name of function</param>
+        /// <param name="fun">Function definition</param>
         public void Register<T1, T2>(string name, Func<T1, T2> fun) {
             if (handlers.ContainsKey(name)) {
                 throw new Exception(String.Format("A handler is already registered for the name '{0}'", name));

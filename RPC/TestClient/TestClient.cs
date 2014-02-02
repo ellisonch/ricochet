@@ -30,6 +30,7 @@ namespace TestClient {
 
             long failures = 0;
             long done = 0;
+            long count = 0;
 
             var sw = Stopwatch.StartNew();
             // int i = 0;
@@ -37,28 +38,32 @@ namespace TestClient {
             // Parallel.For(0, numToDo, i => {
             ParallelOptions po = new ParallelOptions();
             po.MaxDegreeOfParallelism = 4;
-            Parallel.ForEach(IterateUntilFalse(() => { return true; }), po, i => {
+            Parallel.ForEach(IterateUntilFalse(() => { return true; }), po, guard => {
+                var mycount = Interlocked.Increment(ref count);
                 // for (int i = 0; i < numToDo; i++) {
                 // Thread.Sleep(1000);
-                var payload = "foo bar baz" + i;
+                var payload = "foo bar baz" + mycount;
                 // var payload = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent faucibus odio sollicitudin porta condimentum. Maecenas non rutrum sapien, dictum tincidunt nibh. Donec lacinia mattis interdum. Quisque pellentesque, ligula non elementum vulputate, massa lacus mattis justo, at iaculis mi lorem vel neque. Aenean cursus vitae nulla non vehicula. Vestibulum venenatis urna ac turpis semper, sed molestie nibh convallis. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Cras pharetra sodales ante dapibus malesuada. Morbi in lectus vulputate tortor elementum congue id quis sem. Duis eget commodo magna. Suspendisse luctus viverra pharetra. Nam lacinia eros id dictum posuere. Ut euismod, enim sit amet laoreet dictum, enim erat adipiscing eros, nec auctor nibh elit sit amet turpis. Morbi hendrerit nibh a urna congue, ac ultricies tellus vulputate. Integer ac velit venenatis, porttitor tellus eu, pretium sapien. Curabitur eget tincidunt odio, ut vehicula nisi. Praesent molestie diam nullam.";
                 // payload += payload + payload + payload + i;
 
                 var q = new AQuery(payload);
-                Query msg = Query.CreateQuery<AQuery>("double", q);
-                Response res = client.Call(msg);
-                // this should be tucked in
+                // Query msg = Query.CreateQuery<AQuery>("double", q);
                 long myfailures;
-                if (res.OK) {
+                AResponse ar;
+                // Console.WriteLine(payload);
+                if (!client.TryCall<AQuery, AResponse>("double", q, out ar)) {
+                    // Console.WriteLine("Failure");
+                    myfailures = Interlocked.Increment(ref failures);
+                } else {
                     myfailures = Interlocked.Read(ref failures);
-                    AResponse ar = JsonSerializer.DeserializeFromString<AResponse>(res.MessageData);
                     if (ar.res != payload + payload) {
                         Console.WriteLine("Something went wrong, {0} != {1}", ar.res, payload + payload);
                         Environment.Exit(1);
                     }
-                } else {
-                    myfailures = Interlocked.Increment(ref failures);
                 }
+                // this should be tucked in
+                
+                
                 var mydone = Interlocked.Increment(ref done);
                 if (mydone % reportEvery == 0) {
                     double tps = (reportEvery / (sw.ElapsedMilliseconds / 1000.0));

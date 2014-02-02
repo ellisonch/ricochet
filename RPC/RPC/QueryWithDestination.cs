@@ -5,10 +5,10 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace RPC {
-    public class QueryWithDestination {
-        public Query Query;
-        public BlockingQueue<Response> Destination;
-        public QueryWithDestination(Query query, BlockingQueue<Response> destination) {
+    internal class QueryWithDestination {
+        internal Query Query;
+        internal BlockingQueue<Response> Destination;
+        internal QueryWithDestination(Query query, BlockingQueue<Response> destination) {
             this.Query = query;
             this.Destination = destination;
         }

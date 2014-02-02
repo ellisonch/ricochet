@@ -7,7 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 
 namespace RPC {
-    public class PendingRequests {
+    internal class PendingRequests {
         private ConcurrentDictionary<int, SignaledResponse> requests = new ConcurrentDictionary<int, SignaledResponse>();
         Logger l = new Logger(Logger.Flag.Default);
         // private readonly int queryTimeout = 1000; // in ms
