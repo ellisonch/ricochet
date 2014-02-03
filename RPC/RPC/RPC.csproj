@@ -49,6 +49,7 @@
   <ItemGroup>
     <Compile Include="GenericHelpers\BlockingQueue.cs" />
     <Compile Include="Client\Client.cs" />
+    <Compile Include="GenericHelpers\Serialization.cs" />
     <Compile Include="Server\ClientManager.cs" />
     <Compile Include="Client\StableConnection.cs" />
     <Compile Include="GenericHelpers\Logger.cs" />

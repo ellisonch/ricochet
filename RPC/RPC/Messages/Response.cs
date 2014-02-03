@@ -1,10 +1,8 @@
-﻿using ServiceStack.Text;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace RPC {
     /// <summary>
@@ -26,12 +24,12 @@ namespace RPC {
                 OK = true,
                 Dispatch = query.Dispatch,
                 MessageType = typeof(T),
-                MessageData = JsonSerializer.SerializeToString(data)
+                MessageData = Serialization.SerializeToString<T>(data)
             };
         }
 
         public string Serialize() {
-            return JsonSerializer.SerializeToString(this);
+            return Serialization.SerializeToString<Response>(this);
         }
 
         internal static Response Failure() {

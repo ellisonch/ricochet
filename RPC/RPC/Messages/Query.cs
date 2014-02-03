@@ -1,11 +1,9 @@
-﻿using ServiceStack.Text;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 
 namespace RPC {
     /// <summary>
@@ -27,7 +25,7 @@ namespace RPC {
                 Dispatch = Interlocked.Increment(ref ticketNumber),
                 // Dispatch = 1,
                 MessageType = typeof(T),
-                MessageData = JsonSerializer.SerializeToString(data)
+                MessageData = Serialization.SerializeToString<T>(data)
             };
         }
         // serializer doesn't use most specific type?
@@ -38,7 +36,7 @@ namespace RPC {
             //return cache;
             //string ret = Handler + "|" + Dispatch + "|" + MessageType + "|" + MessageData;
             //return ret;
-            return JsonSerializer.SerializeToString(this);
+            return Serialization.SerializeToString<Query>(this);
         }
     }
 

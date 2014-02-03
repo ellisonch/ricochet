@@ -1,5 +1,4 @@
-﻿using ServiceStack.Text;
-using System;
+﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -82,7 +81,7 @@ namespace RPC {
                         throw new RPCException("End of input stream reached");
                     }
                     l.Log(Logger.Flag.Debug, "Server Received {0}", s);
-                    Query query = JsonSerializer.DeserializeFromString<Query>(s);
+                    Query query = Serialization.DeserializeFromString<Query>(s);
                     //var pieces = s.Split(new char[]{'|'});
                     //Query query = new Query() {
                     //    Handler = pieces[0],

@@ -5,7 +5,6 @@ using System.Net;
 using System.Collections.Concurrent;
 using System.Threading;
 using System.Net.Sockets;
-using ServiceStack.Text;
 
 namespace RPC {
     /// <summary>
@@ -81,7 +80,7 @@ namespace RPC {
                 throw new Exception(String.Format("A handler is already registered for the name '{0}'", name));
             }
             handlers[name] = (Func<Query, Response>)((query) => {
-                T1 arg = JsonSerializer.DeserializeFromString<T1>(query.MessageData);
+                T1 arg = Serialization.DeserializeFromString<T1>(query.MessageData);
                 var res = fun(arg);
                 Response resp = Response.CreateResponse<T2>(query, res);
                 return resp;

@@ -4,7 +4,6 @@ using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 using System.Text;
-using ServiceStack.Text;
 using System.Diagnostics;
 using System.Threading.Tasks;
 using System.IO;
@@ -88,7 +87,7 @@ namespace RPC {
                     continue;
                 }
 
-                var response = JsonSerializer.DeserializeFromString<Response>(res);
+                var response = Serialization.DeserializeFromString<Response>(res);
                 if (response == null) {
                     // TODO should probably kill connection here
                     l.Log(Logger.Flag.Warning, "Failed to deserialize response.  Something's really messed up");
@@ -126,7 +125,7 @@ namespace RPC {
                 ret = default(T2);
                 return false;
             }
-            ret = JsonSerializer.DeserializeFromString<T2>(response.MessageData);
+            ret = Serialization.DeserializeFromString<T2>(response.MessageData);
             return true;
         }
         
