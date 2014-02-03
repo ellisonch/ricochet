@@ -18,30 +18,17 @@ namespace TestClient {
         const int reportEvery = 10000;
 
         static int Main(string[] args) {
-            
-            // const int numToDo = 10;
-            // const int numToDo = 1000;
-
-            // Thread.Sleep(1000);
             Client client = new Client("127.0.0.1", 11000);
-
-            // Console.WriteLine("Press enter to send requests.");
-            // Console.ReadLine();
 
             long failures = 0;
             long done = 0;
             long count = 0;
 
             var sw = Stopwatch.StartNew();
-            // int i = 0;
-            // while (true) {
-            // Parallel.For(0, numToDo, i => {
             ParallelOptions po = new ParallelOptions();
             po.MaxDegreeOfParallelism = 4;
             Parallel.ForEach(IterateUntilFalse(() => { return true; }), po, guard => {
                 var mycount = Interlocked.Increment(ref count);
-                // for (int i = 0; i < numToDo; i++) {
-                // Thread.Sleep(1000);
                 var payload = "foo bar baz" + mycount;
                 // var payload = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent faucibus odio sollicitudin porta condimentum. Maecenas non rutrum sapien, dictum tincidunt nibh. Donec lacinia mattis interdum. Quisque pellentesque, ligula non elementum vulputate, massa lacus mattis justo, at iaculis mi lorem vel neque. Aenean cursus vitae nulla non vehicula. Vestibulum venenatis urna ac turpis semper, sed molestie nibh convallis. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Cras pharetra sodales ante dapibus malesuada. Morbi in lectus vulputate tortor elementum congue id quis sem. Duis eget commodo magna. Suspendisse luctus viverra pharetra. Nam lacinia eros id dictum posuere. Ut euismod, enim sit amet laoreet dictum, enim erat adipiscing eros, nec auctor nibh elit sit amet turpis. Morbi hendrerit nibh a urna congue, ac ultricies tellus vulputate. Integer ac velit venenatis, porttitor tellus eu, pretium sapien. Curabitur eget tincidunt odio, ut vehicula nisi. Praesent molestie diam nullam.";
                 // payload += payload + payload + payload + i;
@@ -72,17 +59,6 @@ namespace TestClient {
                     sw.Restart();
                 }
             });
-
-            // client.Disconnect();
-
-            //{
-            //    RPCQuery msg = RPCQuery.CreateQuery<GetStarsQuery>("getStars", new GetStarsQuery() { UserId = 268746123 });
-            //    RPCResponse res = client.SyncCall(msg);
-            //    Console.WriteLine("returned {0}", res);
-            //}
-
-            // Console.WriteLine("Press enter to exit.");
-            // Console.ReadLine();
             return 0;
         }
     }

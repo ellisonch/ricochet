@@ -11,7 +11,7 @@ namespace RPC {
     // TODO should worry about cleaning up thread
     // TODO i think i saw this mess up once; need reporting for weird cases.  i think getting write lock was timing out
     // TODO i think sometimes it's still trying to reconnect twice
-    internal class Connection {
+    internal class StableConnection {
         const int lockTimeout = 50;
         const int reconnectTimer = 500;
 
@@ -30,7 +30,7 @@ namespace RPC {
         AutoResetEvent shouldReconnect = new AutoResetEvent(true);
         Thread reconnectThread;
 
-        public Connection(string hostname, int port) {
+        public StableConnection(string hostname, int port) {
             this.hostname = hostname;
             this.port = port;
 
@@ -170,10 +170,6 @@ namespace RPC {
                 rwl.AcquireWriterLock(5000);
                 try {
                     ConnectWithWriteLock();
-                    // It is safe for this thread to read from 
-                    // the shared resource.
-                    // Display("reads resource value " + resource);
-                    // Interlocked.Increment(ref reads);
                 } finally {
                     // Ensure that the lock is released.
                     rwl.ReleaseWriterLock();
@@ -183,10 +179,5 @@ namespace RPC {
                 throw new RPCException("Timed out on trying to get writer lock; this should never happen");
             }
         }
-
-        //private void Disconnect() {
-        //    Console.WriteLine("Disconnecting from {0}:{1}", hostname, port);
-        //    sender.Close();
-        //}
     }
 }

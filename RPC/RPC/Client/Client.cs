@@ -15,6 +15,8 @@ namespace RPC {
     /// An RPC Client represents a client through which RPC requests can be
     /// sent.  The client maintains a connection to an RPC server, and 
     /// sends the requests to that server.
+    /// 
+    /// A server currently does not release its resources if things go bad.
     /// </summary>
     public class Client {
         Logger l = new Logger(Logger.Flag.Default);
@@ -30,7 +32,7 @@ namespace RPC {
         Thread readerThread;
         Thread writerThread;
 
-        readonly Connection connection;
+        readonly StableConnection connection;
 
         /// <summary>
         /// Create a new RPC Client.
@@ -38,7 +40,7 @@ namespace RPC {
         /// <param name="hostname">The hostname of the server</param>
         /// <param name="port">The port of the server</param>
         public Client(string hostname, int port) {
-            this.connection = new Connection(hostname, port);
+            this.connection = new StableConnection(hostname, port);
 
             readerThread = new Thread(this.ReadResponses);
             readerThread.Start();

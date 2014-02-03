@@ -7,22 +7,27 @@ using System.Threading;
 using System.Net.Sockets;
 using ServiceStack.Text;
 
-
 namespace RPC {
     /// <summary>
     /// An RPC Server represents a server capable of handling RPC requests.  
     /// A server can be made to understand different kinds of queries (through
     /// the use of <see cref="Register{T1, T2}(string, Func{T1, T2})"/>).
+    /// 
+    /// The server reserves all function names starting with "_" for internal 
+    /// purposes.
+    /// 
+    /// A server currently does not release its resources if things go bad.
     /// </summary>
     public class Server {
+        Logger l = new Logger(Logger.Flag.Default);
+
         const int maxQueueSize = 2000;
         const int numWorkerThreads = 8;
 
         private readonly IPAddress address;
         private readonly int port;
-        private ConcurrentDictionary<string, Func<Query, Response>> handlers = new ConcurrentDictionary<string, Func<Query, Response>>();
-        Logger l = new Logger(Logger.Flag.Default);
 
+        private ConcurrentDictionary<string, Func<Query, Response>> handlers = new ConcurrentDictionary<string, Func<Query, Response>>();
         private BlockingQueue<QueryWithDestination> incomingQueries = new BlockingQueue<QueryWithDestination>(maxQueueSize);
 
         /// <summary>
@@ -33,13 +38,54 @@ namespace RPC {
         public Server(IPAddress address, int port) {
             this.address = address;
             this.port = port;
-            Console.WriteLine("Configuring server as {0}:{1}", address, port);
+            l.Log(Logger.Flag.Info, "Configuring server as {0}:{1}", address, port);
 
             for (int i = 0; i < numWorkerThreads; i++) {
                 new Thread(this.DoWork).Start();
             }
 
-            Register<int, int>("ping", Ping);
+            Register<int, int>("_ping", Ping);
+        }
+
+        /// <summary>
+        /// Starts the server.  Blocks while server is running.
+        /// </summary>
+        public void Start() {
+            try {
+                TcpListener listener = new TcpListener(address, port);
+                listener.Start();
+                while (true) {
+                    l.Log(Logger.Flag.Info, "Waiting for new client...");
+
+                    var client = listener.AcceptTcpClient();
+                    l.Log(Logger.Flag.Info, "Client connected.");
+                    var clientHandler = new ClientManager(client, incomingQueries);
+                    clientHandler.Start();
+                }
+            } catch (AggregateException e) {
+                l.Log(Logger.Flag.Error, "Exception thrown: {0}", e.InnerException.Message);
+            } catch (Exception e) {
+                l.Log(Logger.Flag.Error, "Exception thrown: {0}", e);
+            }
+        }
+
+        /// <summary>
+        /// Register a new RPC function.
+        /// </summary>
+        /// <typeparam name="T1">Input type</typeparam>
+        /// <typeparam name="T2">Output type</typeparam>
+        /// <param name="name">External name of function</param>
+        /// <param name="fun">Function definition</param>
+        public void Register<T1, T2>(string name, Func<T1, T2> fun) {
+            if (handlers.ContainsKey(name)) {
+                throw new Exception(String.Format("A handler is already registered for the name '{0}'", name));
+            }
+            handlers[name] = (Func<Query, Response>)((query) => {
+                T1 arg = JsonSerializer.DeserializeFromString<T1>(query.MessageData);
+                var res = fun(arg);
+                Response resp = Response.CreateResponse<T2>(query, res);
+                return resp;
+            });
         }
 
         private void DoWork() {
@@ -51,7 +97,6 @@ namespace RPC {
                 Response response = GetResponseForQuery(qwd.Query);
                 // l.Log(Logger.Flag.Warning, "Response calculated by thread {0}", Thread.CurrentThread.ManagedThreadId);
                 qwd.Destination.EnqueueIfRoom(response);
-                // ProcessQuery(query);
             }
         }
 
@@ -76,47 +121,6 @@ namespace RPC {
                 response = new Response(e);
             }
             return response;
-        }
-
-        /// <summary>
-        /// Starts the server.  Blocks while server is running.
-        /// </summary>
-        public void Start() {
-            try {
-                TcpListener listener = new TcpListener(address, port);
-                listener.Start();
-                while (true) {
-                    Console.WriteLine("Waiting for new client...");
-
-                    var client = listener.AcceptTcpClient();
-                    Console.WriteLine("Client connected.");
-                    var clientHandler = new ClientManager(client, incomingQueries);
-                    clientHandler.Start();
-                }
-            } catch (AggregateException e) {
-                Console.WriteLine("Exception thrown: {0}", e.InnerException.Message);
-            } catch (Exception e) {
-                Console.WriteLine("Exception thrown: {0}", e);
-            }
-        }
-
-        /// <summary>
-        /// Register a new RPC function.
-        /// </summary>
-        /// <typeparam name="T1">Input type</typeparam>
-        /// <typeparam name="T2">Output type</typeparam>
-        /// <param name="name">External name of function</param>
-        /// <param name="fun">Function definition</param>
-        public void Register<T1, T2>(string name, Func<T1, T2> fun) {
-            if (handlers.ContainsKey(name)) {
-                throw new Exception(String.Format("A handler is already registered for the name '{0}'", name));
-            }
-            handlers[name] = (Func<Query, Response>)((query) => {
-                T1 arg = JsonSerializer.DeserializeFromString<T1>(query.MessageData);
-                var res = fun(arg);
-                Response resp = Response.CreateResponse<T2>(query, res);
-                return resp;
-            });
         }
 
         private int Ping(int x) {
