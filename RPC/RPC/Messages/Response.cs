@@ -29,7 +29,7 @@ namespace RPC {
         }
 
         public string Serialize() {
-            return Serialization.SerializeToString<Response>(this);
+            return Serialization.SerializeResponse(this);
         }
 
         internal static Response Failure() {

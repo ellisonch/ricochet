@@ -23,7 +23,9 @@ namespace RPC {
         private object clientLock = new object();
 
         private TcpClient client;
-        StreamReader reader;
+        // StreamReader reader;
+        NetworkStream reader;
+
         StreamWriter writer;
         readonly BlockingQueue<QueryWithDestination> incomingQueries;
         protected BlockingQueue<Response> outgoingResponses = new BlockingQueue<Response>(maxQueueSize);
@@ -45,6 +47,11 @@ namespace RPC {
         /// Starts managing the client using new threads.  Returns immediately.
         /// </summary>
         public void Start() {
+            l.Log(Logger.Flag.Info, "Accepted client");
+            // reader = new StreamReader(client.GetStream());
+            reader = client.GetStream();
+            writer = new StreamWriter(client.GetStream());
+
             this.readerThread = new Thread(this.ReadQueries);
             readerThread.Start();
             this.writerThread = new Thread(this.WriteResponses);
@@ -71,24 +78,21 @@ namespace RPC {
 
         private void ReadQueries() {
             try {
-                l.Log(Logger.Flag.Info, "Accepted client");
-                reader = new StreamReader(client.GetStream());
-                writer = new StreamWriter(client.GetStream());
-
                 while (running) {
-                    var s = reader.ReadLine();
+                    // var s = reader.ReadLine();
+                    var len = reader.ReadByte(); // reader.Read();
+                    // l.Log(Logger.Flag.Warning, "Looking to read {0} bytes", len+1);
+                    if (len < 0) {
+                        throw new RPCException("End of input stream reached");
+                    }
+
+                    byte[] s = readn(len+1);
+                    
                     if (s == null) {
                         throw new RPCException("End of input stream reached");
                     }
-                    l.Log(Logger.Flag.Debug, "Server Received {0}", s);
-                    Query query = Serialization.DeserializeFromString<Query>(s);
-                    //var pieces = s.Split(new char[]{'|'});
-                    //Query query = new Query() {
-                    //    Handler = pieces[0],
-                    //    Dispatch = Convert.ToInt32(pieces[1]),
-                    //    MessageType = Type.GetType(pieces[2]),
-                    //    MessageData = pieces[3],
-                    //};
+                    // l.Log(Logger.Flag.Debug, "Server Received {0}", s);
+                    Query query = Serialization.DeserializeQuery(s);
 
                     if (query == null) {
                         l.Log(Logger.Flag.Warning, "Invalid query received, ignoring it: {0}", s);
@@ -105,6 +109,24 @@ namespace RPC {
                 Cleanup();
             }
             // l.Log(Logger.Flag.Warning, "Finishing Reader");
+        }
+
+        private byte[] readn(int len) {
+            byte[] buffer = new byte[len];
+            int remaining = len;
+            int done = 0;
+            do {
+                int got = reader.Read(buffer, done, remaining);
+                done += got;
+                remaining -= got;
+            } while (remaining > 0);
+            if (done != len) {
+                throw new RPCException(String.Format("Wanted {0}, got {1} bytes", len, done));
+            }
+            if (remaining != 0) {
+                throw new RPCException(String.Format("{0} bytes remaining", remaining));
+            }
+            return buffer;
         }
 
         private void Cleanup() {

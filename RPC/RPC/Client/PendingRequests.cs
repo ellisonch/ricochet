@@ -24,7 +24,7 @@ namespace RPC {
 
             Response res;
             if (!sr.Barrier.WaitOne(remainingTime)) { // if timeout...
-                // l.Info("Hard timeout reached");
+                l.Log(Logger.Flag.Warning, "Hard timeout reached");
                 res = Response.Timeout(ticket);
             } else {
                 res = sr.Response;

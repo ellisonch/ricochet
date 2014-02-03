@@ -68,7 +68,7 @@ namespace RPC {
         }
 
         private bool TrySendQuery(Query query) {
-            string msg = "";
+            byte[] msg;
             try {
                 msg = query.Serialize();
             } catch (Exception e) {
@@ -87,7 +87,7 @@ namespace RPC {
                     continue;
                 }
 
-                var response = Serialization.DeserializeFromString<Response>(res);
+                var response = Serialization.DeserializeResponse(res);
                 if (response == null) {
                     // TODO should probably kill connection here
                     l.Log(Logger.Flag.Warning, "Failed to deserialize response.  Something's really messed up");

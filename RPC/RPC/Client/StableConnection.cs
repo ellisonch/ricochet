@@ -21,7 +21,8 @@ namespace RPC {
         Logger l = new Logger(Logger.Flag.Default);
 
         ReaderWriterLock rwl = new ReaderWriterLock();
-        private StreamWriter writer;
+        // private StreamWriter writer;
+        NetworkStream writer;
         private StreamReader reader;
         private TcpClient sender;
 
@@ -65,12 +66,22 @@ namespace RPC {
             // l.Log(Logger.Flag.Warning, "Connection closing");
         }
 
-        public bool Write(string msg) {
+        public bool Write(byte[] msg) {
+            if (msg.Length > 256) {
+                Console.Write("msg is {0} bytes long", msg.Length);
+                throw new RPCException("Can't handle packets larger than 256");
+            }
             try {
                 rwl.AcquireReaderLock(lockTimeout);
                 try {
                     if (!connected) { return false; }
-                    writer.WriteLine(msg);
+                    char len = (char)(msg.Length-1);
+                    // Console.WriteLine("Writing length of {0}", (int)len);
+                    writer.WriteByte((byte)len);
+                    writer.Write(msg, 0, msg.Length);
+                    // writer.Write(new char[]{(char)255});
+                    // writer.Write((char)255);
+                    // writer.WriteLine(msg);
                     writer.Flush();
                 } catch (IOException e) {
                     l.Log(Logger.Flag.Info, "Error writing: {0}", e.Message);
@@ -159,7 +170,8 @@ namespace RPC {
                 reader.Close();
             }
 
-            writer = new StreamWriter(sender.GetStream());
+            // writer = new StreamWriter(sender.GetStream());
+            writer = sender.GetStream();
             reader = new StreamReader(sender.GetStream());
 
             l.Log(Logger.Flag.Info, "Connected to {0}:{1}", hostname, port);
