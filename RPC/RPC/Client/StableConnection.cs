@@ -75,9 +75,9 @@ namespace RPC {
                 rwl.AcquireReaderLock(lockTimeout);
                 try {
                     if (!connected) { return false; }
-                    char len = (char)(msg.Length-1);
+                    // char len = (char)(msg.Length-1);
                     // Console.WriteLine("Writing length of {0}", (int)len);
-                    writer.WriteByte((byte)len);
+                    // writer.WriteByte((byte)len);
                     writer.Write(msg, 0, msg.Length);
                     // writer.Write(new char[]{(char)255});
                     // writer.Write((char)255);

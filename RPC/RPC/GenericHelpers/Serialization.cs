@@ -21,8 +21,12 @@ namespace RPC {
             //Serializer.Serialize(msTestString, obj);
             //return msTestString.ToArray();
 
-            string ret = obj.Handler + "|" + obj.Dispatch + "|" + obj.MessageType + "|" + obj.MessageData;
-            return Encoding.ASCII.GetBytes(ret);
+            // string ret = obj.Handler + "|" + obj.Dispatch + "|" + obj.MessageType + "|" + obj.MessageData;
+            // return Encoding.ASCII.GetBytes(ret);
+
+            MemoryStream msTestString = new MemoryStream();
+            Serializer.SerializeWithLengthPrefix<Query>(msTestString, obj, PrefixStyle.Base128, 0);
+            return msTestString.ToArray();
         }
         internal static Query DeserializeQuery(byte[] bytes) {
             if (bytes == null || bytes.Length == 0) {

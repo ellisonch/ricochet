@@ -23,9 +23,10 @@ namespace TestClient {
             long done = 0;
             long count = 0;
 
+            var osw = Stopwatch.StartNew();
             var sw = Stopwatch.StartNew();
             ParallelOptions po = new ParallelOptions();
-            po.MaxDegreeOfParallelism = 4;
+            po.MaxDegreeOfParallelism = 16;
             Parallel.ForEach(IterateUntilFalse(() => { return true; }), po, guard => {
                 var mycount = Interlocked.Increment(ref count);
                 var payload = "foo bar baz" + mycount;
@@ -53,8 +54,10 @@ namespace TestClient {
                 var mydone = Interlocked.Increment(ref done);
                 if (mydone % reportEvery == 0) {
                     double tps = (reportEvery / (sw.ElapsedMilliseconds / 1000.0));
+                    double atps = (mydone / (osw.ElapsedMilliseconds / 1000.0));
                     double avg = sw.ElapsedMilliseconds / (double)reportEvery;
-                    Console.WriteLine("{0:#,###.} tps (avg time {3:0.000 ms}) (done: {1}, failures: {2})", tps, mydone, myfailures, avg);
+                    double aavg = osw.ElapsedMilliseconds / (double)mydone;
+                    Console.WriteLine("{0:#,###.} => {4:#,###.} tps (avg time {3:0.000} => {5:0.000} ms) (done: {1}, failures: {2})", tps, mydone, myfailures, avg, atps, aavg);
                     sw.Restart();
                 }
             });

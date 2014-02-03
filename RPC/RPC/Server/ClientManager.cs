@@ -80,22 +80,23 @@ namespace RPC {
             try {
                 while (running) {
                     // var s = reader.ReadLine();
-                    var len = reader.ReadByte(); // reader.Read();
-                    // l.Log(Logger.Flag.Warning, "Looking to read {0} bytes", len+1);
-                    if (len < 0) {
-                        throw new RPCException("End of input stream reached");
-                    }
+                    //var len = reader.ReadByte(); // reader.Read();
+                    //// l.Log(Logger.Flag.Warning, "Looking to read {0} bytes", len+1);
+                    //if (len < 0) {
+                    //    throw new RPCException("End of input stream reached");
+                    //}
 
-                    byte[] s = readn(len+1);
+                    //byte[] s = readn(len+1);
                     
-                    if (s == null) {
-                        throw new RPCException("End of input stream reached");
-                    }
-                    // l.Log(Logger.Flag.Debug, "Server Received {0}", s);
-                    Query query = Serialization.DeserializeQuery(s);
+                    //if (s == null) {
+                    //    throw new RPCException("End of input stream reached");
+                    //}
+                    Query query = ProtoBuf.Serializer.DeserializeWithLengthPrefix<Query>(reader, ProtoBuf.PrefixStyle.Base128, 0);
+                    // l.Log(Logger.Flag.Warning, "Server Received {0}", query.MessageData);
+                    // Query query = Serialization.DeserializeQuery(s);
 
                     if (query == null) {
-                        l.Log(Logger.Flag.Warning, "Invalid query received, ignoring it: {0}", s);
+                        l.Log(Logger.Flag.Warning, "Invalid query received, ignoring it");
                         continue;
                     }
                     var qwd = new QueryWithDestination(query, outgoingResponses);
