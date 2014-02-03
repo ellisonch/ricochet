@@ -47,34 +47,6 @@ namespace RPC {
 
             writerThread = new Thread(this.WriteQueries);
             writerThread.Start();
-
-            // Ping();
-        }
-        
-        //private void Ping() {
-        //    Query msg = Query.CreateQuery<int>("ping", 9001);
-        //    Response r = this.Call(msg);
-        //    if (r.OK) {
-        //        int ar = JsonSerializer.DeserializeFromString<int>(r.MessageData);
-        //        if (ar != 9001) {
-        //            throw new RPCException("Didn't get good response from server");
-        //        }
-        //    } else {
-        //        throw new RPCException("Didn't get good response from server");
-        //    }
-        //}
-
-        private bool shouldDequeue(Query query) {
-            if (query.SW.ElapsedMilliseconds > softQueryTimeout) {
-                l.Log(Logger.Flag.Warning, "Soft timeout reached");
-                return true;
-            }
-            if (this.TrySendQuery(query)) {
-                return true;
-            } else {
-                // System.Threading.Thread.Sleep(connectionTimeout);
-                return false;
-            }
         }
 
         private void WriteQueries() {
@@ -119,7 +91,7 @@ namespace RPC {
                 var response = JsonSerializer.DeserializeFromString<Response>(res);
                 if (response == null) {
                     // TODO should probably kill connection here
-                    l.Log(Logger.Flag.Info, "Failed to deserialize response.  Something's really messed up");
+                    l.Log(Logger.Flag.Warning, "Failed to deserialize response.  Something's really messed up");
                     continue;
                 }
                 if (response.OK == true && response.MessageData == null) {

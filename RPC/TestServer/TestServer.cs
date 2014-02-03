@@ -30,17 +30,6 @@ namespace TestServer {
             Console.ReadLine();
         }
 
-        //private static GetStarsResponse getSuggestionsForUser(GetStarsQuery gs) {
-        //    return new GetStarsResponse() { Stars = new List<StarResult>() { new StarResult() {UserId = gs.UserId, Score = 500} } };
-        //}
-        // public static Func<object, object> Reverse_h = Reverse;
-        //public static RPCResponse Reverse(RPCQuery query) {
-        //    string s = (string)JsonSerializer.DeserializeFromString(query.MessageData, query.MessageType);
-        //    char[] arr = s.ToCharArray();
-        //    Array.Reverse(arr);
-        //    var res = new string(arr);
-        //    return RPCResponse.CreateResponse<string>(query, res);
-        //}
         public static AResponse Reverse(AQuery s) {
             char[] arr = s.msg.ToCharArray();
             

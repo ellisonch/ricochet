@@ -108,6 +108,7 @@ namespace RPC {
                 }
             } catch (ApplicationException) {
                 // lock timed out
+                // l.Log(Logger.Flag.Warning, "Getting reader lock timed out");
                 return false;
             }
             return true;
