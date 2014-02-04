@@ -14,7 +14,7 @@ namespace TestClient {
         private static IEnumerable<bool> IterateUntilFalse(Func<bool> condition) {
             while (condition()) yield return true;
         }
-        const int reportEvery = 10000;
+        const int reportEvery = 40000;
 
         static int Main(string[] args) {
             Client client = new Client("127.0.0.1", 11000);
@@ -26,7 +26,7 @@ namespace TestClient {
             var osw = Stopwatch.StartNew();
             var sw = Stopwatch.StartNew();
             ParallelOptions po = new ParallelOptions();
-            po.MaxDegreeOfParallelism = 16;
+            po.MaxDegreeOfParallelism = 24;
             Parallel.ForEach(IterateUntilFalse(() => { return true; }), po, guard => {
                 var mycount = Interlocked.Increment(ref count);
                 var payload = "foo bar baz" + mycount;
@@ -57,7 +57,7 @@ namespace TestClient {
                     double atps = (mydone / (osw.ElapsedMilliseconds / 1000.0));
                     double avg = sw.ElapsedMilliseconds / (double)reportEvery;
                     double aavg = osw.ElapsedMilliseconds / (double)mydone;
-                    Console.WriteLine("{0:#,###.} => {4:#,###.} tps (avg time {3:0.000} => {5:0.000} ms) (done: {1}, failures: {2})", tps, mydone, myfailures, avg, atps, aavg);
+                    Console.WriteLine("{0:#,###.} => {4:#,###.} tps (avg time {3:0.000} => {5:0.0000} ms) (done: {1}, failures: {2})", tps, mydone, myfailures, avg, atps, aavg);
                     sw.Restart();
                 }
             });

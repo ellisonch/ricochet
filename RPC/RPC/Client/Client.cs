@@ -68,35 +68,17 @@ namespace RPC {
         }
 
         private bool TrySendQuery(Query query) {
-            byte[] msg;
-            try {
-                msg = query.Serialize();
-            } catch (Exception e) {
-                l.Log(Logger.Flag.Info, "Error serializing: {0}", e);
-                throw;
-            }
-
-            return connection.Write(msg);
+            return connection.Write(query);
         }
 
         private void ReadResponses() {
             while (true) {
-                string res;
-                if (!connection.Read(out res)) {
+                Response response;
+                if (!connection.Read(out response)) {
                     System.Threading.Thread.Sleep(connectionTimeout);
                     continue;
                 }
 
-                var response = Serialization.DeserializeResponse(res);
-                if (response == null) {
-                    // TODO should probably kill connection here
-                    l.Log(Logger.Flag.Warning, "Failed to deserialize response.  Something's really messed up");
-                    continue;
-                }
-                if (response.OK == true && response.MessageData == null) {
-                    response.OK = false;
-                    response.Error = new Exception(String.Format("Something went wrong deserializing the message data of length {0}", res.Length));
-                }
                 int dispatch = response.Dispatch;
                 this.pendingRequests.Set(dispatch, response);
             }

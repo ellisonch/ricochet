@@ -66,7 +66,15 @@ namespace RPC {
             // l.Log(Logger.Flag.Warning, "Connection closing");
         }
 
-        public bool Write(byte[] msg) {
+        public bool Write(Query query) {
+            byte[] msg;
+            try {
+                msg = query.Serialize();
+            } catch (Exception e) {
+                l.Log(Logger.Flag.Info, "Error serializing: {0}", e);
+                throw;
+            }
+
             if (msg.Length > 256) {
                 Console.Write("msg is {0} bytes long", msg.Length);
                 throw new RPCException("Can't handle packets larger than 256");
@@ -98,8 +106,9 @@ namespace RPC {
             return true;
         }
 
-        public bool Read(out string s) {
-            s = null;
+        public bool Read(out Response response) {
+            response = null;
+            string s = null;
             try {
                 rwl.AcquireReaderLock(lockTimeout);
                 try {
@@ -122,6 +131,18 @@ namespace RPC {
                 // l.Log(Logger.Flag.Warning, "Getting reader lock timed out");
                 return false;
             }
+
+            response = Serialization.DeserializeResponse(s);
+            if (response == null) {
+                // TODO should probably kill connection here
+                l.Log(Logger.Flag.Warning, "Failed to deserialize response.  Something's really messed up");
+            }
+
+            if (response.OK == true && response.MessageData == null) {
+                response.OK = false;
+                response.Error = new Exception(String.Format("Something went wrong deserializing the message data of length {0}", s.Length));
+            }
+
             return true;
         }
 

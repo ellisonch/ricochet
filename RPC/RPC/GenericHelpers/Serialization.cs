@@ -51,6 +51,5 @@ namespace RPC {
         internal static Response DeserializeResponse(string s) {
             return JsonSerializer.DeserializeFromString<Response>(s);
         }
-
     }
 }

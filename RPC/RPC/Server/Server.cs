@@ -21,7 +21,7 @@ namespace RPC {
         Logger l = new Logger(Logger.Flag.Default);
 
         const int maxQueueSize = 2000;
-        const int numWorkerThreads = 8;
+        const int numWorkerThreads = 12;
 
         private readonly IPAddress address;
         private readonly int port;
