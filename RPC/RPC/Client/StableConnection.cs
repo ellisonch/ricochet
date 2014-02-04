@@ -1,4 +1,5 @@
 ﻿using ProtoBuf;
+using ServiceStack.Text;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -22,10 +23,11 @@ namespace RPC {
         Logger l = new Logger(Logger.Flag.Default);
 
         ReaderWriterLock rwl = new ReaderWriterLock();
-        // private StreamWriter writer;
-        NetworkStream writer;
-        private StreamReader reader;
+
         private TcpClient sender;
+        NetworkStream networkStream;
+        private StreamWriter streamWriter;
+        private StreamReader streamReader;
 
         bool connected = false;
         // Semaphore shouldReconnect = new Semaphore(1, 1);
@@ -72,9 +74,7 @@ namespace RPC {
                 rwl.AcquireReaderLock(lockTimeout);
                 try {
                     if (!connected) { return false; }
-                    // writeQueryWithProtobuf(writer, query);
-                    writeQueryWithChuckybuf(writer, query);
-                    writer.Flush();
+                    Serialization.WriteQuery(networkStream, streamWriter, query);
                 } catch (IOException e) {
                     l.Log(Logger.Flag.Info, "Error writing: {0}", e.Message);
                     RequestReconnect();
@@ -90,33 +90,15 @@ namespace RPC {
             return true;
         }
 
-        private void writeQueryWithProtobuf(NetworkStream writer, Query query) {
-            Serializer.SerializeWithLengthPrefix<Query>(writer, query, PrefixStyle.Base128, 0);
-        }
-
-        private void writeQueryWithChuckybuf(NetworkStream writer, Query query) {
-            string msgString = query.Handler + "|" + query.Dispatch + "|" + query.MessageType + "|" + query.MessageData;
-            byte[] msg = Encoding.ASCII.GetBytes(msgString);
-
-            char len = (char)(msg.Length - 1);
-            if (len > 255) {
-                Console.Write("msg is {0} bytes long", msg.Length);
-                throw new RPCException("Can't handle packets larger than 256");
-            }
-            // Console.WriteLine("Writing length of {0}", (int)len);
-            writer.WriteByte((byte)len);
-            writer.Write(msg, 0, msg.Length);
-        }
-
         public bool Read(out Response response) {
             response = null;
-            string s = null;
             try {
                 rwl.AcquireReaderLock(lockTimeout);
                 try {
                     if (!connected) { return false; }
-                    s = reader.ReadLine();
-                    if (s == null) {
+                    response = Serialization.ReadResponse(networkStream, streamReader);
+                    
+                    if (response == null) {
                         RequestReconnect();
                         return false;
                     }
@@ -134,15 +116,9 @@ namespace RPC {
                 return false;
             }
 
-            response = Serialization.DeserializeResponse(s);
-            if (response == null) {
-                // TODO should probably kill connection here
-                l.Log(Logger.Flag.Warning, "Failed to deserialize response.  Something's really messed up");
-            }
-
             if (response.OK == true && response.MessageData == null) {
                 response.OK = false;
-                response.Error = new Exception(String.Format("Something went wrong deserializing the message data of length {0}", s.Length));
+                response.Error = new Exception(String.Format("Something went wrong deserializing the message data"));
             }
 
             return true;
@@ -186,16 +162,19 @@ namespace RPC {
                 return false;
             }
 
-            if (writer != null) {
-                writer.Close();
+            if (networkStream != null) {
+                networkStream.Close();
             }
-            if (reader != null) {
-                reader.Close();
+            if (streamReader != null) {
+                streamReader.Close();
+            }
+            if (streamWriter != null) {
+                streamWriter.Close();
             }
 
-            // writer = new StreamWriter(sender.GetStream());
-            writer = sender.GetStream();
-            reader = new StreamReader(sender.GetStream());
+            networkStream = sender.GetStream();
+            streamWriter = new StreamWriter(sender.GetStream());
+            streamReader = new StreamReader(sender.GetStream());
 
             l.Log(Logger.Flag.Info, "Connected to {0}:{1}", hostname, port);
             connected = true;

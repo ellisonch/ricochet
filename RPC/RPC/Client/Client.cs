@@ -37,7 +37,7 @@ namespace RPC {
         /// Create a new RPC Client.
         /// </summary>
         /// <param name="hostname">The hostname of the server</param>
-        /// <param name="port">The port of the server</param>
+        /// <param name="port">The port of the server</param>        
         public Client(string hostname, int port) {
             this.connection = new StableConnection(hostname, port);
 
@@ -47,15 +47,16 @@ namespace RPC {
             writerThread = new Thread(this.WriteQueries);
             writerThread.Start();
 
-            int pingResult;
-            if (!this.TryCall<int, int>("_ping", 9001, out pingResult)) {
-                l.Log(Logger.Flag.Error, "Couldn't ping");
-                throw new RPCException("Couldn't connect properly; ping failed");
-            }
-            if (pingResult != 9001) {
-                l.Log(Logger.Flag.Error, "Couldn't ping");
-                throw new RPCException("Couldn't connect properly; ping failed with wrong response");
-            }
+            // TODO: should return and not fail if connection isn't available
+            //int pingResult;
+            //if (!this.TryCall<int, int>("_ping", 9001, out pingResult)) {
+            //    l.Log(Logger.Flag.Error, "Couldn't ping");
+            //    throw new RPCException("Couldn't connect properly; ping failed");
+            //}
+            //if (pingResult != 9001) {
+            //    l.Log(Logger.Flag.Error, "Couldn't ping");
+            //    throw new RPCException("Couldn't connect properly; ping failed with wrong response");
+            //}
         }
 
         private void WriteQueries() {

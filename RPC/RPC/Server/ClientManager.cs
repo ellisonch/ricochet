@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ServiceStack.Text;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -23,10 +24,10 @@ namespace RPC {
         private object clientLock = new object();
 
         private TcpClient client;
-        // StreamReader reader;
-        NetworkStream reader;
+        NetworkStream networkStream;
+        StreamReader streamReader;
+        StreamWriter streamWriter;
 
-        StreamWriter writer;
         readonly BlockingQueue<QueryWithDestination> incomingQueries;
         protected BlockingQueue<Response> outgoingResponses = new BlockingQueue<Response>(maxQueueSize);
 
@@ -47,10 +48,10 @@ namespace RPC {
         /// Starts managing the client using new threads.  Returns immediately.
         /// </summary>
         public void Start() {
-            l.Log(Logger.Flag.Info, "Accepted client");
-            // reader = new StreamReader(client.GetStream());
-            reader = client.GetStream();
-            writer = new StreamWriter(client.GetStream());
+            l.Log(Logger.Flag.Warning, "Accepted client");
+            networkStream = client.GetStream();
+            streamReader = new StreamReader(client.GetStream());
+            streamWriter = new StreamWriter(client.GetStream());
 
             this.readerThread = new Thread(this.ReadQueries);
             readerThread.Start();
@@ -65,8 +66,7 @@ namespace RPC {
                     if (!outgoingResponses.TryDequeue(out response)) {
                         continue;
                     }
-                    writer.WriteLine(response.Serialize());
-                    writer.Flush();
+                    Serialization.WriteResponse(networkStream, streamWriter, response);
                 }
             } catch (Exception e) {
                 l.Log(Logger.Flag.Warning, "Error in WriteResponses(): {0}", e.Message);
@@ -79,14 +79,11 @@ namespace RPC {
         private void ReadQueries() {
             try {
                 while (running) {
-                    // Query query = readQueryWithProtobuf(reader);
-                    Query query = readQueryWithChuckybuf(reader);
-                    // l.Log(Logger.Flag.Warning, "Server Received {0}", query.MessageData);
-                    // Query query = Serialization.DeserializeQuery(s);
-
+                    Query query = Serialization.ReadQuery(networkStream, streamReader);
                     if (query == null) {
-                        l.Log(Logger.Flag.Warning, "Invalid query received, ignoring it");
-                        continue;
+                        throw new RPCException("Error reading query");
+                        //l.Log(Logger.Flag.Warning, "Invalid query received, ignoring it");
+                        //continue;
                     }
                     var qwd = new QueryWithDestination(query, outgoingResponses);
                     if (!incomingQueries.EnqueueIfRoom(qwd)) {
@@ -101,62 +98,15 @@ namespace RPC {
             // l.Log(Logger.Flag.Warning, "Finishing Reader");
         }
 
-        private Query readQueryWithProtobuf(NetworkStream reader) {
-            Query query = ProtoBuf.Serializer.DeserializeWithLengthPrefix<Query>(reader, ProtoBuf.PrefixStyle.Base128, 0);
-            return query;
-        }
-
-        private Query readQueryWithChuckybuf(NetworkStream reader) {
-            var len = reader.ReadByte(); // reader.Read();
-            // l.Log(Logger.Flag.Warning, "Looking to read {0} bytes", len+1);
-            if (len < 0) {
-                throw new RPCException("End of input stream reached");
-            }
-
-            byte[] bytes = readn(len + 1);
-
-            if (bytes == null || bytes.Length == 0) {
-                throw new RPCException("Unable to deserialize empty string");
-            }
-            //MemoryStream afterStream = new MemoryStream(bytes);
-            //return Serializer.Deserialize<Query>(afterStream);
-            string s = System.Text.Encoding.Default.GetString(bytes);
-            var pieces = s.Split(new char[] { '|' });
-            Query query = new Query() {
-                Handler = pieces[0],
-                Dispatch = Convert.ToInt32(pieces[1]),
-                MessageType = Type.GetType(pieces[2]),
-                MessageData = pieces[3],
-            };
-            return query;
-        }
-
-        private byte[] readn(int len) {
-            byte[] buffer = new byte[len];
-            int remaining = len;
-            int done = 0;
-            do {
-                int got = reader.Read(buffer, done, remaining);
-                done += got;
-                remaining -= got;
-            } while (remaining > 0);
-            if (done != len) {
-                throw new RPCException(String.Format("Wanted {0}, got {1} bytes", len, done));
-            }
-            if (remaining != 0) {
-                throw new RPCException(String.Format("{0} bytes remaining", remaining));
-            }
-            return buffer;
-        }
-
         private void Cleanup() {
             lock (clientLock) {
                 // l.Log(Logger.Flag.Warning, "Cleaning up ClientHandler");
                 // l.Log(Logger.Flag.Warning, "Client disconnected.");
                 running = false;
                 outgoingResponses.Close();
-                if (reader != null) { reader.Close(); }
-                if (writer != null) { writer.Close(); }
+                if (networkStream != null) { networkStream.Close(); }
+                if (streamWriter != null) { streamWriter.Close(); }
+                if (streamReader != null) { streamReader.Close(); }
                 if (client != null) { client.Close(); }
             }
         }

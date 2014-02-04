@@ -9,7 +9,8 @@ namespace RPC {
     /// Any kind of packet sent to or from an RPC server.
     /// </summary>
     [ProtoContract]
-    [ProtoInclude(4, typeof(Query))]
+    [ProtoInclude(20, typeof(Query))]
+    [ProtoInclude(21, typeof(Response))]
     internal class Message {
         /// <summary>
         /// The ticket number of the query.  Uniquely identifies a query
