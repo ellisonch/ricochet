@@ -14,7 +14,7 @@ namespace TestClient {
         private static IEnumerable<bool> IterateUntilFalse(Func<bool> condition) {
             while (condition()) yield return true;
         }
-        const int reportEvery = 40000;
+        const int reportEvery = 50000;
 
         static int Main(string[] args) {
             Client client = new Client("127.0.0.1", 11000);

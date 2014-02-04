@@ -46,6 +46,16 @@ namespace RPC {
 
             writerThread = new Thread(this.WriteQueries);
             writerThread.Start();
+
+            int pingResult;
+            if (!this.TryCall<int, int>("_ping", 9001, out pingResult)) {
+                l.Log(Logger.Flag.Error, "Couldn't ping");
+                throw new RPCException("Couldn't connect properly; ping failed");
+            }
+            if (pingResult != 9001) {
+                l.Log(Logger.Flag.Error, "Couldn't ping");
+                throw new RPCException("Couldn't connect properly; ping failed with wrong response");
+            }
         }
 
         private void WriteQueries() {
@@ -58,17 +68,16 @@ namespace RPC {
                     l.Log(Logger.Flag.Warning, "Soft timeout reached");
                     continue;
                 }
-                if (this.TrySendQuery(query)) {
-                    continue;
-                } else {
+                if (!connection.Write(query)) {
+                    // TODO it's possible that the queue has filled up in the time it took us to try to send; 
+                    // it's kind of weird we'd fail here.  may want to cause EnqueuAtFront to kick out
+                    // old stuff
+                    if (!outgoingQueries.EnqueAtFront(query)) {
+                        l.Log(Logger.Flag.Warning, "Reached maximum queue size!  Query dropped.");
+                    }
                     System.Threading.Thread.Sleep(connectionTimeout);
-                    outgoingQueries.EnqueueIfRoom(query);
                 }
             }
-        }
-
-        private bool TrySendQuery(Query query) {
-            return connection.Write(query);
         }
 
         private void ReadResponses() {
@@ -96,7 +105,9 @@ namespace RPC {
         public bool TryCall<T1, T2>(string name, T1 input, out T2 ret) {
             Query query = Query.CreateQuery<T1>(name, input);
             pendingRequests.Add(query);
-            enqueueMessage(query);
+            if (!outgoingQueries.EnqueueIfRoom(query)) {
+                l.Log(Logger.Flag.Warning, "Reached maximum queue size!  Query dropped.");
+            }
             Response response = pendingRequests.Get(query.Dispatch);
             if (!response.OK) {
                 ret = default(T2);
@@ -109,12 +120,6 @@ namespace RPC {
             }
             ret = Serialization.DeserializeFromString<T2>(response.MessageData);
             return true;
-        }
-        
-        private void enqueueMessage(Query query) {
-            if (!outgoingQueries.EnqueueIfRoom(query)) {
-                l.Log(Logger.Flag.Warning, "Reached maximum queue size!  Query dropped.");
-            }
         }
     }
 }

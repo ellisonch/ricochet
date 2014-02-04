@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ProtoBuf;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -67,18 +68,18 @@ namespace RPC {
         }
 
         public bool Write(Query query) {
-            byte[] msg;
-            try {
-                msg = query.Serialize();
-            } catch (Exception e) {
-                l.Log(Logger.Flag.Info, "Error serializing: {0}", e);
-                throw;
-            }
+            //byte[] msg;
+            //try {
+            //    msg = query.Serialize();
+            //} catch (Exception e) {
+            //    l.Log(Logger.Flag.Info, "Error serializing: {0}", e);
+            //    throw;
+            //}
 
-            if (msg.Length > 256) {
-                Console.Write("msg is {0} bytes long", msg.Length);
-                throw new RPCException("Can't handle packets larger than 256");
-            }
+            //if (msg.Length > 256) {
+            //    Console.Write("msg is {0} bytes long", msg.Length);
+            //    throw new RPCException("Can't handle packets larger than 256");
+            //}
             try {
                 rwl.AcquireReaderLock(lockTimeout);
                 try {
@@ -86,7 +87,8 @@ namespace RPC {
                     // char len = (char)(msg.Length-1);
                     // Console.WriteLine("Writing length of {0}", (int)len);
                     // writer.WriteByte((byte)len);
-                    writer.Write(msg, 0, msg.Length);
+                    Serializer.SerializeWithLengthPrefix<Query>(writer, query, PrefixStyle.Base128, 0);
+                    // writer.Write(msg, 0, msg.Length);
                     // writer.Write(new char[]{(char)255});
                     // writer.Write((char)255);
                     // writer.WriteLine(msg);
