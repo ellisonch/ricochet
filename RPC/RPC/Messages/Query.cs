@@ -30,9 +30,9 @@ namespace RPC {
             };
         }
         // serializer doesn't use most specific type?
-        internal byte[] Serialize() {
-            return Serialization.SerializeQuery(this);
-        }
+        //internal byte[] Serialize() {
+        //    return Serialization.SerializeQuery(this);
+        //}
     }
 
 }

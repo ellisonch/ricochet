@@ -79,19 +79,8 @@ namespace RPC {
         private void ReadQueries() {
             try {
                 while (running) {
-                    // var s = reader.ReadLine();
-                    //var len = reader.ReadByte(); // reader.Read();
-                    //// l.Log(Logger.Flag.Warning, "Looking to read {0} bytes", len+1);
-                    //if (len < 0) {
-                    //    throw new RPCException("End of input stream reached");
-                    //}
-
-                    //byte[] s = readn(len+1);
-                    
-                    //if (s == null) {
-                    //    throw new RPCException("End of input stream reached");
-                    //}
-                    Query query = ProtoBuf.Serializer.DeserializeWithLengthPrefix<Query>(reader, ProtoBuf.PrefixStyle.Base128, 0);
+                    // Query query = readQueryWithProtobuf(reader);
+                    Query query = readQueryWithChuckybuf(reader);
                     // l.Log(Logger.Flag.Warning, "Server Received {0}", query.MessageData);
                     // Query query = Serialization.DeserializeQuery(s);
 
@@ -110,6 +99,36 @@ namespace RPC {
                 Cleanup();
             }
             // l.Log(Logger.Flag.Warning, "Finishing Reader");
+        }
+
+        private Query readQueryWithProtobuf(NetworkStream reader) {
+            Query query = ProtoBuf.Serializer.DeserializeWithLengthPrefix<Query>(reader, ProtoBuf.PrefixStyle.Base128, 0);
+            return query;
+        }
+
+        private Query readQueryWithChuckybuf(NetworkStream reader) {
+            var len = reader.ReadByte(); // reader.Read();
+            // l.Log(Logger.Flag.Warning, "Looking to read {0} bytes", len+1);
+            if (len < 0) {
+                throw new RPCException("End of input stream reached");
+            }
+
+            byte[] bytes = readn(len + 1);
+
+            if (bytes == null || bytes.Length == 0) {
+                throw new RPCException("Unable to deserialize empty string");
+            }
+            //MemoryStream afterStream = new MemoryStream(bytes);
+            //return Serializer.Deserialize<Query>(afterStream);
+            string s = System.Text.Encoding.Default.GetString(bytes);
+            var pieces = s.Split(new char[] { '|' });
+            Query query = new Query() {
+                Handler = pieces[0],
+                Dispatch = Convert.ToInt32(pieces[1]),
+                MessageType = Type.GetType(pieces[2]),
+                MessageData = pieces[3],
+            };
+            return query;
         }
 
         private byte[] readn(int len) {

@@ -16,34 +16,30 @@ namespace RPC {
             return JsonSerializer.SerializeToString<T>(obj);
         }
 
-        internal static byte[] SerializeQuery(Query obj) {
-            //MemoryStream msTestString = new MemoryStream();
-            //Serializer.Serialize(msTestString, obj);
-            //return msTestString.ToArray();
-
-            // string ret = obj.Handler + "|" + obj.Dispatch + "|" + obj.MessageType + "|" + obj.MessageData;
-            // return Encoding.ASCII.GetBytes(ret);
-
-            MemoryStream msTestString = new MemoryStream();
-            Serializer.SerializeWithLengthPrefix<Query>(msTestString, obj, PrefixStyle.Base128, 0);
-            return msTestString.ToArray();
-        }
-        internal static Query DeserializeQuery(byte[] bytes) {
-            if (bytes == null || bytes.Length == 0) {
-                throw new RPCException("Unable to deserialize empty string");
-            }
-            //MemoryStream afterStream = new MemoryStream(bytes);
-            //return Serializer.Deserialize<Query>(afterStream);
-            string s = System.Text.Encoding.Default.GetString(bytes);
-            var pieces = s.Split(new char[] { '|' });
-            Query query = new Query() {
-                Handler = pieces[0],
-                Dispatch = Convert.ToInt32(pieces[1]),
-                MessageType = Type.GetType(pieces[2]),
-                MessageData = pieces[3],
-            };
-            return query;
-        }
+        //internal static byte[] SerializeQuery(Query obj) {
+        //    //MemoryStream msTestString = new MemoryStream();
+        //    //Serializer.Serialize(msTestString, obj);
+        //    //return msTestString.ToArray();
+        //    MemoryStream msTestString = new MemoryStream();
+        //    Serializer.SerializeWithLengthPrefix<Query>(msTestString, obj, PrefixStyle.Base128, 0);
+        //    return msTestString.ToArray();
+        //}
+        //internal static Query DeserializeQuery(byte[] bytes) {
+        //    if (bytes == null || bytes.Length == 0) {
+        //        throw new RPCException("Unable to deserialize empty string");
+        //    }
+        //    //MemoryStream afterStream = new MemoryStream(bytes);
+        //    //return Serializer.Deserialize<Query>(afterStream);
+        //    string s = System.Text.Encoding.Default.GetString(bytes);
+        //    var pieces = s.Split(new char[] { '|' });
+        //    Query query = new Query() {
+        //        Handler = pieces[0],
+        //        Dispatch = Convert.ToInt32(pieces[1]),
+        //        MessageType = Type.GetType(pieces[2]),
+        //        MessageData = pieces[3],
+        //    };
+        //    return query;
+        //}
         
         internal static string SerializeResponse(Response obj) {
             return JsonSerializer.SerializeToString<Response>(obj);

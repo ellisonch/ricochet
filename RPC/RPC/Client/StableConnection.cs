@@ -68,30 +68,12 @@ namespace RPC {
         }
 
         public bool Write(Query query) {
-            //byte[] msg;
-            //try {
-            //    msg = query.Serialize();
-            //} catch (Exception e) {
-            //    l.Log(Logger.Flag.Info, "Error serializing: {0}", e);
-            //    throw;
-            //}
-
-            //if (msg.Length > 256) {
-            //    Console.Write("msg is {0} bytes long", msg.Length);
-            //    throw new RPCException("Can't handle packets larger than 256");
-            //}
             try {
                 rwl.AcquireReaderLock(lockTimeout);
                 try {
                     if (!connected) { return false; }
-                    // char len = (char)(msg.Length-1);
-                    // Console.WriteLine("Writing length of {0}", (int)len);
-                    // writer.WriteByte((byte)len);
-                    Serializer.SerializeWithLengthPrefix<Query>(writer, query, PrefixStyle.Base128, 0);
-                    // writer.Write(msg, 0, msg.Length);
-                    // writer.Write(new char[]{(char)255});
-                    // writer.Write((char)255);
-                    // writer.WriteLine(msg);
+                    // writeQueryWithProtobuf(writer, query);
+                    writeQueryWithChuckybuf(writer, query);
                     writer.Flush();
                 } catch (IOException e) {
                     l.Log(Logger.Flag.Info, "Error writing: {0}", e.Message);
@@ -106,6 +88,24 @@ namespace RPC {
                 return false;
             }
             return true;
+        }
+
+        private void writeQueryWithProtobuf(NetworkStream writer, Query query) {
+            Serializer.SerializeWithLengthPrefix<Query>(writer, query, PrefixStyle.Base128, 0);
+        }
+
+        private void writeQueryWithChuckybuf(NetworkStream writer, Query query) {
+            string msgString = query.Handler + "|" + query.Dispatch + "|" + query.MessageType + "|" + query.MessageData;
+            byte[] msg = Encoding.ASCII.GetBytes(msgString);
+
+            char len = (char)(msg.Length - 1);
+            if (len > 255) {
+                Console.Write("msg is {0} bytes long", msg.Length);
+                throw new RPCException("Can't handle packets larger than 256");
+            }
+            // Console.WriteLine("Writing length of {0}", (int)len);
+            writer.WriteByte((byte)len);
+            writer.Write(msg, 0, msg.Length);
         }
 
         public bool Read(out Response response) {
