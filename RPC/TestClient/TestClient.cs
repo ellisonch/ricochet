@@ -48,8 +48,6 @@ namespace TestClient {
                         Environment.Exit(1);
                     }
                 }
-                // this should be tucked in
-                
                 
                 var mydone = Interlocked.Increment(ref done);
                 if (mydone % reportEvery == 0) {
