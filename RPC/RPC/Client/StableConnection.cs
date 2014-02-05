@@ -41,7 +41,7 @@ namespace RPC {
             reconnectThread = new Thread(this.Reconnect);
             reconnectThread.Start();
         }
-
+        // TODO consider using lock slim
         private void Reconnect() {
             while (true) {
                 // l.Info("Waiting for need...");
@@ -125,9 +125,12 @@ namespace RPC {
         }
 
         // should be called from a thread with a read lock held
+        // TODO if both timeout, don't even reconnect
+        // TODO don't reconnect until there is a timeout below
         private void RequestReconnect() {
             try {
                 var lc = rwl.UpgradeToWriterLock(lockTimeout);
+                
                 try {
                     // l.Info("Setting new need");
                     shouldReconnect.Set();

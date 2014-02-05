@@ -45,6 +45,7 @@ namespace TestServer {
             //if (r.NextDouble() < 0.01) {
             //    System.Threading.Thread.Sleep(1000);
             //}
+            // throw new Exception("asdf");
             var res = s.msg + s.msg;
             // Console.WriteLine(res);
             return new AResponse(res);

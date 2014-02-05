@@ -21,13 +21,18 @@ namespace RPC {
         Logger l = new Logger(Logger.Flag.Default);
 
         const int maxQueueSize = 2000;
-        const int numWorkerThreads = 12;
+        const int numWorkerThreads = 8;
 
         private readonly IPAddress address;
         private readonly int port;
 
         private ConcurrentDictionary<string, Func<Query, Response>> handlers = new ConcurrentDictionary<string, Func<Query, Response>>();
+
+        /// <summary>
+        /// Only contains non-null queries
+        /// </summary>
         private BlockingQueue<QueryWithDestination> incomingQueries = new BlockingQueue<QueryWithDestination>(maxQueueSize);
+
 
         /// <summary>
         /// Creates a new server that is not yet running.
@@ -90,9 +95,11 @@ namespace RPC {
         private void DoWork() {
             while (true) {
                 QueryWithDestination qwd;
+                // TODO consider not allowing it to fail
                 if (!incomingQueries.TryDequeue(out qwd)) {
                     continue;
                 }
+                // TODO what about doing work for connections that died
                 Response response = GetResponseForQuery(qwd.Query);
                 // l.Log(Logger.Flag.Warning, "Response calculated by thread {0}", Thread.CurrentThread.ManagedThreadId);
                 qwd.Destination.EnqueueIfRoom(response);
@@ -105,20 +112,20 @@ namespace RPC {
                 l.Log(Logger.Flag.Info, "Data is: {0}", query.MessageData);
                 if (query.Handler == null) {
                     l.Log(Logger.Flag.Warning, "No query name given: {0}", query.MessageData);
-                    throw new Exception(String.Format("Do not handle query {0}", query.Handler));
+                    throw new RPCException(String.Format("Do not handle query {0}", query.Handler));
                 }
                 if (!handlers.ContainsKey(query.Handler)) {
                     l.Log(Logger.Flag.Warning, "Do not handle query {0}", query.Handler);
-                    throw new Exception(String.Format("Do not handle query {0}", query.Handler));
+                    throw new RPCException(String.Format("Do not handle query {0}", query.Handler));
                 }
                 Func<Query, Response> fun = handlers[query.Handler];
                 l.Log(Logger.Flag.Info, "Calling handler {0}...", query.Handler);
                 response = fun(query);
-                response.Dispatch = query.Dispatch;
                 l.Log(Logger.Flag.Info, "Back from handler {0}.", query.Handler);
             } catch (Exception e) {
                 response = new Response(e);
             }
+            response.Dispatch = query.Dispatch;
             return response;
         }
 

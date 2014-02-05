@@ -15,8 +15,14 @@ namespace RPC {
     /// sent.  The client maintains a connection to an RPC server, and 
     /// sends the requests to that server.
     /// 
-    /// A server currently does not release its resources if things go bad.
+    /// A client currently does not release its resources if things go bad.
     /// </summary>
+    /* Anatomy of an RPC call:
+Let's say someone wants to make an RPC call for a function named "foo".  The client calls TryCall("foo", argument, out result).
+This request gets assigned a unique ID and is turned into a Query object.  This Query gets added to the outgoing Query queue of the client, and also gets added to PendingRequests.  PendingRequests is a map from IDs to Query/ManualResetEvent(Signal) pairs.  Finally, the call waits on that signal for the response to come back.
+When a Result comes back from the server, the PendingRequests map is accessed to figure out 
+     * a which gets inserted into the outgoing Query queue of the client.
+    */
     public class Client {
         Logger l = new Logger(Logger.Flag.Default);
 
@@ -108,6 +114,10 @@ namespace RPC {
             pendingRequests.Add(query);
             if (!outgoingQueries.EnqueueIfRoom(query)) {
                 l.Log(Logger.Flag.Warning, "Reached maximum queue size!  Query dropped.");
+                ret = default(T2);
+                // TODO put at top
+                // TODO also remove from pendingRequests (probably)
+                return false;
             }
             Response response = pendingRequests.Get(query.Dispatch);
             if (!response.OK) {

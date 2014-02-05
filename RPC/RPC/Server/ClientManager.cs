@@ -9,8 +9,7 @@ using System.Net.Sockets;
 using System.Threading;
 
 namespace RPC {
-    // TODO: the readers and writer die if any exception is throw, not only actually being disconnected
-    // TODO: worker threads aren't being cleaned up
+    // TODO: should really be using timeout that comes from the client
 
     /// <summary>
     /// A ClientManager is in charge of receiving queries and sending responses
@@ -97,7 +96,7 @@ namespace RPC {
             }
             // l.Log(Logger.Flag.Warning, "Finishing Reader");
         }
-
+        // TODO consider idisposable stuff
         private void Cleanup() {
             lock (clientLock) {
                 // l.Log(Logger.Flag.Warning, "Cleaning up ClientHandler");
