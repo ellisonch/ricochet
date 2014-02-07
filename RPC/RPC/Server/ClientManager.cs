@@ -27,8 +27,8 @@ namespace RPC {
         StreamReader streamReader;
         StreamWriter streamWriter;
 
-        readonly BlockingQueue<QueryWithDestination> incomingQueries;
-        protected BlockingQueue<Response> outgoingResponses = new BlockingQueue<Response>(maxQueueSize);
+        readonly BoundedQueue<QueryWithDestination> incomingQueries;
+        protected BoundedQueue<Response> outgoingResponses = new BoundedQueue<Response>(maxQueueSize);
 
         Thread readerThread;
         Thread writerThread;
@@ -38,7 +38,7 @@ namespace RPC {
         /// </summary>
         /// <param name="client">TcpClient to handle.</param>
         /// <param name="incomingQueries">Global queue in which to insert incoming queries.</param>
-        public ClientManager(TcpClient client, BlockingQueue<QueryWithDestination> incomingQueries) {
+        public ClientManager(TcpClient client, BoundedQueue<QueryWithDestination> incomingQueries) {
             this.client = client;
             this.incomingQueries = incomingQueries;
         }

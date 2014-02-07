@@ -31,7 +31,7 @@ namespace RPC {
         /// <summary>
         /// Only contains non-null queries
         /// </summary>
-        private BlockingQueue<QueryWithDestination> incomingQueries = new BlockingQueue<QueryWithDestination>(maxQueueSize);
+        private BoundedQueue<QueryWithDestination> incomingQueries = new BoundedQueue<QueryWithDestination>(maxQueueSize);
 
 
         /// <summary>

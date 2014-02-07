@@ -47,7 +47,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="GenericHelpers\BlockingQueue.cs" />
+    <Compile Include="GenericHelpers\BoundedQueue.cs" />
     <Compile Include="Client\Client.cs" />
     <Compile Include="SerializationStuff\SerialChuckyStream.cs" />
     <Compile Include="SerializationStuff\SerialChuckybuf.cs" />

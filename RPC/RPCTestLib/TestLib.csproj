@@ -44,9 +44,9 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\RPC\RPC.csproj">
+    <ProjectReference Include="..\RPC\Ricochet.csproj">
       <Project>{aee87d42-27fb-4e1b-bf77-b773b22d2bcc}</Project>
-      <Name>RPC</Name>
+      <Name>Ricochet</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

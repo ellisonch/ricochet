@@ -6,13 +6,15 @@ using System.Threading;
 using System.Threading.Tasks;
 
 namespace RPC {
-    // TODO can maybe be replaced with BlockingCollection<T>
-    internal class BlockingQueue<T> {
+    // Based on Marc Gravell's code from http://stackoverflow.com/questions/530211/creating-a-blocking-queuet-in-net
+    // Used here with permission
+    // Changes to the original code made by Chucky Ellison
+    internal class BoundedQueue<T> {
         protected LinkedList<T> queue = new LinkedList<T>();
         private readonly int maxSize;
         bool closing;
 
-        public BlockingQueue(int maxSize) {
+        public BoundedQueue(int maxSize) {
             this.maxSize = maxSize;
         }
         public bool EnqueAtFront(T item) {
@@ -31,7 +33,6 @@ namespace RPC {
                 if (queue.Count >= maxSize) {
                     return false;
                 }
-                // queue.Enqueue(item);
                 queue.AddLast(item);
                 Monitor.Pulse(queue);
             }
@@ -47,7 +48,6 @@ namespace RPC {
                     }
                     Monitor.Wait(queue);
                 }
-                // T item = queue.Dequeue();
                 value = queue.First();
                 queue.RemoveFirst();
                 return true;

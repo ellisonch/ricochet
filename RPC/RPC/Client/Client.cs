@@ -17,12 +17,6 @@ namespace RPC {
     /// 
     /// A client currently does not release its resources if things go bad.
     /// </summary>
-    /* Anatomy of an RPC call:
-Let's say someone wants to make an RPC call for a function named "foo".  The client calls TryCall("foo", argument, out result).
-This request gets assigned a unique ID and is turned into a Query object.  This Query gets added to the outgoing Query queue of the client, and also gets added to PendingRequests.  PendingRequests is a map from IDs to Query/ManualResetEvent(Signal) pairs.  Finally, the call waits on that signal for the response to come back.
-When a Result comes back from the server, the PendingRequests map is accessed to figure out 
-     * a which gets inserted into the outgoing Query queue of the client.
-    */
     public class Client {
         Logger l = new Logger(Logger.Flag.Default);
 
@@ -31,7 +25,7 @@ When a Result comes back from the server, the PendingRequests map is accessed to
         static int softQueryTimeout = 500; // time (ms) before it gets sent
         internal static int HardQueryTimeout = 2000; // total time of round trip (still takes this long to give up even if soft is hit)
 
-        private BlockingQueue<Query> outgoingQueries = new BlockingQueue<Query>(maxQueueSize);
+        private BoundedQueue<Query> outgoingQueries = new BoundedQueue<Query>(maxQueueSize);
         private PendingRequests pendingRequests = new PendingRequests();
 
         Thread readerThread;
