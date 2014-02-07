@@ -48,11 +48,11 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\RPCTestLib\TestLib.csproj">
+    <ProjectReference Include="..\TestLib\TestLib.csproj">
       <Project>{532992d4-aa21-4a9c-b05f-acc3a4c9839e}</Project>
       <Name>TestLib</Name>
     </ProjectReference>
-    <ProjectReference Include="..\RPC\Ricochet.csproj">
+    <ProjectReference Include="..\Ricochet\Ricochet.csproj">
       <Project>{aee87d42-27fb-4e1b-bf77-b773b22d2bcc}</Project>
       <Name>Ricochet</Name>
     </ProjectReference>

@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace RPCTestLib {
+namespace TestLib {
     public class AResponse {
         public string res { get; set; }
 
