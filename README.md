@@ -8,7 +8,7 @@ The best way to figure out how to use this framework is to look at the `TestClie
 
 ## Server
 
-```
+```C#
 // We will publish this function finding the length of a string
 public static int Length(string s) { return s.Length; }
 ...
@@ -19,11 +19,11 @@ server.Start();
 
 ## Client
 
-```
+```C#
 Client client = new Client("127.0.0.1", 11000);
 
 int result;
-if (!client.TryCall<string, string>("length", "foobar", out result)) {
+if (!client.TryCall<string, int>("length", "foobar", out result)) {
     // failed due to timeout, broken connection, etc.
 } else {
     // result should be set to 6 here
