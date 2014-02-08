@@ -24,6 +24,7 @@ namespace TestClient {
 
         static int Main(string[] args) {
             Client client = new Client("127.0.0.1", 11000);
+            client.WaitUntilConnected();
 
             long failures = 0;
             long done = 0;

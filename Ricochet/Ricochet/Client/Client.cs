@@ -46,17 +46,30 @@ namespace RPC {
 
             writerThread = new Thread(this.WriteQueries);
             writerThread.Start();
+        }
 
-            // TODO: should return and not fail if connection isn't available
-            //int pingResult;
-            //if (!this.TryCall<int, int>("_ping", 9001, out pingResult)) {
-            //    l.Log(Logger.Flag.Error, "Couldn't ping");
-            //    throw new RPCException("Couldn't connect properly; ping failed");
-            //}
-            //if (pingResult != 9001) {
-            //    l.Log(Logger.Flag.Error, "Couldn't ping");
-            //    throw new RPCException("Couldn't connect properly; ping failed with wrong response");
-            //}
+        /// <summary>
+        /// Blocks until connected to the server and the server responds to a ping.
+        /// Does not guarantee the server will still be connected when another query is sent.
+        /// </summary>
+        public void WaitUntilConnected() {
+            Console.Write("Waiting... ");
+            while (!Ping()) {
+                Console.Write(".");
+                System.Threading.Thread.Sleep(100);
+            }
+            Console.WriteLine(" Connected.");
+        }
+
+        private bool Ping() {
+            int pingResult;
+            if (!this.TryCall<int, int>("_ping", 9001, out pingResult)) {
+                return false;
+            }
+            if (pingResult != 9001) {
+                return false;
+            }
+            return true;
         }
 
         private void WriteQueries() {
@@ -66,7 +79,7 @@ namespace RPC {
                     continue;
                 }
                 if (query.SW.ElapsedMilliseconds > softQueryTimeout) {
-                    l.Log(Logger.Flag.Warning, "Soft timeout reached");
+                    l.Log(Logger.Flag.Info, "Soft timeout reached");
                     continue;
                 }
                 if (!connection.Write(query)) {
