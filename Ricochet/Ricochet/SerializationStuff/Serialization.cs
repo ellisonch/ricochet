@@ -1,5 +1,4 @@
-﻿using ProtoBuf;
-using ServiceStack.Text;
+﻿using ServiceStack.Text;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -12,7 +11,7 @@ namespace RPC {
     internal class Serialization {
         // Serial S = new SerialProtobuf();
         static Dictionary<int, Serial> methods = new Dictionary<int, Serial>() {
-            {0, new SerialProtobuf()},
+            // {0, new SerialProtobuf()},
             {1, new SerialChuckybuf()},
             {2, new SerialChuckyStream()},
             {3, new SerialServiceStack()},

@@ -32,9 +32,6 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="protobuf-net">
-      <HintPath>..\packages\protobuf-net.2.0.0.668\lib\net40\protobuf-net.dll</HintPath>
-    </Reference>
     <Reference Include="ServiceStack.Text">
       <HintPath>..\packages\ServiceStack.Text.4.0.8\lib\net40\ServiceStack.Text.dll</HintPath>
     </Reference>
@@ -51,7 +48,6 @@
     <Compile Include="Client\Client.cs" />
     <Compile Include="SerializationStuff\SerialChuckyStream.cs" />
     <Compile Include="SerializationStuff\SerialChuckybuf.cs" />
-    <Compile Include="SerializationStuff\SerialProtobuf.cs" />
     <Compile Include="SerializationStuff\Serialization.cs" />
     <Compile Include="SerializationStuff\Serial.cs" />
     <Compile Include="SerializationStuff\SerialServiceStackStream.cs" />

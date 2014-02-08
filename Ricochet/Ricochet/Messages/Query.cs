@@ -1,5 +1,4 @@
-﻿using ProtoBuf;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -10,7 +9,6 @@ namespace RPC {
     /// <summary>
     /// The actual package that is sent to a server representing an RPC call.
     /// </summary>
-    [ProtoContract]
     internal class Query : Message {
         static private int ticketNumber = 0;
         internal Stopwatch SW = Stopwatch.StartNew();
@@ -18,7 +16,6 @@ namespace RPC {
         /// <summary>
         /// Name of function to which this query should be passed.
         /// </summary>
-        [ProtoMember(5)]
         public string Handler { get; set; }
 
         internal static Query CreateQuery<T>(string handler, T data) {

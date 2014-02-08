@@ -1,4 +1,4 @@
-﻿using ProtoBuf;
+﻿using ServiceStack.Text;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -32,13 +32,21 @@ namespace RPC {
         }
 
         internal override void WriteResponse(NetworkStream networkWriter, StreamWriter streamWriter, Response response) {
-            Serializer.SerializeWithLengthPrefix<Response>(networkWriter, response, PrefixStyle.Base128, 0);
-            networkWriter.Flush();
+            var s = JsonSerializer.SerializeToString<Response>(response);
+            streamWriter.WriteLine(s);
+            streamWriter.Flush();
         }
 
         internal override Response ReadResponse(NetworkStream networkReader, StreamReader streamReader) {
-            Response response = ProtoBuf.Serializer.DeserializeWithLengthPrefix<Response>(networkReader, ProtoBuf.PrefixStyle.Base128, 0);
-            // Console.WriteLine("x: {0}", response.MessageData);
+            string s = streamReader.ReadLine();
+            if (s == null) {
+                return null;
+            }
+            Response response = JsonSerializer.DeserializeFromString<Response>(s);
+            if (response == null) {
+                // TODO should probably kill connection here
+                l.Log(Logger.Flag.Warning, "Failed to deserialize response.  Something's really messed up");
+            }
             return response;
         }
     }

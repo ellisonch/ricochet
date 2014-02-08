@@ -1,5 +1,4 @@
-﻿using ProtoBuf;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -10,11 +9,8 @@ namespace RPC {
     /// The actual package that is returned from a server representing an RPC 
     /// result.
     /// </summary>
-    [ProtoContract]
     internal class Response : Message {
-        [ProtoMember(6)]
         public bool OK { get; set; }
-        // [ProtoMember(6)]
         public Exception Error { get; set; }
 
         public Response(Exception e) {
