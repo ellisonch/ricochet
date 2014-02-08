@@ -35,6 +35,10 @@ namespace RPC {
             var s = JsonSerializer.SerializeToString<Response>(response);
             streamWriter.WriteLine(s);
             streamWriter.Flush();
+            //string msgString = response.Handler + "|" + query.Dispatch + "|" + query.MessageType + "|" + query.MessageData;
+
+            //streamWriter.WriteLine(msgString);
+            //streamWriter.Flush();
         }
 
         internal override Response ReadResponse(NetworkStream networkReader, StreamReader streamReader) {

@@ -11,11 +11,16 @@ namespace RPC {
     /// </summary>
     internal class Response : Message {
         public bool OK { get; set; }
-        public Exception Error { get; set; }
+        public string ErrorMsg { get; set; }
+        // public Exception Error { get; set; }
 
-        public Response(Exception e) {
+        //public Response(Exception e) {
+        //    OK = false;
+        //    Error = e;
+        //}
+        public Response(string e) {
             OK = false;
-            Error = e;
+            ErrorMsg = e;
         }
         public Response() { }
 
@@ -31,14 +36,14 @@ namespace RPC {
         internal static Response Failure() {
             return new Response() {
                 OK = false,
-                Error = new Exception("Failed to get a result, maybe the connection died")
+                ErrorMsg = "Failed to get a result, maybe the connection died"
             };
         }
 
         internal static Response Timeout(int ticket) {
             return new Response() {
                 OK = false,
-                Error = new Exception("Timeout"),
+                ErrorMsg = "Timeout",
                 Dispatch = ticket,
             };
         }

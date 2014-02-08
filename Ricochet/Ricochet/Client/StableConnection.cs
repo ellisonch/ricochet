@@ -116,7 +116,7 @@ namespace RPC {
 
             if (response.OK == true && response.MessageData == null) {
                 response.OK = false;
-                response.Error = new Exception(String.Format("Something went wrong deserializing the message data"));
+                response.ErrorMsg = "Something went wrong deserializing the message data";
             }
 
             return true;

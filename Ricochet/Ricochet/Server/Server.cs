@@ -123,7 +123,7 @@ namespace RPC {
                 response = fun(query);
                 l.Log(Logger.Flag.Info, "Back from handler {0}.", query.Handler);
             } catch (Exception e) {
-                response = new Response(e);
+                response = new Response(e.Message);
             }
             response.Dispatch = query.Dispatch;
             return response;

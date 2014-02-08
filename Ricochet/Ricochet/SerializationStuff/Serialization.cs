@@ -18,7 +18,7 @@ namespace RPC {
             {4, new SerialServiceStackStream()}, // doesn't work
         };
 
-        static int method = 3;
+        static int method = 2;
         // at 500000 iterations...
         // 0: 49222
         // 1: 51781
