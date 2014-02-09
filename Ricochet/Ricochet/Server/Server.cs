@@ -89,7 +89,13 @@ namespace RPC {
             }
             handlers[name] = (Func<Query, Response>)((query) => {
                 // T1 arg = Serialization.DeserializeFromString<T1>(query.MessageData);
-                T1 arg = serializer.Deserialize<T1>(query.MessageData);
+                T1 arg = default(T1);
+                try {
+                    arg = serializer.Deserialize<T1>(query.MessageData);
+                } catch (Exception e) {
+                    l.Log(Logger.Flag.Warning, "Something weng wrong Deserialinzg the message data: {0}", e.Message);
+                    throw;
+                }
                 var res = fun(arg);
                 Response resp = Response.CreateResponse<T2>(query, res, serializer);
                 return resp;
@@ -127,13 +133,15 @@ namespace RPC {
                 response = fun(query);
                 l.Log(Logger.Flag.Info, "Back from handler {0}.", query.Handler);
             } catch (Exception e) {
-                response = new Response(e.Message);
+                l.Log(Logger.Flag.Warning, "Something went wrong calling handler: {0}", e.Message);
+                response = Response.Failure(e.Message);
             }
             response.Dispatch = query.Dispatch;
             return response;
         }
 
         private int Ping(int x) {
+            Console.WriteLine("ping of {0}", x);
             return x;
         }
     }

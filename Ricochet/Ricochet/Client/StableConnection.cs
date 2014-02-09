@@ -73,7 +73,8 @@ namespace RPC {
                 rwl.AcquireReaderLock(lockTimeout);
                 try {
                     if (!connected) { return false; }
-                    serializer.WriteToStream<Query>(writeStream, query);
+                    byte[] bytes = serializer.SerializeQuery(query);
+                    serializer.WriteToStream(writeStream, bytes);
                 } catch (IOException e) {
                     l.Log(Logger.Flag.Info, "Error writing: {0}", e.Message);
                     RequestReconnect();
@@ -95,7 +96,8 @@ namespace RPC {
                 rwl.AcquireReaderLock(lockTimeout);
                 try {
                     if (!connected) { return false; }
-                    response = serializer.ReadFromStream<Response>(readStream);
+                    byte[] bytes = serializer.ReadFromStream(readStream);
+                    response = serializer.DeserializeResponse(bytes);
                     
                     if (response == null) {
                         RequestReconnect();

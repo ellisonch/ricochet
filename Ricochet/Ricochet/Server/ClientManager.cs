@@ -66,7 +66,8 @@ namespace RPC {
                     if (!outgoingResponses.TryDequeue(out response)) {
                         continue;
                     }
-                    serializer.WriteToStream<Response>(writeStream, response);
+                    byte[] bytes = serializer.SerializeResponse(response);
+                    serializer.WriteToStream(writeStream, bytes);
                 }
             } catch (Exception e) {
                 l.Log(Logger.Flag.Warning, "Error in WriteResponses(): {0}", e.Message);
@@ -79,10 +80,11 @@ namespace RPC {
         private void ReadQueries() {
             try {
                 while (running) {
-                    Query query = serializer.ReadFromStream<Query>(readStream);
+                    byte[] bytes = serializer.ReadFromStream(readStream);
+                    Query query = serializer.DeserializeQuery(bytes);
                     if (query == null) {
+                        l.Log(Logger.Flag.Warning, "Invalid query received, ignoring it");
                         throw new RPCException("Error reading query");
-                        //l.Log(Logger.Flag.Warning, "Invalid query received, ignoring it");
                         //continue;
                     }
                     var qwd = new QueryWithDestination(query, outgoingResponses);

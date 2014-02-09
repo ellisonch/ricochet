@@ -9,7 +9,7 @@ namespace RPC {
     /// <summary>
     /// The actual package that is sent to a server representing an RPC call.
     /// </summary>
-    internal class Query : Message {
+    public class Query : Message {
         static private int ticketNumber = 0;
         internal Stopwatch SW = Stopwatch.StartNew();
 

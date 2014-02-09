@@ -21,23 +21,56 @@ namespace RPC {
         public abstract byte[] Serialize<T>(T thing);
 
         /// <summary>
-        /// Converts a byte array coming from Serialize{T}(T thing) into an 
+        /// Converts a thing of type query into a serialized byte array that can be
+        /// decoded using DeserializeQuery(byte[]).
+        /// </summary>
+        /// <param name="thing">The thing to be serialized</param>
+        public virtual byte[] SerializeQuery(Query thing) {
+            return Serialize<Query>(thing);
+        }
+
+        /// <summary>
+        /// Converts a thing of type response into a serialized byte array that can be
+        /// decoded using DeserializeQuery(byte[]).
+        /// </summary>
+        /// <param name="thing">The thing to be serialized</param>
+        public virtual byte[] SerializeResponse(Response thing) {
+            return Serialize<Response>(thing);
+        }
+
+        /// <summary>
+        /// Converts a byte array coming from SerializeQuery(T thing) into an 
         /// actual object of type T.
         /// </summary>
-        /// <typeparam name="T">The type of the thing to be serialized</typeparam>
         /// <param name="thing">The thing to be serialized</param>
         public abstract T Deserialize<T>(byte[] thing);
 
         /// <summary>
-        /// Writes a serialized version of thing on the Stream.
+        /// Converts a byte array coming from Serialize{T}(T thing) into an 
+        /// actual object of type Query.
+        /// </summary>
+        /// <param name="thing">The thing to be serialized</param>
+        public virtual Query DeserializeQuery(byte[] thing) {
+            return Deserialize<Query>(thing);
+        }
+
+        /// <summary>
+        /// Converts a byte array coming from Serialize{T}(T thing) into an 
+        /// actual object of type Query.
+        /// </summary>
+        /// <param name="thing">The thing to be serialized</param>
+        public virtual Response DeserializeResponse(byte[] thing) {
+            return Deserialize<Response>(thing);
+        }
+
+        /// <summary>
+        /// Writes bytes to the Stream.
         /// 
         /// Assumes this thread has exclusive access to the Stream.
         /// </summary>
-        /// <typeparam name="T"></typeparam>
         /// <param name="stream"></param>
-        /// <param name="thing"></param>
-        public void WriteToStream<T>(Stream stream, T thing) {
-            byte[] bytes = Serialize<T>(thing);
+        /// <param name="bytes"></param>
+        public void WriteToStream(Stream stream, byte[] bytes) {
             int len = bytes.Length;
             // Console.WriteLine("Writing length {0}", len);
             byte[] lenBytes = BitConverter.GetBytes(len);
@@ -53,16 +86,13 @@ namespace RPC {
         /// 
         /// Assumes this thread has exclusive access to the Stream.
         /// </summary>
-        /// <typeparam name="T"></typeparam>
         /// <param name="stream"></param>
-        public T ReadFromStream<T>(Stream stream) {
+        public byte[] ReadFromStream(Stream stream) {
             byte[] lenBytes = readn(stream, 4);
             int len = BitConverter.ToInt32(lenBytes, 0);
             // Console.WriteLine("Read length {0}", len);
             byte[] bytes = readn(stream, len);
-
-            T thing = Deserialize<T>(bytes);
-            return thing;
+            return bytes;
         }
 
 

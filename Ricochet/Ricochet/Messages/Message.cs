@@ -7,7 +7,7 @@ namespace RPC {
     /// <summary>
     /// Any kind of packet sent to or from an RPC server.
     /// </summary>
-    internal class Message {
+    public class Message {
         /// <summary>
         /// The ticket number of the query.  Uniquely identifies a query
         /// for a client.

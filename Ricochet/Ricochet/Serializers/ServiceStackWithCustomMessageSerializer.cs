@@ -11,50 +11,102 @@ namespace RPC {
     ///  Provides a ServiceStack.Text-based Serializer (with custom serialization
     ///  for Message types) for Ricochet.
     /// </summary>
-    public class ServiceStackWithCustomMessageSerializer : Serializer {
+    public class ServiceStackWithCustomMessageSerializer : ServiceStackSerializer {
         /// <summary>
-        /// Serialization via ServiceStack.Text
+        /// Serialize using goofy, custom method.
         /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="thing"></param>
+        /// <param name="query"></param>
         /// <returns></returns>
-        public override byte[] Serialize<T>(T thing) {
-            //string s = null;
-            //if (typeof(T) == typeof(Query)) {
-            //    Query query = (Query)thing;
-            //    s = query.Handler + "|" + query.Dispatch + "|" + query.MessageData;
-            //} else if (typeof(T) == typeof(Response)) {
+        public override byte[] SerializeQuery(Query query) {
+            // packet looks like:
+            // Dispatch (4 bytes)
+            // Length of handler (4 bytes)
+            // handler
+            // message data (rest of array)
+            byte[] handlerBytes = Encoding.Default.GetBytes(query.Handler);
 
-            //} else {
-            //    s = JsonSerializer.SerializeToString<T>(thing);
-            //}
-            //return Encoding.Default.GetBytes(s);
+            int len = 4 + 4 + handlerBytes.Length + query.MessageData.Length;
+            byte[] bytes = new byte[len];
 
-            string s = JsonSerializer.SerializeToString<T>(thing);
-            return Encoding.Default.GetBytes(s);
+            BitConverter.GetBytes(query.Dispatch).CopyTo(bytes, 0);
+            BitConverter.GetBytes(handlerBytes.Length).CopyTo(bytes, 4);            
+            handlerBytes.CopyTo(bytes, 8);
+            query.MessageData.CopyTo(bytes, 8 + handlerBytes.Length);
+            return bytes;
         }
 
         /// <summary>
-        /// Deserialization via ServiceStack.Text
+        /// Deserialize using goofy, custom method.
         /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="thing"></param>
+        /// <param name="bytes"></param>
         /// <returns></returns>
-        public override T Deserialize<T>(byte[] thing) {
-            //var s = streamReader.ReadLine();
-            //if (s == null) {
-            //    return null;
-            //}
-            //var pieces = s.Split(new char[] { '|' });
-            //Query query = new Query() {
-            //    Handler = pieces[0],
-            //    Dispatch = Convert.ToInt32(pieces[1]),
-            //    MessageData = Encoding.Default.GetBytes(pieces[2]),
-            //};
-            //return query;
+        public override Query DeserializeQuery(byte[] bytes) {
+            int dispatch = BitConverter.ToInt32(bytes, 0);
+            int handlerLen = BitConverter.ToInt32(bytes, 4);
+            string handler = Encoding.Default.GetString(bytes, 8, handlerLen);
+            int messageDataLen = bytes.Length - 4 - 4 - handlerLen;
+            byte[] messageData = new byte[messageDataLen];
+            Array.Copy(bytes, 4 + 4 + handlerLen, messageData, 0, messageDataLen);
+            Query query = new Query() {
+                Handler = handler,
+                Dispatch = dispatch,
+                MessageData = messageData,
+            };
+            // Console.WriteLine("dispatch: {0}, handler: {1}", dispatch, handler);
+            return query;
+        }
 
-            string s = Encoding.Default.GetString(thing);
-            return JsonSerializer.DeserializeFromString<T>(s);
+        /// <summary>
+        /// Serialize using goofy, custom method.
+        /// </summary>
+        /// <param name="response"></param>
+        /// <returns></returns>
+        public override byte[] SerializeResponse(Response response) {
+            // packet looks like:
+            // OK (1 byte)
+            // Dispatch (4 bytes)
+            // Length of error (4 bytes)
+            // errorMsg
+            // message data (rest of array)
+            byte[] errorBytes;
+            if (response.ErrorMsg == null){
+                errorBytes = new byte[0];
+            } else {
+                errorBytes = Encoding.Default.GetBytes(response.ErrorMsg);
+            }
+
+            int len = 9 + errorBytes.Length + response.MessageData.Length;
+            byte[] bytes = new byte[len];
+
+            BitConverter.GetBytes(response.OK).CopyTo(bytes, 0);
+            BitConverter.GetBytes(response.Dispatch).CopyTo(bytes, 1);
+            BitConverter.GetBytes(errorBytes.Length).CopyTo(bytes, 5);
+            errorBytes.CopyTo(bytes, 9);
+            response.MessageData.CopyTo(bytes, 9 + errorBytes.Length);
+            return bytes;
+        }
+
+        /// <summary>
+        /// Deserialize using goofy, custom method.
+        /// </summary>
+        /// <param name="bytes"></param>
+        /// <returns></returns>
+        public override Response DeserializeResponse(byte[] bytes) {
+            bool ok = BitConverter.ToBoolean(bytes, 0);
+            int dispatch = BitConverter.ToInt32(bytes, 1);
+            int errorLen = BitConverter.ToInt32(bytes, 5);
+            string errorMsg = Encoding.Default.GetString(bytes, 9, errorLen);
+            int messageDataLen = bytes.Length - 9 - errorLen;
+            byte[] messageData = new byte[messageDataLen];
+            Array.Copy(bytes, 9 + errorLen, messageData, 0, messageDataLen);
+            Response response = new Response() {
+                OK = ok,
+                Dispatch = dispatch,
+                ErrorMsg = errorMsg,
+                MessageData = messageData,
+            };
+            // Console.WriteLine("dispatch: {0}, handler: {1}", dispatch, handler);
+            return response;
         }
     }
 }

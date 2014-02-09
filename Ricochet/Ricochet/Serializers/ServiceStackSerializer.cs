@@ -30,6 +30,7 @@ namespace RPC {
         /// <returns></returns>
         public override T Deserialize<T>(byte[] thing) {
             string s = Encoding.Default.GetString(thing);
+            // Console.WriteLine(s);
             return JsonSerializer.DeserializeFromString<T>(s);
         }
     }
