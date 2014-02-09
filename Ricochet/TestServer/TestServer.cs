@@ -10,16 +10,11 @@ using System.Threading.Tasks;
 namespace TestServer {
     class TestServer {
         delegate string ReverseDel(string s);
-        static void Main(string[] args)
-        {
-            var server = new Server(IPAddress.Any, 11000);
+        static void Main(string[] args) {
+            var server = new Server(IPAddress.Any, 11000, WhichSerializer.Serializer);
 
-            // ReverseDel f = Reverse;
-            // Delegate f = Reverse;
-            // Handler h = new Handler(Reverse);
             server.Register<AQuery, AResponse>("reverse", Reverse);
             server.Register<AQuery, AResponse>("double", Double);
-            // server.Register<GetStarsQuery, GetStarsResponse>("getStars", getSuggestionsForUser);
             try {
                 server.Start();
             } catch (RPCException e) {
@@ -35,7 +30,6 @@ namespace TestServer {
             
             Array.Reverse(arr);
             var res = new string(arr);
-            // Console.WriteLine(res);
             return new AResponse(res);
         }
 

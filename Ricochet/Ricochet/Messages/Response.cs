@@ -24,12 +24,11 @@ namespace RPC {
         }
         public Response() { }
 
-        public static Response CreateResponse<T>(Query query, T data) {
+        public static Response CreateResponse<T>(Query query, T data, Serializer serializer) {
             return new Response {
                 OK = true,
                 Dispatch = query.Dispatch,
-                MessageType = typeof(T),
-                MessageData = Serialization.SerializeToString<T>(data)
+                MessageData = serializer.Serialize<T>(data)
             };
         }
 

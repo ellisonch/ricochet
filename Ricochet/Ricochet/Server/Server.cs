@@ -23,6 +23,7 @@ namespace RPC {
         const int maxQueueSize = 2000;
         const int numWorkerThreads = 8;
 
+        Serializer serializer;
         private readonly IPAddress address;
         private readonly int port;
 
@@ -39,9 +40,11 @@ namespace RPC {
         /// </summary>
         /// <param name="address">The IPAddress on which to start the server</param>
         /// <param name="port">The port to use</param>
-        public Server(IPAddress address, int port) {
+        /// <param name="serializer">Serializer to use for serialization</param>
+        public Server(IPAddress address, int port, Serializer serializer) {
             this.address = address;
             this.port = port;
+            this.serializer = serializer;
             l.Log(Logger.Flag.Info, "Configuring server as {0}:{1}", address, port);
 
             for (int i = 0; i < numWorkerThreads; i++) {
@@ -63,7 +66,7 @@ namespace RPC {
 
                     var client = listener.AcceptTcpClient();
                     l.Log(Logger.Flag.Info, "Client connected.");
-                    var clientHandler = new ClientManager(client, incomingQueries);
+                    var clientHandler = new ClientManager(client, incomingQueries, serializer);
                     clientHandler.Start();
                 }
             } catch (AggregateException e) {
@@ -85,9 +88,10 @@ namespace RPC {
                 throw new Exception(String.Format("A handler is already registered for the name '{0}'", name));
             }
             handlers[name] = (Func<Query, Response>)((query) => {
-                T1 arg = Serialization.DeserializeFromString<T1>(query.MessageData);
+                // T1 arg = Serialization.DeserializeFromString<T1>(query.MessageData);
+                T1 arg = serializer.Deserialize<T1>(query.MessageData);
                 var res = fun(arg);
-                Response resp = Response.CreateResponse<T2>(query, res);
+                Response resp = Response.CreateResponse<T2>(query, res, serializer);
                 return resp;
             });
         }

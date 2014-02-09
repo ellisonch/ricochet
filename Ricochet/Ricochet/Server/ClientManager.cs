@@ -23,24 +23,26 @@ namespace RPC {
         private object clientLock = new object();
 
         private TcpClient client;
-        NetworkStream networkStream;
-        StreamReader streamReader;
-        StreamWriter streamWriter;
+        BufferedStream writeStream;
+        BufferedStream readStream;
 
         readonly BoundedQueue<QueryWithDestination> incomingQueries;
         protected BoundedQueue<Response> outgoingResponses = new BoundedQueue<Response>(maxQueueSize);
 
         Thread readerThread;
         Thread writerThread;
+        Serializer serializer;
 
         /// <summary>
         /// Creates a new ClientManager that is not yet running.
         /// </summary>
         /// <param name="client">TcpClient to handle.</param>
         /// <param name="incomingQueries">Global queue in which to insert incoming queries.</param>
-        public ClientManager(TcpClient client, BoundedQueue<QueryWithDestination> incomingQueries) {
+        /// <param name="serializer">Serializer user to send and receive messages over the wire.</param>
+        public ClientManager(TcpClient client, BoundedQueue<QueryWithDestination> incomingQueries, Serializer serializer) {
             this.client = client;
             this.incomingQueries = incomingQueries;
+            this.serializer = serializer;
         }
 
         /// <summary>
@@ -48,9 +50,8 @@ namespace RPC {
         /// </summary>
         public void Start() {
             l.Log(Logger.Flag.Warning, "Accepted client");
-            networkStream = client.GetStream();
-            streamReader = new StreamReader(client.GetStream());
-            streamWriter = new StreamWriter(client.GetStream());
+            writeStream = new BufferedStream(client.GetStream());
+            readStream = new BufferedStream(client.GetStream());
 
             this.readerThread = new Thread(this.ReadQueries);
             readerThread.Start();
@@ -65,7 +66,7 @@ namespace RPC {
                     if (!outgoingResponses.TryDequeue(out response)) {
                         continue;
                     }
-                    Serialization.WriteResponse(networkStream, streamWriter, response);
+                    serializer.WriteToStream<Response>(writeStream, response);
                 }
             } catch (Exception e) {
                 l.Log(Logger.Flag.Warning, "Error in WriteResponses(): {0}", e.Message);
@@ -78,7 +79,7 @@ namespace RPC {
         private void ReadQueries() {
             try {
                 while (running) {
-                    Query query = Serialization.ReadQuery(networkStream, streamReader);
+                    Query query = serializer.ReadFromStream<Query>(readStream);
                     if (query == null) {
                         throw new RPCException("Error reading query");
                         //l.Log(Logger.Flag.Warning, "Invalid query received, ignoring it");
@@ -103,9 +104,8 @@ namespace RPC {
                 // l.Log(Logger.Flag.Warning, "Client disconnected.");
                 running = false;
                 outgoingResponses.Close();
-                if (networkStream != null) { networkStream.Close(); }
-                if (streamWriter != null) { streamWriter.Close(); }
-                if (streamReader != null) { streamReader.Close(); }
+                if (writeStream != null) { writeStream.Close(); }
+                if (readStream != null) { readStream.Close(); }
                 if (client != null) { client.Close(); }
             }
         }

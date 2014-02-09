@@ -23,7 +23,7 @@ namespace TestClient {
         const int reportEvery = 50000;
 
         static int Main(string[] args) {
-            Client client = new Client("127.0.0.1", 11000);
+            Client client = new Client("127.0.0.1", 11000, WhichSerializer.Serializer);
             client.WaitUntilConnected();
 
             long failures = 0;

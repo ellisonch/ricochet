@@ -32,8 +32,14 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Microsoft.Hadoop.Avro">
+      <HintPath>..\packages\Microsoft.Hadoop.Avro.0.8.4951.5418\lib\net40\Microsoft.Hadoop.Avro.dll</HintPath>
+    </Reference>
     <Reference Include="MsgPack">
       <HintPath>..\packages\MsgPack.Cli.0.4.1\lib\net40-client\MsgPack.dll</HintPath>
+    </Reference>
+    <Reference Include="Newtonsoft.Json">
+      <HintPath>..\packages\Newtonsoft.Json.5.0.8\lib\net45\Newtonsoft.Json.dll</HintPath>
     </Reference>
     <Reference Include="ServiceStack.Text">
       <HintPath>..\packages\ServiceStack.Text.4.0.8\lib\net40\ServiceStack.Text.dll</HintPath>
@@ -49,13 +55,9 @@
   <ItemGroup>
     <Compile Include="GenericHelpers\BoundedQueue.cs" />
     <Compile Include="Client\Client.cs" />
-    <Compile Include="SerializationStuff\MessagePack.cs" />
-    <Compile Include="SerializationStuff\SerialChuckyStream.cs" />
-    <Compile Include="SerializationStuff\SerialChuckybuf.cs" />
-    <Compile Include="SerializationStuff\Serialization.cs" />
-    <Compile Include="SerializationStuff\Serial.cs" />
-    <Compile Include="SerializationStuff\SerialServiceStackStream.cs" />
-    <Compile Include="SerializationStuff\SerialServiceStack.cs" />
+    <Compile Include="Serializers\ServiceStackWithCustomMessageSerializer.cs" />
+    <Compile Include="Serializers\ServiceStackSerializer.cs" />
+    <Compile Include="Serializers\Serializer.cs" />
     <Compile Include="Server\ClientManager.cs" />
     <Compile Include="Client\StableConnection.cs" />
     <Compile Include="GenericHelpers\Logger.cs" />

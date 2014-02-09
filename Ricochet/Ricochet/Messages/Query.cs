@@ -18,12 +18,11 @@ namespace RPC {
         /// </summary>
         public string Handler { get; set; }
 
-        internal static Query CreateQuery<T>(string handler, T data) {
+        internal static Query CreateQuery<T>(string handler, T data, Serializer serializer) {
             return new Query {
                 Handler = handler,
                 Dispatch = Interlocked.Increment(ref ticketNumber),
-                MessageType = typeof(T),
-                MessageData = Serialization.SerializeToString<T>(data)
+                MessageData = serializer.Serialize<T>(data)
             };
         }
         // serializer doesn't use most specific type?

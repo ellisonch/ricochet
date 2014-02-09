@@ -15,13 +15,8 @@ namespace RPC {
         public int Dispatch { get; set; }
 
         /// <summary>
-        /// The type of the payload
-        /// </summary>
-        public Type MessageType { get; set; }
-
-        /// <summary>
         /// The actual payload
         /// </summary>
-        public string MessageData { get; set; }
+        public byte[] MessageData { get; set; }
     }
 }

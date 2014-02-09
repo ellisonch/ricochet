@@ -25,6 +25,8 @@ namespace RPC {
         static int softQueryTimeout = 500; // time (ms) before it gets sent
         internal static int HardQueryTimeout = 2000; // total time of round trip (still takes this long to give up even if soft is hit)
 
+        Serializer serializer;
+
         private BoundedQueue<Query> outgoingQueries = new BoundedQueue<Query>(maxQueueSize);
         private PendingRequests pendingRequests = new PendingRequests();
 
@@ -37,10 +39,12 @@ namespace RPC {
         /// Create a new RPC Client.
         /// </summary>
         /// <param name="hostname">The hostname of the server</param>
-        /// <param name="port">The port of the server</param>        
-        public Client(string hostname, int port) {
-            this.connection = new StableConnection(hostname, port);
-
+        /// <param name="port">The port of the server</param>
+        /// <param name="serializer">The Serializer to use</param>
+        public Client(string hostname, int port, Serializer serializer) {
+            this.serializer = serializer;
+            this.connection = new StableConnection(hostname, port, serializer);
+            
             readerThread = new Thread(this.ReadResponses);
             readerThread.Start();
 
@@ -117,7 +121,7 @@ namespace RPC {
         /// <param name="ret">Output from function</param>
         /// <returns>True if the call was successful, false otherwise.</returns>
         public bool TryCall<T1, T2>(string name, T1 input, out T2 ret) {
-            Query query = Query.CreateQuery<T1>(name, input);
+            Query query = Query.CreateQuery<T1>(name, input, serializer);
             pendingRequests.Add(query);
             if (!outgoingQueries.EnqueueIfRoom(query)) {
                 l.Log(Logger.Flag.Warning, "Reached maximum queue size!  Query dropped.");
@@ -136,7 +140,8 @@ namespace RPC {
                 ret = default(T2);
                 return false;
             }
-            ret = Serialization.DeserializeFromString<T2>(response.MessageData);
+            // ret = Serialization.DeserializeFromString<T2>(response.MessageData);
+            ret = serializer.Deserialize<T2>(response.MessageData);
             return true;
         }
     }

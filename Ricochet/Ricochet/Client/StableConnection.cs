@@ -22,19 +22,20 @@ namespace RPC {
 
         ReaderWriterLock rwl = new ReaderWriterLock();
 
+        Serializer serializer;
         private TcpClient sender;
-        NetworkStream networkStream;
-        private StreamWriter streamWriter;
-        private StreamReader streamReader;
+        private BufferedStream writeStream;
+        private BufferedStream readStream;
 
         bool connected = false;
         // Semaphore shouldReconnect = new Semaphore(1, 1);
         AutoResetEvent shouldReconnect = new AutoResetEvent(true);
         Thread reconnectThread;
 
-        public StableConnection(string hostname, int port) {
+        public StableConnection(string hostname, int port, Serializer serializer) {
             this.hostname = hostname;
             this.port = port;
+            this.serializer = serializer;
 
             reconnectThread = new Thread(this.Reconnect);
             reconnectThread.Start();
@@ -72,7 +73,7 @@ namespace RPC {
                 rwl.AcquireReaderLock(lockTimeout);
                 try {
                     if (!connected) { return false; }
-                    Serialization.WriteQuery(networkStream, streamWriter, query);
+                    serializer.WriteToStream<Query>(writeStream, query);
                 } catch (IOException e) {
                     l.Log(Logger.Flag.Info, "Error writing: {0}", e.Message);
                     RequestReconnect();
@@ -94,7 +95,7 @@ namespace RPC {
                 rwl.AcquireReaderLock(lockTimeout);
                 try {
                     if (!connected) { return false; }
-                    response = Serialization.ReadResponse(networkStream, streamReader);
+                    response = serializer.ReadFromStream<Response>(readStream);
                     
                     if (response == null) {
                         RequestReconnect();
@@ -163,19 +164,15 @@ namespace RPC {
                 return false;
             }
 
-            if (networkStream != null) {
-                networkStream.Close();
+            if (readStream != null) {
+                readStream.Close();
             }
-            if (streamReader != null) {
-                streamReader.Close();
-            }
-            if (streamWriter != null) {
-                streamWriter.Close();
+            if (writeStream != null) {
+                writeStream.Close();
             }
 
-            networkStream = sender.GetStream();
-            streamWriter = new StreamWriter(sender.GetStream());
-            streamReader = new StreamReader(sender.GetStream());
+            writeStream = new BufferedStream(sender.GetStream());
+            readStream = new BufferedStream(sender.GetStream());
 
             l.Log(Logger.Flag.Info, "Connected to {0}:{1}", hostname, port);
             connected = true;
