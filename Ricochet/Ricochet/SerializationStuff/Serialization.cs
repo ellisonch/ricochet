@@ -16,9 +16,10 @@ namespace RPC {
             {2, new SerialChuckyStream()},
             {3, new SerialServiceStack()},
             {4, new SerialServiceStackStream()}, // doesn't work
+            {5, new MessagePack()}, // doesn't work
         };
 
-        static int method = 2;
+        static int method = 3;
         // at 500000 iterations...
         // 0: 49222
         // 1: 51781

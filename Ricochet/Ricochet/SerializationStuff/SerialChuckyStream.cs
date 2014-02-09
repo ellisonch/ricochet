@@ -32,26 +32,29 @@ namespace RPC {
         }
 
         internal override void WriteResponse(NetworkStream networkWriter, StreamWriter streamWriter, Response response) {
-            var s = JsonSerializer.SerializeToString<Response>(response);
-            streamWriter.WriteLine(s);
-            streamWriter.Flush();
-            //string msgString = response.Handler + "|" + query.Dispatch + "|" + query.MessageType + "|" + query.MessageData;
-
-            //streamWriter.WriteLine(msgString);
+            //var s = JsonSerializer.SerializeToString<Response>(response);
+            //streamWriter.WriteLine(s);
             //streamWriter.Flush();
+            string msgString = response.Dispatch + "|" + response.ErrorMsg + "|" + response.MessageData + "|" + response.MessageType + "|" + response.OK;
+
+            streamWriter.WriteLine(msgString);
+            streamWriter.Flush();
         }
 
         internal override Response ReadResponse(NetworkStream networkReader, StreamReader streamReader) {
-            string s = streamReader.ReadLine();
+            var s = streamReader.ReadLine();
             if (s == null) {
                 return null;
             }
-            Response response = JsonSerializer.DeserializeFromString<Response>(s);
-            if (response == null) {
-                // TODO should probably kill connection here
-                l.Log(Logger.Flag.Warning, "Failed to deserialize response.  Something's really messed up");
-            }
-            return response;
+            var pieces = s.Split(new char[] { '|' });
+            Response query = new Response() {
+                Dispatch = Convert.ToInt32(pieces[0]),
+                ErrorMsg = pieces[1],
+                MessageData = pieces[2],
+                MessageType = Type.GetType(pieces[3]),
+                OK = Convert.ToBoolean(pieces[4]),                
+            };
+            return query;
         }
     }
 }
