@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 namespace RPC {
     class SignaledResponse {
         private ManualResetEvent barrier = new ManualResetEvent(false);
-        private SemaphoreSlim barrier2 = new SemaphoreSlim(0, 1);
+        // private SemaphoreSlim barrier2 = new SemaphoreSlim(0, 1);
 
         public Response Response;
         public Stopwatch SW;
@@ -26,8 +26,8 @@ namespace RPC {
             return barrier.WaitOne(timeout);
             // return barrier.Wait(timeout);
         }
-        public async Task<bool> WaitUntilAsync(int timeout) {
-            return await barrier2.WaitAsync(timeout);
-        }
+        //public async Task<bool> WaitUntilAsync(int timeout) {
+        //    return await barrier2.WaitAsync(timeout);
+        //}
     }
 }

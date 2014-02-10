@@ -55,6 +55,7 @@
   <ItemGroup>
     <Compile Include="GenericHelpers\BoundedQueue.cs" />
     <Compile Include="Client\Client.cs" />
+    <Compile Include="GenericHelpers\MessageStream.cs" />
     <Compile Include="Serializers\ServiceStackWithCustomMessageSerializer.cs" />
     <Compile Include="Serializers\ServiceStackSerializer.cs" />
     <Compile Include="Serializers\Serializer.cs" />

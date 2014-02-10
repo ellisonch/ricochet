@@ -15,7 +15,7 @@ namespace RPC {
     /// sent.  The client maintains a connection to an RPC server, and 
     /// sends the requests to that server.
     /// 
-    /// A client currently does not release its resources if things go bad.
+    /// TODO: A client currently does not release its resources if things go bad.
     /// </summary>
     public class Client {
         Logger l = new Logger(Logger.Flag.Default);
@@ -87,9 +87,7 @@ namespace RPC {
                     continue;
                 }
                 if (!connection.Write(query)) {
-                    // TODO it's possible that the queue has filled up in the time it took us to try to send; 
-                    // it's kind of weird we'd fail here.  may want to cause EnqueuAtFront to kick out
-                    // old stuff
+                    // TODO it's kind of weird we'd fail here.  may want to cause EnqueuAtFront to kick out old stuff
                     if (!outgoingQueries.EnqueAtFront(query)) {
                         l.Log(Logger.Flag.Warning, "Reached maximum queue size!  Query dropped.");
                     }
@@ -118,53 +116,27 @@ namespace RPC {
         /// <typeparam name="T2">Type of output.</typeparam>
         /// <param name="name">Name of function call</param>
         /// <param name="input">Input to function</param>
-        /// <param name="ret">Output from function</param>
+        /// <param name="ret">Result from function</param>
         /// <returns>True if the call was successful, false otherwise.</returns>
         public bool TryCall<T1, T2>(string name, T1 input, out T2 ret) {
-            return TryCallHelper<T1, T2>(name, input, out ret);
-        }
-
-        /// <summary>
-        /// Tries to make an RPC call.  May timeout or otherwise fail.
-        /// </summary>
-        /// <typeparam name="T1">Type of input.</typeparam>
-        /// <typeparam name="T2">Type of output.</typeparam>
-        /// <param name="name">Name of function call</param>
-        /// <param name="input">Input to function</param>
-        /// <returns>True if the call was successful, false otherwise.</returns>
-        public async Task<Tuple<bool, T2>> TryCallAsync<T1, T2>(string name, T1 input) {
-            bool res = false;
-            T2 myRet = default(T2);
-            await Task.Run(() => 
-                res = TryCallHelper<T1, T2>(name, input, out myRet)
-            );
-            return new Tuple<bool, T2>(res, myRet);
-        }
-
-        private bool TryCallHelper<T1, T2>(string name, T1 input, out T2 ret) {
+            ret = default(T2);
             Query query = Query.CreateQuery<T1>(name, input, serializer);
             pendingRequests.Add(query);
             if (!outgoingQueries.EnqueueIfRoom(query)) {
                 l.Log(Logger.Flag.Warning, "Reached maximum queue size!  Query dropped.");
-                ret = default(T2);
-                // TODO put at top
-                // TODO also remove from pendingRequests (probably)
+                pendingRequests.Delete(query.Dispatch);
                 return false;
             }
             Response response = pendingRequests.Get(query.Dispatch);
             if (!response.OK) {
-                ret = default(T2);
                 return false;
             }
 
             if (response.MessageData == null) {
-                ret = default(T2);
                 return false;
             }
-            // ret = Serialization.DeserializeFromString<T2>(response.MessageData);
             ret = serializer.Deserialize<T2>(response.MessageData);
             return true;
         }
-
     }
 }

@@ -67,7 +67,7 @@ namespace RPC {
                         continue;
                     }
                     byte[] bytes = serializer.SerializeResponse(response);
-                    serializer.WriteToStream(writeStream, bytes);
+                    MessageStream.WriteToStream(writeStream, bytes);
                 }
             } catch (Exception e) {
                 l.Log(Logger.Flag.Warning, "Error in WriteResponses(): {0}", e.Message);
@@ -80,7 +80,7 @@ namespace RPC {
         private void ReadQueries() {
             try {
                 while (running) {
-                    byte[] bytes = serializer.ReadFromStream(readStream);
+                    byte[] bytes = MessageStream.ReadFromStream(readStream);
                     Query query = serializer.DeserializeQuery(bytes);
                     if (query == null) {
                         l.Log(Logger.Flag.Warning, "Invalid query received, ignoring it");
