@@ -43,19 +43,12 @@ namespace TestClient {
                 var q = new AQuery(payload);
                 // Query msg = Query.CreateQuery<AQuery>("double", q);
                 long myfailures;
+
                 AResponse ar;
-                // Console.WriteLine(payload);
+                bool success;
+                success = client.TryCall<AQuery, AResponse>("double", q, out ar);
 
-                // var ar = client.Call(q);
-
-                // var ar = Server.Double2(q, q2, q3);
-
-                // var ar = client.TryDouble2<AQuery, AResponse>(q);
-                // public Double(){
-                //     return Client.TryCall
-                //     else throw exception
-                // }
-                if (!client.TryCall<AQuery, AResponse>("double", q, out ar)) {
+                if (!success) {
                     // Console.WriteLine("Failure");
                     myfailures = Interlocked.Increment(ref failures);
                 } else {

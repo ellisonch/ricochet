@@ -121,6 +121,27 @@ namespace RPC {
         /// <param name="ret">Output from function</param>
         /// <returns>True if the call was successful, false otherwise.</returns>
         public bool TryCall<T1, T2>(string name, T1 input, out T2 ret) {
+            return TryCallHelper<T1, T2>(name, input, out ret);
+        }
+
+        /// <summary>
+        /// Tries to make an RPC call.  May timeout or otherwise fail.
+        /// </summary>
+        /// <typeparam name="T1">Type of input.</typeparam>
+        /// <typeparam name="T2">Type of output.</typeparam>
+        /// <param name="name">Name of function call</param>
+        /// <param name="input">Input to function</param>
+        /// <returns>True if the call was successful, false otherwise.</returns>
+        public async Task<Tuple<bool, T2>> TryCallAsync<T1, T2>(string name, T1 input) {
+            bool res = false;
+            T2 myRet = default(T2);
+            await Task.Run(() => 
+                res = TryCallHelper<T1, T2>(name, input, out myRet)
+            );
+            return new Tuple<bool, T2>(res, myRet);
+        }
+
+        private bool TryCallHelper<T1, T2>(string name, T1 input, out T2 ret) {
             Query query = Query.CreateQuery<T1>(name, input, serializer);
             pendingRequests.Add(query);
             if (!outgoingQueries.EnqueueIfRoom(query)) {
@@ -144,5 +165,6 @@ namespace RPC {
             ret = serializer.Deserialize<T2>(response.MessageData);
             return true;
         }
+
     }
 }

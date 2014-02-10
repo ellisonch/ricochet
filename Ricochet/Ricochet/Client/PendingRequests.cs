@@ -23,7 +23,8 @@ namespace RPC {
             }
 
             Response res;
-            if (!sr.Barrier.WaitOne(remainingTime)) { // if timeout...
+            bool canProceed = sr.WaitUntil(remainingTime);
+            if (!canProceed) { // if timeout...
                 l.Log(Logger.Flag.Info, "Hard timeout reached");
                 res = Response.Timeout(ticket);
             } else {
@@ -39,7 +40,7 @@ namespace RPC {
             SignaledResponse sr;
             if (requests.TryGetValue(dispatch, out sr)) {
                 sr.Response = response;
-                sr.Barrier.Set();
+                sr.Set();
             }
         }
 
