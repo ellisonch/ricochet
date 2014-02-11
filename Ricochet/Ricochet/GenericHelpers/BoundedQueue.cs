@@ -10,15 +10,17 @@ namespace RPC {
     // Used here with permission
     // Changes to the original code made by Chucky Ellison
     internal class BoundedQueue<T> {
+        Logger l = new Logger(Logger.Flag.Default);
         protected LinkedList<T> queue = new LinkedList<T>();
         private readonly int maxSize;
-        bool closing;
+        bool closed;
 
         public BoundedQueue(int maxSize) {
             this.maxSize = maxSize;
         }
         public bool EnqueAtFront(T item) {
             lock (queue) {
+                if (closed) { return false; }
                 if (queue.Count >= maxSize) {
                     return false;
                 }
@@ -30,7 +32,9 @@ namespace RPC {
 
         public bool EnqueueIfRoom(T item) {
             lock (queue) {
+                if (closed) { return false; }
                 if (queue.Count >= maxSize) {
+                    l.Log(Logger.Flag.Warning, "Reached maximum queue size!  Item dropped.");
                     return false;
                 }
                 queue.AddLast(item);
@@ -40,9 +44,9 @@ namespace RPC {
         }
 
         public bool TryDequeue(out T value) {
-            lock (queue) {
+            lock (queue) { // TODO seems to be lots of contention for this lock (at least on server)
                 while (queue.Count == 0) {
-                    if (closing) {
+                    if (closed) {
                         value = default(T);
                         return false;
                     }
@@ -56,7 +60,7 @@ namespace RPC {
 
         internal void Close() {
             lock (queue) {
-                closing = true;
+                closed = true;
                 Monitor.PulseAll(queue);
             }
         }

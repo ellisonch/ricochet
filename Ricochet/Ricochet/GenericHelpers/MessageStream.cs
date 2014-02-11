@@ -8,6 +8,8 @@ using System.Threading.Tasks;
 
 namespace RPC {
     internal class MessageStream {
+        static Logger l = new Logger(Logger.Flag.Default);
+
         /// <summary>
         /// Writes bytes to the Stream.
         /// 
@@ -46,6 +48,10 @@ namespace RPC {
             int done = 0;
             do {
                 int got = stream.Read(buffer, done, remaining);
+                if (got == 0) {
+                    // l.Log(Logger.Flag.Warning, "stream.Read returned 0 bytes");
+                    throw new Exception("Stream was closed out from under us");
+                }
                 done += got;
                 remaining -= got;
             } while (remaining > 0);

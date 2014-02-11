@@ -17,7 +17,7 @@ namespace RPC {
     /// 
     /// TODO: A client currently does not release its resources if things go bad.
     /// </summary>
-    public class Client {
+    public class Client : IDisposable {
         Logger l = new Logger(Logger.Flag.Default);
 
         const int maxQueueSize = 2000;
@@ -25,6 +25,7 @@ namespace RPC {
         static int softQueryTimeout = 500; // time (ms) before it gets sent
         internal static int HardQueryTimeout = 2000; // total time of round trip (still takes this long to give up even if soft is hit)
 
+        private bool disposed = false;
         Serializer serializer;
 
         private BoundedQueue<Query> outgoingQueries = new BoundedQueue<Query>(maxQueueSize);
@@ -77,7 +78,7 @@ namespace RPC {
         }
 
         private void WriteQueries() {
-            while (true) {
+            while (!disposed) {
                 Query query;
                 if (!outgoingQueries.TryDequeue(out query)) {
                     continue;
@@ -88,16 +89,14 @@ namespace RPC {
                 }
                 if (!connection.Write(query)) {
                     // TODO it's kind of weird we'd fail here.  may want to cause EnqueuAtFront to kick out old stuff
-                    if (!outgoingQueries.EnqueAtFront(query)) {
-                        l.Log(Logger.Flag.Warning, "Reached maximum queue size!  Query dropped.");
-                    }
+                    outgoingQueries.EnqueAtFront(query);
                     System.Threading.Thread.Sleep(connectionTimeout);
                 }
             }
         }
 
         private void ReadResponses() {
-            while (true) {
+            while (!disposed) {
                 Response response;
                 if (!connection.Read(out response)) {
                     System.Threading.Thread.Sleep(connectionTimeout);
@@ -120,10 +119,11 @@ namespace RPC {
         /// <returns>True if the call was successful, false otherwise.</returns>
         public bool TryCall<T1, T2>(string name, T1 input, out T2 ret) {
             ret = default(T2);
+            if (disposed) { throw new ObjectDisposedException("This client has been disposed."); }
             Query query = Query.CreateQuery<T1>(name, input, serializer);
             pendingRequests.Add(query);
             if (!outgoingQueries.EnqueueIfRoom(query)) {
-                l.Log(Logger.Flag.Warning, "Reached maximum queue size!  Query dropped.");
+                // l.Log(Logger.Flag.Warning, "Reached maximum queue size!  Query dropped.");
                 pendingRequests.Delete(query.Dispatch);
                 return false;
             }
@@ -137,6 +137,28 @@ namespace RPC {
             }
             ret = serializer.Deserialize<T2>(response.MessageData);
             return true;
+        }
+
+        /// <summary>
+        /// Releases the resources held by the Client.
+        /// </summary>
+        public void Dispose() {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        /// <summary>
+        /// Releases the resources held by the Client.
+        /// </summary>
+        /// <param name="disposing">If true, Disposes of owned, managed objects</param>
+        public virtual void Dispose(bool disposing) {
+            if (disposed) { return; }
+            if (disposing) {
+                try { outgoingQueries.Close(); } catch (Exception) { }
+                // pendingRequests.Dispose();
+                connection.Dispose();
+            }
+            disposed = true;
         }
     }
 }

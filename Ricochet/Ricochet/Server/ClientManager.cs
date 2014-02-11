@@ -15,19 +15,22 @@ namespace RPC {
     /// A ClientManager is in charge of receiving queries and sending responses
     /// to a single client.
     /// </summary>
-    internal class ClientManager {
+    internal sealed class ClientManager : IDisposable {
         Logger l = new Logger(Logger.Flag.Default);
         const int maxQueueSize = 2000;
+        //const int readTimeout = 500;
+        //const int writeTimeout = 500;
 
-        private bool running = true;
-        private object clientLock = new object();
+        private bool disposed = false;
+        // private object clientLock = new object();
 
         private TcpClient client;
-        BufferedStream writeStream;
-        BufferedStream readStream;
+        Stream underlyingStream;
+        Stream writeStream;
+        Stream readStream;
 
         readonly BoundedQueue<QueryWithDestination> incomingQueries;
-        protected BoundedQueue<Response> outgoingResponses = new BoundedQueue<Response>(maxQueueSize);
+        private BoundedQueue<Response> outgoingResponses = new BoundedQueue<Response>(maxQueueSize);
 
         Thread readerThread;
         Thread writerThread;
@@ -43,6 +46,18 @@ namespace RPC {
             this.client = client;
             this.incomingQueries = incomingQueries;
             this.serializer = serializer;
+            this.underlyingStream = client.GetStream();
+
+            //this.underlyingStream.ReadTimeout = readTimeout;
+            //this.underlyingStream.WriteTimeout = writeTimeout;
+
+            this.writeStream = new BufferedStream(underlyingStream);
+            this.readStream = new BufferedStream(underlyingStream);
+
+
+            //l.Log(Logger.Flag.Warning, "RCanTimeout: {0}", underlyingStream.CanTimeout);
+            //l.Log(Logger.Flag.Warning, "ReadTimeout: {0}", underlyingStream.ReadTimeout);
+            //l.Log(Logger.Flag.Warning, "WriteTimeout: {0}", underlyingStream.ReadTimeout);
         }
 
         /// <summary>
@@ -50,8 +65,6 @@ namespace RPC {
         /// </summary>
         public void Start() {
             l.Log(Logger.Flag.Warning, "Accepted client");
-            writeStream = new BufferedStream(client.GetStream());
-            readStream = new BufferedStream(client.GetStream());
 
             this.readerThread = new Thread(this.ReadQueries);
             readerThread.Start();
@@ -61,7 +74,7 @@ namespace RPC {
 
         private void WriteResponses() {
             try {
-                while (running) {
+                while (!disposed) {
                     Response response;
                     if (!outgoingResponses.TryDequeue(out response)) {
                         continue;
@@ -72,44 +85,60 @@ namespace RPC {
             } catch (Exception e) {
                 l.Log(Logger.Flag.Warning, "Error in WriteResponses(): {0}", e.Message);
             } finally {
-                Cleanup();
+                this.Dispose();
             }
             // l.Log(Logger.Flag.Warning, "Finishing Writer");
         }
 
         private void ReadQueries() {
             try {
-                while (running) {
+                while (!disposed) {
                     byte[] bytes = MessageStream.ReadFromStream(readStream);
                     Query query = serializer.DeserializeQuery(bytes);
                     if (query == null) {
                         l.Log(Logger.Flag.Warning, "Invalid query received, ignoring it");
                         throw new RPCException("Error reading query");
-                        //continue;
                     }
                     var qwd = new QueryWithDestination(query, outgoingResponses);
                     if (!incomingQueries.EnqueueIfRoom(qwd)) {
                         l.Log(Logger.Flag.Warning, "Reached maximum queue size!  Query dropped.");
-                    }                    
+                    }
                 }
             } catch (Exception e) {
                 l.Log(Logger.Flag.Warning, "Error in ReadQueries(): {0}", e.Message);
             } finally {
-                Cleanup();
+                Dispose();
             }
             // l.Log(Logger.Flag.Warning, "Finishing Reader");
         }
-        // TODO consider idisposable stuff
-        private void Cleanup() {
-            lock (clientLock) {
-                // l.Log(Logger.Flag.Warning, "Cleaning up ClientHandler");
-                // l.Log(Logger.Flag.Warning, "Client disconnected.");
-                running = false;
-                outgoingResponses.Close();
-                if (writeStream != null) { writeStream.Close(); }
-                if (readStream != null) { readStream.Close(); }
-                if (client != null) { client.Close(); }
+
+        public void Dispose() {
+            if (disposed) { return; }
+            try { outgoingResponses.Close(); } catch (Exception) { }
+
+            if (underlyingStream != null) {
+                try { underlyingStream.Close(); } catch (Exception) { 
+                    // l.Log(Logger.Flag.Warning, "Error closing stream: {0}", e.Message); 
+                }
             }
+            if (writeStream != null) {
+                try { writeStream.Dispose(); } catch (Exception) {
+                    // l.Log(Logger.Flag.Warning, "Error closing write stream: {0}", e.Message);
+                }
+            }
+            if (readStream != null) {
+                try { readStream.Dispose(); } catch (Exception) {
+                    // l.Log(Logger.Flag.Warning, "Error closing read stream: {0}", e.Message);
+                }
+            }
+            if (client != null) {
+                try { client.Close(); } catch (Exception) {
+                    // l.Log(Logger.Flag.Warning, "Error closing client: {0}", e.Message);
+                }
+                client = null;
+            }
+
+            disposed = true;
         }
     }
 }

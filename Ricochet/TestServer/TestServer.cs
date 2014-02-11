@@ -11,6 +11,18 @@ namespace TestServer {
     class TestServer {
         delegate string ReverseDel(string s);
         static void Main(string[] args) {
+//            GC.GetTotalMemory(true);
+
+
+//using System.Diagnostics;
+
+//Process currentProc = Process.GetCurrentProcess();
+//Once you have a reference to the current process, you can determine its memory usage by reading the PrivateMemorySize64 property.
+
+//long memoryUsed = currentProc.PrivateMemorySize64;
+
+
+
             var server = new Server(IPAddress.Any, 11000, WhichSerializer.Serializer);
 
             server.Register<AQuery, AResponse>("reverse", Reverse);
