@@ -9,5 +9,6 @@ namespace TestLib {
     public class WhichSerializer {
         // public static Serializer Serializer = new ServiceStackSerializer();
         public static Serializer Serializer = new ServiceStackWithCustomMessageSerializer();
+        // public static Serializer Serializer = new ServiceStackWithCustomMessageSerializer2();
     }
 }
