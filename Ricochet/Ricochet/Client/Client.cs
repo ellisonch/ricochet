@@ -69,6 +69,7 @@ namespace RPC {
         public void WaitUntilConnected() {
             Console.Write("Waiting... ");
             while (!Ping()) {
+                if (disposed) { throw new ObjectDisposedException("Client was disposed, so can't connect"); }
                 Console.Write(".");
                 System.Threading.Thread.Sleep(100);
             }
@@ -162,12 +163,12 @@ namespace RPC {
         /// <param name="disposing">If true, Disposes of owned, managed objects</param>
         public virtual void Dispose(bool disposing) {
             if (disposed) { return; }
+            disposed = true;
             if (disposing) {
                 try { outgoingQueries.Close(); } catch (Exception) { }
                 // pendingRequests.Dispose();
                 connection.Dispose();
             }
-            disposed = true;
         }
     }
 }

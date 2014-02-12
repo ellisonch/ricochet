@@ -114,7 +114,7 @@ namespace RPC {
                     Interlocked.Increment(ref responsesReturned);
                 }
             } catch (Exception e) {
-                l.Log(Logger.Flag.Warning, "Error in WriteResponses(): {0}", e.Message);
+                l.Log(Logger.Flag.Info, "Error in WriteResponses(): {0}", e.Message);
             } finally {
                 this.Dispose();
             }
@@ -137,7 +137,7 @@ namespace RPC {
                     }
                 }
             } catch (Exception e) {
-                l.Log(Logger.Flag.Warning, "Error in ReadQueries(): {0}", e.Message);
+                l.Log(Logger.Flag.Info, "Error in ReadQueries(): {0}", e.Message);
             } finally {
                 Dispose();
             }

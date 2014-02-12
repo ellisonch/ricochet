@@ -17,7 +17,7 @@ namespace TestClient {
     // TODO client threads not being shut down when disposed
     class TestClient {
         // const double howUnreliable = 0.000005;
-        const double howUnreliable = 0.00001;
+        const double howUnreliable = 0.01;
         // const double howUnreliable = 0;
         public static Random r = new Random(0);
 
@@ -25,6 +25,9 @@ namespace TestClient {
             while (condition()) yield return true;
         }
         const int reportEvery = 50000;
+
+        // long clients = 0;
+        // long disposedClients = 0;
 
         long failures = 0;
         long done = 0;
@@ -36,22 +39,33 @@ namespace TestClient {
             TestClient tc = new TestClient();
             while (true) {
                 tc.BenchOnce();
+                // System.Threading.Thread.Sleep(100);
             }
             // return 0;
         }
 
         private int BenchOnce() {
+            // long x = Interlocked.Read(ref clients);
+            // long y = Interlocked.Read(ref disposedClients);
+            // Debug.Assert(x == y, "The number of clients created isn't the same as the number of clients disposed");
+
             Client client = new Client("127.0.0.1", 11000, WhichSerializer.Serializer);
+            // Interlocked.Increment(ref clients);
             client.WaitUntilConnected();
-            new Thread(this.ReportStats).Start(client);
+            // new Thread(this.ReportStats).Start(client);
+            var shouldContinue = true;
 
             ParallelOptions po = new ParallelOptions();
             po.MaxDegreeOfParallelism = 12;
-            Parallel.ForEach(IterateUntilFalse(() => { return true; }), po, (guard, loopstate) => {
+            Parallel.ForEach(IterateUntilFalse(() => { return shouldContinue; }), po, (guard, loopstate) => {
                 if (r.NextDouble() < howUnreliable) {
                     Console.WriteLine("Simulated network instability!");
                     client.Dispose();
+                    Debug.Assert(!client.IsAlive, "Disposed client, but it's still alive");
+                    // Interlocked.Increment(ref disposedClients);
+                    shouldContinue = false;
                     loopstate.Stop();
+                    return;
                 }
                 var mycount = Interlocked.Increment(ref count);
                 var payload = "foo bar baz" + mycount;
@@ -94,6 +108,7 @@ namespace TestClient {
         private void ReportStats(object obj) {
             Client client = (Client)obj;
             while (client.IsAlive) {
+                System.Threading.Thread.Sleep(2000);
                 bool success;
                 ServerStats ss = null;
                 try {
@@ -109,7 +124,7 @@ namespace TestClient {
                     Console.WriteLine("  Client total queries: {0}", cs.IncomingTotal);
                     Console.WriteLine("  Client total responses: {0}", cs.OutgoingTotal);
                 }
-                System.Threading.Thread.Sleep(2000);
+                
             }
         }
     }

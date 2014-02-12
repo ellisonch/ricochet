@@ -210,12 +210,15 @@ namespace RPC {
             disposed = true;
             if (writeStream != null) {
                 try { writeStream.Close(); } catch (Exception) { }
+                writeStream = null;
             }
             if (readStream != null) {
                 try { readStream.Close(); } catch (Exception) { }
+                readStream = null;
             }
             if (sender != null) {
                 try {sender.Close(); } catch (Exception) {}
+                sender = null;
             }
         }
     }
