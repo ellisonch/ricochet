@@ -17,7 +17,8 @@ namespace TestClient {
     // TODO client threads not being shut down when disposed
     class TestClient {
         // const double howUnreliable = 0.000005;
-        const double howUnreliable = 0.01;
+        // const double howUnreliable = 0.01;
+        const double howUnreliable = 0;
         // const double howUnreliable = 0;
         public static Random r = new Random(0);
 
