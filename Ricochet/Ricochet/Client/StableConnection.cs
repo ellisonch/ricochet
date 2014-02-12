@@ -62,6 +62,7 @@ namespace RPC {
             try {
                 if (disposed) { return false; }
                 if (connection == null) { return false; }
+                // NetworkInstability();
                 byte[] bytes = serializer.SerializeQuery(query);
                 MessageStream.WriteToStream(writeStream, bytes);
             } catch (Exception e) {
@@ -70,6 +71,14 @@ namespace RPC {
                 return false;
             }
             return true;
+        }
+
+        public static Random r = new Random(0);
+        private void NetworkInstability() {
+            if (r.NextDouble() < 0.00001) {
+                l.Log(Logger.Flag.Warning, "Network Instability!");
+                this.connection.Close();
+            }
         }
 
         internal bool Read(out Response response) {

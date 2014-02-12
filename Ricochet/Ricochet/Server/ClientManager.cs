@@ -124,6 +124,7 @@ namespace RPC {
         private void ReadQueries() {
             try {
                 while (!disposed) {
+                    // NetworkInstability();
                     byte[] bytes = MessageStream.ReadFromStream(readStream);
                     Query query = serializer.DeserializeQuery(bytes);
                     if (query == null) {
@@ -142,6 +143,15 @@ namespace RPC {
                 Dispose();
             }
             // l.Log(Logger.Flag.Warning, "Finishing Reader");
+        }
+
+        // Used to test what happens when the network is unstable
+        public static Random r = new Random(0);
+        private void NetworkInstability() {
+            if (r.NextDouble() < 0.00001) {
+                l.Log(Logger.Flag.Warning, "Network Instability!");
+                this.client.Close();
+            }
         }
 
         public void Dispose() {
