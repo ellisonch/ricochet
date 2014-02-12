@@ -64,5 +64,9 @@ namespace RPC {
                 Monitor.PulseAll(queue);
             }
         }
+
+        public int Count {
+            get { return queue.Count; }
+        }
     }
 }

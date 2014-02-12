@@ -5,6 +5,7 @@ using System.Net;
 using System.Collections.Concurrent;
 using System.Threading;
 using System.Net.Sockets;
+using System.Collections.Generic;
 
 namespace RPC {
     /// <summary>
@@ -33,6 +34,7 @@ namespace RPC {
         /// Only contains non-null queries
         /// </summary>
         private BoundedQueue<QueryWithDestination> incomingQueries = new BoundedQueue<QueryWithDestination>(maxQueueSize);
+        private ConcurrentBag<ClientManager> clients = new ConcurrentBag<ClientManager>();
 
 
         /// <summary>
@@ -51,7 +53,30 @@ namespace RPC {
                 new Thread(this.DoWork).Start();
             }
 
+            new Thread(this.CleanUp).Start();
+
             Register<int, int>("_ping", Ping);
+            Register<bool, ServerStats>("_getStats", GetStats);
+        }
+
+        private void CleanUp() {
+            while (true) {
+                ConcurrentBag<ClientManager> toAddBack = new ConcurrentBag<ClientManager>();
+                ClientManager client;
+                while (clients.TryTake(out client)) {
+                    toAddBack.Add(client);
+                }
+
+                // replace the good entries
+                while (toAddBack.TryTake(out client)) {
+                    if (!client.IsAlive) {
+                        l.Log(Logger.Flag.Warning, "Dropping a client");
+                        continue;
+                    }
+                    clients.Add(client);
+                }
+                System.Threading.Thread.Sleep(2000);
+            }
         }
 
         /// <summary>
@@ -67,6 +92,7 @@ namespace RPC {
                     var client = listener.AcceptTcpClient();
                     l.Log(Logger.Flag.Info, "Client connected.");
                     var clientHandler = new ClientManager(client, incomingQueries, serializer);
+                    clients.Add(clientHandler);
                     clientHandler.Start();
                 }
             } catch (AggregateException e) {
@@ -140,9 +166,26 @@ namespace RPC {
             return response;
         }
 
+        #region Builtin procedures
+
         private int Ping(int x) {
             Console.WriteLine("ping of {0}", x);
             return x;
         }
+
+        private ServerStats GetStats(bool junk) {
+            ServerStats ss = new ServerStats(incomingQueries.Count);
+            foreach (var client in clients) {
+                ClientStats cs = new ClientStats() {
+                    OutgoingQueueLength = client.OutgoingCount,
+                    IncomingTotal = client.QueriesReceived,
+                    OutgoingTotal = client.ResponsesReturned,
+                };
+                ss.AddClient(cs);
+            }
+            return ss;
+        }
+
+        #endregion
     }
 }

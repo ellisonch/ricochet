@@ -29,6 +29,20 @@ namespace RPC {
         Stream writeStream;
         Stream readStream;
 
+        private long queriesReceived;
+        private long responsesReturned;
+
+        public long QueriesReceived {
+            get {
+                return Interlocked.Read(ref queriesReceived);
+            }
+        }
+        public long ResponsesReturned {
+            get {
+                return Interlocked.Read(ref responsesReturned);
+            }
+        }
+
         readonly BoundedQueue<QueryWithDestination> incomingQueries;
         private BoundedQueue<Response> outgoingResponses = new BoundedQueue<Response>(maxQueueSize);
 
@@ -60,10 +74,26 @@ namespace RPC {
             //l.Log(Logger.Flag.Warning, "WriteTimeout: {0}", underlyingStream.ReadTimeout);
         }
 
+        internal int IncomingCount {
+            get {
+                return incomingQueries.Count;
+            }
+        }
+        internal int OutgoingCount {
+            get {
+                return outgoingResponses.Count;
+            }
+        }
+        internal bool IsAlive {
+            get {
+                return !disposed;
+            }
+        }
+
         /// <summary>
         /// Starts managing the client using new threads.  Returns immediately.
         /// </summary>
-        public void Start() {
+        internal void Start() {
             l.Log(Logger.Flag.Warning, "Accepted client");
 
             this.readerThread = new Thread(this.ReadQueries);
@@ -81,6 +111,7 @@ namespace RPC {
                     }
                     byte[] bytes = serializer.SerializeResponse(response);
                     MessageStream.WriteToStream(writeStream, bytes);
+                    Interlocked.Increment(ref responsesReturned);
                 }
             } catch (Exception e) {
                 l.Log(Logger.Flag.Warning, "Error in WriteResponses(): {0}", e.Message);
@@ -99,6 +130,7 @@ namespace RPC {
                         l.Log(Logger.Flag.Warning, "Invalid query received, ignoring it");
                         throw new RPCException("Error reading query");
                     }
+                    Interlocked.Increment(ref queriesReceived);
                     var qwd = new QueryWithDestination(query, outgoingResponses);
                     if (!incomingQueries.EnqueueIfRoom(qwd)) {
                         l.Log(Logger.Flag.Warning, "Reached maximum queue size!  Query dropped.");

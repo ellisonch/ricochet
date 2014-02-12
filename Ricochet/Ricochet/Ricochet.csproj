@@ -53,6 +53,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Builtins\ClientStats.cs" />
+    <Compile Include="Builtins\ServerStats.cs" />
     <Compile Include="GenericHelpers\BoundedQueue.cs" />
     <Compile Include="Client\Client.cs" />
     <Compile Include="GenericHelpers\MessageStream.cs" />

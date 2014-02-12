@@ -17,8 +17,8 @@ namespace TestClient {
     // TODO client threads not being shut down when disposed
     class TestClient {
         // const double howUnreliable = 0.000005;
-        // const double howUnreliable = 0.00001;
-        const double howUnreliable = 0;
+        const double howUnreliable = 0.00001;
+        // const double howUnreliable = 0;
         public static Random r = new Random(0);
 
         private static IEnumerable<bool> IterateUntilFalse(Func<bool> condition) {
@@ -43,9 +43,10 @@ namespace TestClient {
         private int BenchOnce() {
             Client client = new Client("127.0.0.1", 11000, WhichSerializer.Serializer);
             client.WaitUntilConnected();
+            new Thread(this.ReportStats).Start(client);
 
             ParallelOptions po = new ParallelOptions();
-            po.MaxDegreeOfParallelism = 8;
+            po.MaxDegreeOfParallelism = 12;
             Parallel.ForEach(IterateUntilFalse(() => { return true; }), po, (guard, loopstate) => {
                 if (r.NextDouble() < howUnreliable) {
                     Console.WriteLine("Simulated network instability!");
@@ -88,6 +89,28 @@ namespace TestClient {
                 }
             });
             return 0;
+        }
+
+        private void ReportStats(object obj) {
+            Client client = (Client)obj;
+            while (client.IsAlive) {
+                bool success;
+                ServerStats ss = null;
+                try {
+                    success = client.TryCall<bool, ServerStats>("_getStats", true, out ss);
+                } catch (ObjectDisposedException) {
+                    success = false;
+                }
+                if (!success) { continue; }
+                Console.WriteLine("Server queue length: {0}", ss.WorkQueueLength);
+                foreach (var cs in ss.Clients) {
+                    Console.WriteLine("A client:");
+                    Console.WriteLine("  Client outgoing queue length: {0}", cs.OutgoingQueueLength);
+                    Console.WriteLine("  Client total queries: {0}", cs.IncomingTotal);
+                    Console.WriteLine("  Client total responses: {0}", cs.OutgoingTotal);
+                }
+                System.Threading.Thread.Sleep(2000);
+            }
         }
     }
 }

@@ -37,6 +37,15 @@ namespace RPC {
         readonly StableConnection connection;
 
         /// <summary>
+        /// Returns true if this client is still alive (hasn't been disposed).
+        /// </summary>
+        public bool IsAlive {
+            get {
+                return !disposed;
+            }
+        }
+
+        /// <summary>
         /// Create a new RPC Client.
         /// </summary>
         /// <param name="hostname">The hostname of the server</param>
