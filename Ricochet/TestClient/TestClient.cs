@@ -17,9 +17,9 @@ namespace TestClient {
     class TestClient {
         // const double howUnreliable = 0.000005;
         // const double howUnreliable = 0.01;
-        const double howUnreliable = 0;
         // const double howUnreliable = 0;
-        public static Random r = new Random(0);
+        // const double howUnreliable = 0;
+        // public static Random r = new Random(0);
 
         private static IEnumerable<bool> IterateUntilFalse(Func<bool> condition) {
             while (condition()) yield return true;
@@ -29,44 +29,57 @@ namespace TestClient {
         // long clients = 0;
         // long disposedClients = 0;
 
-        long failures = 0;
-        long done = 0;
-        long count = 0;
-        Stopwatch osw = Stopwatch.StartNew();
-        Stopwatch sw = Stopwatch.StartNew();
+        static long failures = 0;
+        static long done = 0;
+        static long count = 0;
+        static Stopwatch osw = Stopwatch.StartNew();
+        static Stopwatch sw = Stopwatch.StartNew();
+
+        static Client client;
 
         static int Main(string[] args) {
             TestClient tc = new TestClient();
-            while (true) {
-                tc.BenchOnce();
-                // System.Threading.Thread.Sleep(100);
+
+            client = new Client("127.0.0.1", 11000, WhichSerializer.Serializer);
+            // Interlocked.Increment(ref clients);
+            client.WaitUntilConnected();
+
+            new Thread(ReportStats).Start(client);
+
+
+            List<Thread> threads = new List<Thread>();
+            for (int i = 0; i < 16; i++) {
+                Thread t = new Thread(ClientWorker);
+                threads.Add(t);
+                t.Start();
             }
-            // return 0;
+            foreach (var thread in threads) {
+                thread.Join();
+            }
+            return 0;
         }
 
-        private int BenchOnce() {
+        private static void ClientWorker() {
             // long x = Interlocked.Read(ref clients);
             // long y = Interlocked.Read(ref disposedClients);
             // Debug.Assert(x == y, "The number of clients created isn't the same as the number of clients disposed");
 
-            Client client = new Client("127.0.0.1", 11000, WhichSerializer.Serializer);
-            // Interlocked.Increment(ref clients);
-            client.WaitUntilConnected();
-            // new Thread(this.ReportStats).Start(client);
-            var shouldContinue = true;
+            
+            // var shouldContinue = true;
 
-            ParallelOptions po = new ParallelOptions();
-            po.MaxDegreeOfParallelism = 12;
-            Parallel.ForEach(IterateUntilFalse(() => { return shouldContinue; }), po, (guard, loopstate) => {
-                if (r.NextDouble() < howUnreliable) {
-                    Console.WriteLine("Simulated network instability!");
-                    client.Dispose();
-                    Debug.Assert(!client.IsAlive, "Disposed client, but it's still alive");
-                    // Interlocked.Increment(ref disposedClients);
-                    shouldContinue = false;
-                    loopstate.Stop();
-                    return;
-                }
+            // ParallelOptions po = new ParallelOptions();
+            // po.MaxDegreeOfParallelism = 12;
+            // Parallel.ForEach(IterateUntilFalse(() => { return shouldContinue; }), po, (guard, loopstate) => {
+            while (true) {
+                //if (r.NextDouble() < howUnreliable) {
+                //    Console.WriteLine("Simulated network instability!");
+                //    client.Dispose();
+                //    Debug.Assert(!client.IsAlive, "Disposed client, but it's still alive");
+                //    // Interlocked.Increment(ref disposedClients);
+                //    shouldContinue = false;
+                //    loopstate.Stop();
+                //    return;
+                //}
                 var mycount = Interlocked.Increment(ref count);
                 var payload = "foo bar baz" + mycount;
                 //var payload = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent faucibus odio sollicitudin porta condimentum. Maecenas non rutrum sapien, dictum tincidunt nibh. Donec lacinia mattis interdum. Quisque pellentesque, ligula non elementum vulputate, massa lacus mattis justo, at iaculis mi lorem vel neque. Aenean cursus vitae nulla non vehicula. Vestibulum venenatis urna ac turpis semper, sed molestie nibh convallis. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Cras pharetra sodales ante dapibus malesuada. Morbi in lectus vulputate tortor elementum congue id quis sem. Duis eget commodo magna. Suspendisse luctus viverra pharetra. Nam lacinia eros id dictum posuere. Ut euismod, enim sit amet laoreet dictum, enim erat adipiscing eros, nec auctor nibh elit sit amet turpis. Morbi hendrerit nibh a urna congue, ac ultricies tellus vulputate. Integer ac velit venenatis, porttitor tellus eu, pretium sapien. Curabitur eget tincidunt odio, ut vehicula nisi. Praesent molestie diam nullam.";
@@ -101,14 +114,13 @@ namespace TestClient {
                     Console.WriteLine("{0:#,###.} => {4:#,###.} tps (avg time {3:0.000} => {5:0.0000} ms) (done: {1}, failures: {2})", tps, mydone, myfailures, avg, atps, aavg);
                     sw.Restart();
                 }
-            });
-            return 0;
+            }
         }
 
-        private void ReportStats(object obj) {
+        private static void ReportStats(object obj) {
             Client client = (Client)obj;
             while (client.IsAlive) {
-                System.Threading.Thread.Sleep(2000);
+                System.Threading.Thread.Sleep(3000);
                 bool success;
                 ServerStats ss = null;
                 try {
@@ -117,6 +129,7 @@ namespace TestClient {
                     success = false;
                 }
                 if (!success) { continue; }
+                // Console.WriteLine("My outgoing queue length: {0}", client.)
                 Console.WriteLine("Server queue length: {0}", ss.WorkQueueLength);
                 foreach (var cs in ss.Clients) {
                     Console.WriteLine("A client:");

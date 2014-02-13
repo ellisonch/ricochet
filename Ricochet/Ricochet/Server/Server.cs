@@ -125,7 +125,7 @@ namespace Ricochet {
                 try {
                     arg = serializer.Deserialize<T1>(query.MessageData);
                 } catch (Exception e) {
-                    l.WarnFormat("Something weng wrong Deserializing the message data: {0}", e.Message);
+                    l.WarnFormat("Something went wrong Deserializing the message data: {0}", e.Message);
                     throw;
                 }
                 var res = fun(arg);
