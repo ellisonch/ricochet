@@ -1,17 +1,18 @@
-﻿using ServiceStack.Text;
+﻿
+using ServiceStack.Text;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Collections.Concurrent;
 
 namespace Ricochet {
     /// <summary>
-    ///  Provides a ServiceStack.Text-based Serializer (with custom serialization
-    ///  for Message types) for Ricochet.
+    ///  Provides a ServiceStack.Text-based Serializer for Ricochet.
     /// </summary>
-    public class ServiceStackWithCustomMessageSerializer : ServiceStackSerializer {
+    public class MessagePackWithCustomMessageSerializer : MessagePackSerializer {
         /// <summary>
         /// Serialize using goofy, custom method.
         /// </summary>

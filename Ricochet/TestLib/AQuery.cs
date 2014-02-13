@@ -9,6 +9,7 @@ namespace TestLib {
     public class AQuery {
         public string msg { get; set; }
 
+        public AQuery() { } // needed for MessagePack?
         public AQuery(string payload) {
             this.msg = payload;
         }

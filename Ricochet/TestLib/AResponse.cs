@@ -9,6 +9,7 @@ namespace TestLib {
     public class AResponse {
         public string res { get; set; }
 
+        public AResponse() { } // needed for MessagePack?
         public AResponse(string res) {
             this.res = res;
         }

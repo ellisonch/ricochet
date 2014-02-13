@@ -10,5 +10,7 @@ namespace TestLib {
         // public static Serializer Serializer = new ServiceStackSerializer();
         public static Serializer Serializer = new ServiceStackWithCustomMessageSerializer();
         // public static Serializer Serializer = new ServiceStackWithCustomMessageSerializer2();
+        // public static Serializer Serializer = new MessagePackSerializer();
+        // public static Serializer Serializer = new MessagePackWithCustomMessageSerializer();
     }
 }
