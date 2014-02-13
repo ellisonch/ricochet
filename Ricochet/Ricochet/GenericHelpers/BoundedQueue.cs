@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Common.Logging;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -10,7 +11,7 @@ namespace RPC {
     // Used here with permission
     // Changes to the original code made by Chucky Ellison
     internal class BoundedQueue<T> {
-        Logger l = new Logger(Logger.Flag.Default);
+        private readonly ILog l = LogManager.GetCurrentClassLogger();
         protected LinkedList<T> queue = new LinkedList<T>();
         private readonly int maxSize;
         bool closed;
@@ -34,7 +35,7 @@ namespace RPC {
             lock (queue) {
                 if (closed) { return false; }
                 if (queue.Count >= maxSize) {
-                    l.Log(Logger.Flag.Warning, "Reached maximum queue size!  Item dropped.");
+                    l.WarnFormat("Reached maximum queue size!  Item dropped.");
                     return false;
                 }
                 queue.AddLast(item);

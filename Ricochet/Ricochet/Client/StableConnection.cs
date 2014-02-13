@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Common.Logging;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -22,7 +23,7 @@ namespace RPC {
         private readonly string hostname;
         private readonly int port;
 
-        Logger l = new Logger(Logger.Flag.Default);
+        private readonly ILog l = LogManager.GetCurrentClassLogger();
 
         // ReaderWriterLock rwl = new ReaderWriterLock();
 
@@ -66,7 +67,7 @@ namespace RPC {
                 byte[] bytes = serializer.SerializeQuery(query);
                 MessageStream.WriteToStream(writeStream, bytes);
             } catch (Exception e) {
-                l.Log(Logger.Flag.Info, "Error writing: {0}", e.Message);
+                l.InfoFormat("Error writing: {0}", e.Message);
                 // RequestReconnect();
                 return false;
             }
@@ -76,7 +77,7 @@ namespace RPC {
         public static Random r = new Random(0);
         private void NetworkInstability() {
             if (r.NextDouble() < 0.00001) {
-                l.Log(Logger.Flag.Warning, "Network Instability!");
+                l.WarnFormat("Network Instability!");
                 this.connection.Close();
             }
         }
@@ -94,7 +95,7 @@ namespace RPC {
                     return false;
                 }
             } catch (Exception e) {
-                l.Log(Logger.Flag.Info, "Error reading: {0}", e.Message);
+                l.InfoFormat("Error reading: {0}", e.Message);
                 // RequestReconnect();
                 return false;
             }
@@ -112,12 +113,12 @@ namespace RPC {
             TcpClient myConnection = new TcpClient();
             //sender.ReceiveBufferSize = 1024 * 32;
             //sender.SendBufferSize = 1024 * 32;
-            l.Log(Logger.Flag.Info, "Connecting to {0}:{1}...", hostname, port);
+            l.InfoFormat("Connecting to {0}:{1}...", hostname, port);
             // await sender.ConnectAsync(hostname, port);
             try {
                 myConnection.Connect(hostname, port);
             } catch (SocketException e) {
-                l.Log(Logger.Flag.Info, "Couldn't connect: {0}", e.Message);
+                l.InfoFormat("Couldn't connect: {0}", e.Message);
                 return false;
             }
 
@@ -133,7 +134,7 @@ namespace RPC {
 
             connection = myConnection;
 
-            l.Log(Logger.Flag.Info, "Connected to {0}:{1}", hostname, port);
+            l.InfoFormat("Connected to {0}:{1}", hostname, port);
             return true;
         }
 

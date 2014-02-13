@@ -1,4 +1,5 @@
-﻿using ServiceStack.Text;
+﻿using Common.Logging;
+using ServiceStack.Text;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -16,7 +17,7 @@ namespace RPC {
     /// to a single client.
     /// </summary>
     internal sealed class ClientManager : IDisposable {
-        Logger l = new Logger(Logger.Flag.Default);
+        private readonly ILog l = LogManager.GetCurrentClassLogger();
         const int maxQueueSize = 2000;
         //const int readTimeout = 500;
         //const int writeTimeout = 500;
@@ -94,7 +95,7 @@ namespace RPC {
         /// Starts managing the client using new threads.  Returns immediately.
         /// </summary>
         internal void Start() {
-            l.Log(Logger.Flag.Warning, "Accepted client");
+            l.WarnFormat("Accepted client");
 
             this.readerThread = new Thread(this.ReadQueries);
             readerThread.Start();
@@ -114,7 +115,7 @@ namespace RPC {
                     Interlocked.Increment(ref responsesReturned);
                 }
             } catch (Exception e) {
-                l.Log(Logger.Flag.Info, "Error in WriteResponses(): {0}", e.Message);
+                l.InfoFormat("Error in WriteResponses(): {0}", e.Message);
             } finally {
                 this.Dispose();
             }
@@ -128,17 +129,17 @@ namespace RPC {
                     byte[] bytes = MessageStream.ReadFromStream(readStream);
                     Query query = serializer.DeserializeQuery(bytes);
                     if (query == null) {
-                        l.Log(Logger.Flag.Warning, "Invalid query received, ignoring it");
+                        l.WarnFormat("Invalid query received, ignoring it");
                         throw new RPCException("Error reading query");
                     }
                     Interlocked.Increment(ref queriesReceived);
                     var qwd = new QueryWithDestination(query, outgoingResponses);
                     if (!incomingQueries.EnqueueIfRoom(qwd)) {
-                        l.Log(Logger.Flag.Warning, "Reached maximum queue size!  Query dropped.");
+                        l.WarnFormat("Reached maximum queue size!  Query dropped.");
                     }
                 }
             } catch (Exception e) {
-                l.Log(Logger.Flag.Info, "Error in ReadQueries(): {0}", e.Message);
+                l.InfoFormat("Error in ReadQueries(): {0}", e.Message);
             } finally {
                 Dispose();
             }
@@ -149,7 +150,7 @@ namespace RPC {
         public static Random r = new Random(0);
         private void NetworkInstability() {
             if (r.NextDouble() < 0.00001) {
-                l.Log(Logger.Flag.Warning, "Network Instability!");
+                l.WarnFormat("Network Instability!");
                 this.client.Close();
             }
         }

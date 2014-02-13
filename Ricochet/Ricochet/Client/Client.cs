@@ -8,17 +8,16 @@ using System.Diagnostics;
 using System.Threading.Tasks;
 using System.IO;
 using System.Collections.Concurrent;
+using Common.Logging;
 
 namespace RPC {
     /// <summary>
     /// An RPC Client represents a client through which RPC requests can be
     /// sent.  The client maintains a connection to an RPC server, and 
     /// sends the requests to that server.
-    /// 
-    /// TODO: A client currently does not release its resources if things go bad.
     /// </summary>
     public class Client : IDisposable {
-        Logger l = new Logger(Logger.Flag.Default);
+        private readonly ILog l = LogManager.GetCurrentClassLogger();
 
         const int maxQueueSize = 2000;
         const int connectionTimeout = 50;
@@ -67,13 +66,13 @@ namespace RPC {
         /// Does not guarantee the server will still be connected when another query is sent.
         /// </summary>
         public void WaitUntilConnected() {
-            Console.Write("Waiting... ");
+            l.WarnFormat("Waiting...");
             while (!Ping()) {
                 if (disposed) { throw new ObjectDisposedException("Client was disposed, so can't connect"); }
-                Console.Write(".");
+                // Console.Write(".");
                 System.Threading.Thread.Sleep(100);
             }
-            Console.WriteLine(" Connected.");
+            l.WarnFormat("Connected.");
         }
 
         private bool Ping() {
@@ -94,7 +93,7 @@ namespace RPC {
                     continue;
                 }
                 if (query.SW.ElapsedMilliseconds > softQueryTimeout) {
-                    l.Log(Logger.Flag.Info, "Soft timeout reached");
+                    l.InfoFormat("Soft timeout reached");
                     continue;
                 }
                 if (!connection.Write(query)) {

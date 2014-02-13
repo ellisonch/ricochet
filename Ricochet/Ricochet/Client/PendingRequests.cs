@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Common.Logging;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,7 +10,7 @@ using System.Threading.Tasks;
 namespace RPC {
     internal class PendingRequests {
         private ConcurrentDictionary<int, SignaledResponse> requests = new ConcurrentDictionary<int, SignaledResponse>();
-        Logger l = new Logger(Logger.Flag.Default);
+        private readonly ILog l = LogManager.GetCurrentClassLogger();
 
         internal Response Get(int ticket) {
             var sr = requests[ticket];
@@ -25,7 +26,7 @@ namespace RPC {
             Response res;
             bool canProceed = sr.WaitUntil(remainingTime);
             if (!canProceed) { // if timeout...
-                l.Log(Logger.Flag.Info, "Hard timeout reached");
+                l.InfoFormat("Hard timeout reached");
                 res = Response.Timeout(ticket);
             } else {
                 res = sr.Response;

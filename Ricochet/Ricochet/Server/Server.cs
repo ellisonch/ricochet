@@ -6,6 +6,8 @@ using System.Collections.Concurrent;
 using System.Threading;
 using System.Net.Sockets;
 using System.Collections.Generic;
+using Common.Logging;
+using System.Diagnostics;
 
 namespace RPC {
     /// <summary>
@@ -19,7 +21,10 @@ namespace RPC {
     /// A server currently does not release its resources if things go bad.
     /// </summary>
     public class Server {
-        Logger l = new Logger(Logger.Flag.Default);
+        // Logger l = new Logger(Logger.Flag.Default);
+        // private readonly Logger l = new Logger(LogManager.GetCurrentClassLogger());
+        // private readonly ILog l;
+        private readonly ILog l = LogManager.GetCurrentClassLogger();
 
         const int maxQueueSize = 2000;
         const int numWorkerThreads = 8;
@@ -47,7 +52,8 @@ namespace RPC {
             this.address = address;
             this.port = port;
             this.serializer = serializer;
-            l.Log(Logger.Flag.Info, "Configuring server as {0}:{1}", address, port);
+            // l.Log(Logger.Flag.Info, "Configuring server as {0}:{1}", address, port);
+            this.l.InfoFormat("Configuring server as {0}:{1}", address, port);
 
             for (int i = 0; i < numWorkerThreads; i++) {
                 new Thread(this.DoWork).Start();
@@ -70,7 +76,7 @@ namespace RPC {
                 // replace the good entries
                 while (toAddBack.TryTake(out client)) {
                     if (!client.IsAlive) {
-                        l.Log(Logger.Flag.Warning, "Dropping a client");
+                        l.WarnFormat("Dropping a client");
                         continue;
                     }
                     clients.Add(client);
@@ -87,18 +93,18 @@ namespace RPC {
                 TcpListener listener = new TcpListener(address, port);
                 listener.Start();
                 while (true) {
-                    l.Log(Logger.Flag.Info, "Waiting for new client...");
+                    l.InfoFormat("Waiting for new client...");
 
                     var client = listener.AcceptTcpClient();
-                    l.Log(Logger.Flag.Info, "Client connected.");
+                    l.InfoFormat("Client connected.");
                     var clientHandler = new ClientManager(client, incomingQueries, serializer);
                     clients.Add(clientHandler);
                     clientHandler.Start();
                 }
             } catch (AggregateException e) {
-                l.Log(Logger.Flag.Error, "Exception thrown: {0}", e.InnerException.Message);
+                l.ErrorFormat("Exception thrown: {0}", e.InnerException.Message);
             } catch (Exception e) {
-                l.Log(Logger.Flag.Error, "Exception thrown: {0}", e);
+                l.ErrorFormat("Exception thrown: {0}", e);
             }
         }
 
@@ -119,7 +125,7 @@ namespace RPC {
                 try {
                     arg = serializer.Deserialize<T1>(query.MessageData);
                 } catch (Exception e) {
-                    l.Log(Logger.Flag.Warning, "Something weng wrong Deserialinzg the message data: {0}", e.Message);
+                    l.WarnFormat("Something weng wrong Deserializing the message data: {0}", e.Message);
                     throw;
                 }
                 var res = fun(arg);
@@ -145,21 +151,21 @@ namespace RPC {
         private Response GetResponseForQuery(Query query) {
             Response response;
             try {
-                l.Log(Logger.Flag.Info, "Data is: {0}", query.MessageData);
+                l.InfoFormat("Data is: {0}", query.MessageData);
                 if (query.Handler == null) {
-                    l.Log(Logger.Flag.Warning, "No query name given: {0}", query.MessageData);
+                    l.WarnFormat("No query name given: {0}", query.MessageData);
                     throw new RPCException(String.Format("Do not handle query {0}", query.Handler));
                 }
                 if (!handlers.ContainsKey(query.Handler)) {
-                    l.Log(Logger.Flag.Warning, "Do not handle query {0}", query.Handler);
+                    l.WarnFormat("Do not handle query {0}", query.Handler);
                     throw new RPCException(String.Format("Do not handle query {0}", query.Handler));
                 }
                 Func<Query, Response> fun = handlers[query.Handler];
-                l.Log(Logger.Flag.Info, "Calling handler {0}...", query.Handler);
+                l.InfoFormat("Calling handler {0}...", query.Handler);
                 response = fun(query);
-                l.Log(Logger.Flag.Info, "Back from handler {0}.", query.Handler);
+                l.InfoFormat("Back from handler {0}.", query.Handler);
             } catch (Exception e) {
-                l.Log(Logger.Flag.Warning, "Something went wrong calling handler: {0}", e.Message);
+                l.WarnFormat("Something went wrong calling handler: {0}", e.Message);
                 response = Response.Failure(e.Message);
             }
             response.Dispatch = query.Dispatch;
@@ -169,7 +175,7 @@ namespace RPC {
         #region Builtin procedures
 
         private int Ping(int x) {
-            Console.WriteLine("ping of {0}", x);
+            l.InfoFormat("ping of {0}", x);
             return x;
         }
 

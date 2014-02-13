@@ -14,7 +14,6 @@ namespace TestClient {
     // consider auto registering public methods/etc
     // x/y
     //  TODO consider moving out the serialization stuff from the reader/writer
-    // TODO client threads not being shut down when disposed
     class TestClient {
         // const double howUnreliable = 0.000005;
         // const double howUnreliable = 0.01;

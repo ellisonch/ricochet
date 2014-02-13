@@ -5,10 +5,11 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Common.Logging;
 
 namespace RPC {
     internal class MessageStream {
-        static Logger l = new Logger(Logger.Flag.Default);
+        private readonly ILog l = LogManager.GetCurrentClassLogger();
 
         /// <summary>
         /// Writes bytes to the Stream.
