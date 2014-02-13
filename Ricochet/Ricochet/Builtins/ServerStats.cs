@@ -14,6 +14,12 @@ namespace Ricochet {
         /// </summary>
         public int WorkQueueLength { get; set; }
         private List<ClientStats> _clients = new List<ClientStats>();
+
+        /// <summary>
+        /// Default constructor
+        /// </summary>
+        public ServerStats() { }
+
         /// <summary>
         /// A list of stats about the clients the server is connected to.
         /// </summary>

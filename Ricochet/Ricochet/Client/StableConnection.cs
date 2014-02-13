@@ -25,15 +25,11 @@ namespace Ricochet {
 
         private readonly ILog l = LogManager.GetCurrentClassLogger();
 
-        // ReaderWriterLock rwl = new ReaderWriterLock();
-
         Serializer serializer;
         private TcpClient connection;
         private BufferedStream writeStream;
         private BufferedStream readStream;
 
-        // Semaphore shouldReconnect = new Semaphore(1, 1);
-        AutoResetEvent shouldReconnect = new AutoResetEvent(true);
         Thread reconnectThread;
 
         public StableConnection(string hostname, int port, Serializer serializer) {
@@ -44,7 +40,7 @@ namespace Ricochet {
             reconnectThread = new Thread(this.MonitorConnection);
             reconnectThread.Start();
         }
-        // TODO consider using lock slim
+
         private void MonitorConnection() {
             while (!disposed) {
                 if (connection != null && connection.Connected) {

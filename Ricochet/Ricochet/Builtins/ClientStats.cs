@@ -21,5 +21,10 @@ namespace Ricochet {
         /// The total number of responses returned over the wire.
         /// </summary>
         public long OutgoingTotal { get; set; }
+
+        /// <summary>
+        /// Default constructor
+        /// </summary>
+        public ClientStats() { }
     }
 }
