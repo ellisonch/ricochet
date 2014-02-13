@@ -53,6 +53,7 @@ namespace Ricochet {
             return query;
         }
 
+        static byte[] zeroLenByteArray = new byte[0];
         /// <summary>
         /// Serialize using goofy, custom method.
         /// </summary>
@@ -67,7 +68,7 @@ namespace Ricochet {
             // message data (rest of array)
             byte[] errorBytes;
             if (response.ErrorMsg == null) {
-                errorBytes = new byte[0];
+                errorBytes = zeroLenByteArray;
             } else {
                 errorBytes = Encoding.Unicode.GetBytes(response.ErrorMsg);
             }

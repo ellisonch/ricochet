@@ -44,11 +44,10 @@ namespace TestClient {
             // Interlocked.Increment(ref clients);
             client.WaitUntilConnected();
 
-            new Thread(ReportStats).Start(client);
-
+            // new Thread(ReportStats).Start(client);
 
             List<Thread> threads = new List<Thread>();
-            for (int i = 0; i < 16; i++) {
+            for (int i = 0; i < 128; i++) {
                 Thread t = new Thread(ClientWorker);
                 threads.Add(t);
                 t.Start();

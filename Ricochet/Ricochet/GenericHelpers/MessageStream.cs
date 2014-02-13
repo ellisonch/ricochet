@@ -36,15 +36,24 @@ namespace Ricochet {
         /// </summary>
         /// <param name="stream"></param>
         internal static byte[] ReadFromStream(Stream stream) {
-            byte[] lenBytes = readn(stream, 4);
+            byte[] lenBytes = read4(stream);
             int len = BitConverter.ToInt32(lenBytes, 0);
             // Console.WriteLine("Read length {0}", len);
             byte[] bytes = readn(stream, len);
             return bytes;
         }
 
+        private static byte[] buffer4 = new byte[4];
+        private static byte[] read4(Stream stream) {
+            return readnHelper(stream, 4, buffer4);
+        }
+
         private static byte[] readn(Stream stream, int len) {
-            byte[] buffer = new byte[len];
+            return readnHelper(stream, len, new byte[len]);
+        }
+
+        private static byte[] readnHelper(Stream stream, int len, byte[] buffer) {
+            Debug.Assert(buffer.Length == len, "Length of buffer should be same as len");
             int remaining = len;
             int done = 0;
             do {

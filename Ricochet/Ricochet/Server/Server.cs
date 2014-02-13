@@ -56,7 +56,8 @@ namespace Ricochet {
             this.l.InfoFormat("Configuring server as {0}:{1}", address, port);
 
             for (int i = 0; i < numWorkerThreads; i++) {
-                new Thread(this.DoWork).Start();
+                var t = new Thread(this.DoWork);
+                t.Start();
             }
 
             new Thread(this.CleanUp).Start();
