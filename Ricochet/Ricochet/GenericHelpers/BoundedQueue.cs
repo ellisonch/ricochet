@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Collections.Concurrent;
 
 namespace Ricochet {
     // Based on Marc Gravell's code from http://stackoverflow.com/questions/530211/creating-a-blocking-queuet-in-net
@@ -12,9 +13,20 @@ namespace Ricochet {
     // Changes to the original code made by Chucky Ellison
     internal class BoundedQueue<T> {
         private readonly ILog l = LogManager.GetCurrentClassLogger();
+
+        /// <summary>
+        /// Time to wait for a signal that something has been put into the queue
+        /// before checking it manually.  
+        /// </summary>
+        const int dequeueWaitTimeout = 50;
+
         protected LinkedList<T> queue = new LinkedList<T>();
         private readonly int maxSize;
         bool closed;
+
+        public int Count {
+            get { return queue.Count; }
+        }
 
         public BoundedQueue(int maxSize) {
             this.maxSize = maxSize;
@@ -51,7 +63,7 @@ namespace Ricochet {
                         value = default(T);
                         return false;
                     }
-                    Monitor.Wait(queue);
+                    Monitor.Wait(queue, dequeueWaitTimeout);
                 }
                 value = queue.First();
                 queue.RemoveFirst();
@@ -64,10 +76,6 @@ namespace Ricochet {
                 closed = true;
                 Monitor.PulseAll(queue);
             }
-        }
-
-        public int Count {
-            get { return queue.Count; }
         }
     }
 }
