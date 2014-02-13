@@ -20,11 +20,10 @@ namespace Ricochet {
         /// Time to wait for a signal that something has been put into the queue
         /// before checking it manually.
         /// </summary>
-        const int dequeueWaitTimeout = 1;
+        const int dequeueWaitTimeout = 10;
 
         ManualResetEvent barrier = new ManualResetEvent(false);
         private ConcurrentQueue<T> queue = new ConcurrentQueue<T>();
-        // private BlockingCollection<T> queue = new BlockingCollection<T>(new ConcurrentQueue<T>());
         private readonly int maxSize;
         bool closed = false;
         
@@ -42,10 +41,10 @@ namespace Ricochet {
                 l.WarnFormat("Reached maximum queue size!  Item dropped.");
                 return false;
             }
-            // queue.Add(item);
             queue.Enqueue(item);
-            // Console.WriteLine("Item Enqueued");
-            //Debug.Assert(queue.Count > 0, "Count should be positive before set (1)");
+            // since there's no lock, this space allows for the possibility that
+            // a reader pulled the item we just put on off, so this set isn't
+            // guaranteed to be real the next time the reader reads
             barrier.Set();
             return true;
         }
@@ -53,16 +52,11 @@ namespace Ricochet {
         public bool TryDequeue(out T value) {
             value = default(T);
             if (closed) { return false; }
-            //try {
-            //    value = queue.Take();
-            //} catch (Exception) {
-            //    return false;
-            //}
-            // l.WarnFormat("Queue length is {0}", queue.Count);
-            // l.WarnFormat("Current thread is {0}", Thread.CurrentThread.GetHashCode());
+
             int oldCount = queue.Count;
             while (oldCount == 0) {
                 while (!barrier.WaitOne(dequeueWaitTimeout)) {
+                    if (closed) { return false; }
                     oldCount = queue.Count;
                     if (oldCount > 0) {
                         barrier.Set();
@@ -70,25 +64,12 @@ namespace Ricochet {
                 }
                 oldCount = queue.Count;
             }
-            // Debug.Assert(oldCount > 0, "Count should be greater than 0");
-            // l.WarnFormat("Queue length is {0}", count);
-            if (!queue.TryDequeue(out value)) {
-                throw new Exception("Tried to dequeue, but nothing was there");
-            }
-            // int newCount = queue.Count();
-            // Debug.Assert(newCount >= oldCount - 1, String.Format("Expected count is wrong: {0}, {1}", oldCount, newCount));
+            Debug.Assert(oldCount > 0, "Count should be greater than 0");
+            var dequeueSuccess = queue.TryDequeue(out value);
+            Debug.Assert(dequeueSuccess, "We thought there was something in the queue, but we were wrong");
             if (oldCount - 1 == 0) {
                 barrier.Reset();
             }
-            //if (oldCount - 1 >= 1) {
-            //    Debug.Assert(queue.Count > 0, "Count should be positive before set (2)");
-            //    barrier.Set();
-            //}
-
-            //while (queue.Count == 0) {
-            //    // l.WarnFormat("Having to wait :(");
-            //    System.Threading.Thread.Sleep(dequeueWaitTimeout);
-            //}
             
             return true;
         }
