@@ -67,21 +67,25 @@ namespace Ricochet {
 
         private void CleanUp() {
             while (true) {
-                ConcurrentBag<ClientManager> toAddBack = new ConcurrentBag<ClientManager>();
-                ClientManager client;
-                while (clients.TryTake(out client)) {
-                    toAddBack.Add(client);
-                }
-
-                // replace the good entries
-                while (toAddBack.TryTake(out client)) {
-                    if (!client.IsAlive) {
-                        l.WarnFormat("Dropping a client");
-                        continue;
+                try {
+                    ConcurrentBag<ClientManager> toAddBack = new ConcurrentBag<ClientManager>();
+                    ClientManager client;
+                    while (clients.TryTake(out client)) {
+                        toAddBack.Add(client);
                     }
-                    clients.Add(client);
+
+                    // replace the good entries
+                    while (toAddBack.TryTake(out client)) {
+                        if (!client.IsAlive) {
+                            l.WarnFormat("Dropping a client");
+                            continue;
+                        }
+                        clients.Add(client);
+                    }
+                    System.Threading.Thread.Sleep(2000);
+                } catch (Exception e) {
+                    l.ErrorFormat("Unexpected exception in Cleanup: {0}", e);
                 }
-                System.Threading.Thread.Sleep(2000);
             }
         }
 
