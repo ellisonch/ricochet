@@ -45,7 +45,7 @@ namespace Ricochet {
         /// <summary>
         /// Only contains non-null queries
         /// </summary>
-        private BoundedQueue<QueryWithDestination> incomingQueries = new BoundedQueue<QueryWithDestination>(maxQueueSize);
+        private BoundedQueueSingleConsumer<QueryWithDestination> incomingQueries = new BoundedQueueSingleConsumer<QueryWithDestination>(maxQueueSize);
         private ConcurrentBag<ClientManager> clients = new ConcurrentBag<ClientManager>();
         private ConcurrentBag<Thread> workers = new ConcurrentBag<Thread>();
 
@@ -168,6 +168,7 @@ namespace Ricochet {
                     QueryWithDestination qwd;
                     // TODO if TryDequeue fails, we're probably being shut down
                     if (!incomingQueries.TryDequeue(out qwd)) {
+                        l.WarnFormat("TryDequeue failed");
                         continue;
                     }
                     try {
