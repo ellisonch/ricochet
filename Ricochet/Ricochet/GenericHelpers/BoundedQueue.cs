@@ -30,7 +30,7 @@ namespace Ricochet {
 
         private LinkedList<T> queue = new LinkedList<T>();
         private readonly int maxSize;
-        bool closed;
+        bool closed = false;
 
         public int Count {
             get { return queue.Count; }
