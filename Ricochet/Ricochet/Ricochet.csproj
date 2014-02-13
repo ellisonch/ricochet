@@ -7,7 +7,7 @@
     <ProjectGuid>{AEE87D42-27FB-4E1B-BF77-B773B22D2BCC}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>RPC</RootNamespace>
+    <RootNamespace>Ricochet</RootNamespace>
     <AssemblyName>RPC</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>

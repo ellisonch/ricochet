@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 
-namespace RPC {
+namespace Ricochet {
     /// <summary>
     /// The actual package that is sent to a server representing an RPC call.
     /// </summary>

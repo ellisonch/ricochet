@@ -9,7 +9,7 @@ using System.Linq;
 using System.Net.Sockets;
 using System.Threading;
 
-namespace RPC {
+namespace Ricochet {
     // TODO: should really be using timeout that comes from the client
 
     /// <summary>

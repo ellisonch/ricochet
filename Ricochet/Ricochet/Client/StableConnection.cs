@@ -9,7 +9,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace RPC {
+namespace Ricochet {
     // TODO should worry about cleaning up thread
     // TODO i think i saw this mess up once; need reporting for weird cases.  i think getting write lock was timing out
     // TODO i think sometimes it's still trying to reconnect twice

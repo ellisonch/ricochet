@@ -10,7 +10,7 @@ using System.IO;
 using System.Collections.Concurrent;
 using Common.Logging;
 
-namespace RPC {
+namespace Ricochet {
     /// <summary>
     /// An RPC Client represents a client through which RPC requests can be
     /// sent.  The client maintains a connection to an RPC server, and 

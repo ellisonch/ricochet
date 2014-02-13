@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace RPC {
+namespace Ricochet {
     // Based on Marc Gravell's code from http://stackoverflow.com/questions/530211/creating-a-blocking-queuet-in-net
     // Used here with permission
     // Changes to the original code made by Chucky Ellison

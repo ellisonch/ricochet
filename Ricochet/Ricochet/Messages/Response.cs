@@ -4,7 +4,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text;
 
-namespace RPC {
+namespace Ricochet {
     /// <summary>
     /// The actual package that is returned from a server representing an RPC 
     /// result.

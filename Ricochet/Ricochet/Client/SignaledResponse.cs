@@ -7,7 +7,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace RPC {
+namespace Ricochet {
     class SignaledResponse {
         private ManualResetEvent barrier = new ManualResetEvent(false);
         // private SemaphoreSlim barrier2 = new SemaphoreSlim(0, 1);

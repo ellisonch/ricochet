@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace RPC {
+namespace Ricochet {
     /// <summary>
     /// Class representing operating stats for a server.
     /// </summary>

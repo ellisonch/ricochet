@@ -9,7 +9,7 @@ using System.Collections.Generic;
 using Common.Logging;
 using System.Diagnostics;
 
-namespace RPC {
+namespace Ricochet {
     /// <summary>
     /// An RPC Server represents a server capable of handling RPC requests.  
     /// A server can be made to understand different kinds of queries (through

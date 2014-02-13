@@ -7,7 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Common.Logging;
 
-namespace RPC {
+namespace Ricochet {
     internal class MessageStream {
         private readonly ILog l = LogManager.GetCurrentClassLogger();
 

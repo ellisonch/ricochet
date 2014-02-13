@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace RPC {
+namespace Ricochet {
     /// <summary>
     /// Any kind of packet sent to or from an RPC server.
     /// </summary>

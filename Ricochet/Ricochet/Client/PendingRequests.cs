@@ -7,7 +7,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace RPC {
+namespace Ricochet {
     internal class PendingRequests {
         private ConcurrentDictionary<int, SignaledResponse> requests = new ConcurrentDictionary<int, SignaledResponse>();
         private readonly ILog l = LogManager.GetCurrentClassLogger();

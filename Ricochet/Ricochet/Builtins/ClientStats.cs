@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace RPC {
+namespace Ricochet {
     /// <summary>
     /// Stats about a client.
     /// </summary>

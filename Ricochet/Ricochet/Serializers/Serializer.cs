@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace RPC {
+namespace Ricochet {
     /// <summary>
     /// This class can be instantiated to provide a serialization mechanism for 
     /// Ricochet.
