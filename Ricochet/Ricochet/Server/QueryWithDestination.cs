@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Common.Logging;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -6,11 +7,23 @@ using System.Threading.Tasks;
 
 namespace Ricochet {
     internal class QueryWithDestination {
-        internal Query Query;
+        private byte[] bytes;
+        private Serializer serializer;
+
+        internal Query Query {
+            get {
+                Query query = serializer.DeserializeQuery(bytes);
+                if (bytes == null) {
+                    throw new RPCException("Error deserializing query");
+                }
+                return query;
+            }
+        }
         internal BoundedQueue<Response> Destination;
-        internal QueryWithDestination(Query query, BoundedQueue<Response> destination) {
-            this.Query = query;
+        internal QueryWithDestination(byte[] bytes, BoundedQueue<Response> destination, Serializer serializer) {
+            this.bytes = bytes;
             this.Destination = destination;
+            this.serializer = serializer;
         }
     }
 }

@@ -103,6 +103,29 @@ namespace Ricochet {
             writerThread.Start();
         }
 
+        private void ReadQueries() {
+            try {
+                while (!disposed) {
+                    // NetworkInstability();
+                    byte[] bytes = MessageStream.ReadFromStream(readStream);
+                    if (bytes == null) {
+                        l.WarnFormat("Invalid query received, ignoring it");
+                        throw new RPCException("Error reading query");
+                    }
+                    Interlocked.Increment(ref queriesReceived);
+                    var qwd = new QueryWithDestination(bytes, outgoingResponses, serializer);
+                    if (!incomingQueries.EnqueueIfRoom(qwd)) {
+                        l.WarnFormat("Reached maximum queue size!  Query dropped.");
+                    }
+                }
+            } catch (Exception e) {
+                l.InfoFormat("Error in ReadQueries(): {0}", e.Message);
+            } finally {
+                Dispose();
+            }
+            // l.Log(Logger.Flag.Warning, "Finishing Reader");
+        }
+
         private void WriteResponses() {
             try {
                 while (!disposed) {
@@ -122,29 +145,6 @@ namespace Ricochet {
             // l.Log(Logger.Flag.Warning, "Finishing Writer");
         }
 
-        private void ReadQueries() {
-            try {
-                while (!disposed) {
-                    // NetworkInstability();
-                    byte[] bytes = MessageStream.ReadFromStream(readStream);
-                    Query query = serializer.DeserializeQuery(bytes);
-                    if (query == null) {
-                        l.WarnFormat("Invalid query received, ignoring it");
-                        throw new RPCException("Error reading query");
-                    }
-                    Interlocked.Increment(ref queriesReceived);
-                    var qwd = new QueryWithDestination(query, outgoingResponses);
-                    if (!incomingQueries.EnqueueIfRoom(qwd)) {
-                        l.WarnFormat("Reached maximum queue size!  Query dropped.");
-                    }
-                }
-            } catch (Exception e) {
-                l.InfoFormat("Error in ReadQueries(): {0}", e.Message);
-            } finally {
-                Dispose();
-            }
-            // l.Log(Logger.Flag.Warning, "Finishing Reader");
-        }
 
         // Used to test what happens when the network is unstable
         public static Random r = new Random(0);

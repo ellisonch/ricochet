@@ -25,6 +25,8 @@ namespace TestClient {
             while (condition()) yield return true;
         }
         const int reportEvery = 50000;
+        const bool shouldReportStats = true;
+        const int reportStatsTimer = 5000;
 
         // long clients = 0;
         // long disposedClients = 0;
@@ -44,7 +46,9 @@ namespace TestClient {
             // Interlocked.Increment(ref clients);
             client.WaitUntilConnected();
 
-            // new Thread(ReportStats).Start(client);
+            if (shouldReportStats) {
+                new Thread(ReportStats).Start(client);
+            }
 
             List<Thread> threads = new List<Thread>();
             for (int i = 0; i < 128; i++) {
@@ -119,7 +123,7 @@ namespace TestClient {
         private static void ReportStats(object obj) {
             Client client = (Client)obj;
             while (client.IsAlive) {
-                System.Threading.Thread.Sleep(3000);
+                System.Threading.Thread.Sleep(reportStatsTimer);
                 bool success;
                 ServerStats ss = null;
                 try {

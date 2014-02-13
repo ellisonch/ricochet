@@ -141,15 +141,19 @@ namespace Ricochet {
 
         private void DoWork() {
             while (true) {
-                QueryWithDestination qwd;
-                // TODO consider not allowing it to fail
-                if (!incomingQueries.TryDequeue(out qwd)) {
-                    continue;
+                try {
+                    QueryWithDestination qwd;
+                    // TODO consider not allowing it to fail
+                    if (!incomingQueries.TryDequeue(out qwd)) {
+                        continue;
+                    }
+                    // TODO what about doing work for connections that died
+                    Response response = GetResponseForQuery(qwd.Query);
+                    // l.Log(Logger.Flag.Warning, "Response calculated by thread {0}", Thread.CurrentThread.ManagedThreadId);
+                    qwd.Destination.EnqueueIfRoom(response);
+                } catch(Exception e) {
+                    l.WarnFormat("Problem doing work: {0}", e.Message);
                 }
-                // TODO what about doing work for connections that died
-                Response response = GetResponseForQuery(qwd.Query);
-                // l.Log(Logger.Flag.Warning, "Response calculated by thread {0}", Thread.CurrentThread.ManagedThreadId);
-                qwd.Destination.EnqueueIfRoom(response);
             }
         }
 
