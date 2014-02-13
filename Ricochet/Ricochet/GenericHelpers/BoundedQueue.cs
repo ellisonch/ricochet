@@ -30,7 +30,7 @@ namespace Ricochet {
 
         private LinkedList<T> queue = new LinkedList<T>();
         private readonly int maxSize;
-        bool closed;
+        bool closed = false;
 
         public int Count {
             get { return queue.Count; }
@@ -61,7 +61,6 @@ namespace Ricochet {
             return true;
         }
 
-        // TODO consider only having one thread read from this queue and immediately pass it to a worker
         public bool TryDequeue(out T value) {
             lock (queue) { // TODO seems to be lots of contention for this lock (at least on server)
                 while (queue.Count == 0) {
