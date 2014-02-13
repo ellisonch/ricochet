@@ -13,6 +13,8 @@ namespace Ricochet {
     ///  Provides a ServiceStack.Text-based Serializer for Ricochet.
     /// </summary>
     public class MessagePackSerializer : Serializer {
+        ConcurrentDictionary<Type, MsgPack.Serialization.IMessagePackSingleObjectSerializer> serializers = new ConcurrentDictionary<Type, MsgPack.Serialization.IMessagePackSingleObjectSerializer>();
+
         /// <summary>
         /// Serialization via MessagePack.cli
         /// </summary>
@@ -20,7 +22,11 @@ namespace Ricochet {
         /// <param name="thing"></param>
         /// <returns></returns>
         public override byte[] Serialize<T>(T thing) {
-            var serializer = MsgPack.Serialization.MessagePackSerializer.Create<T>();
+            MsgPack.Serialization.IMessagePackSingleObjectSerializer serializer;
+            if (!serializers.TryGetValue(typeof(T), out serializer)) {
+                serializer = MsgPack.Serialization.MessagePackSerializer.Create<T>();
+                serializers.TryAdd(typeof(T), serializer);
+            }
             return serializer.PackSingleObject(thing);
         }
 
@@ -31,8 +37,12 @@ namespace Ricochet {
         /// <param name="thing"></param>
         /// <returns></returns>
         public override T Deserialize<T>(byte[] thing) {
-            var serializer = MsgPack.Serialization.MessagePackSerializer.Create<T>();
-            return serializer.UnpackSingleObject(thing);
+            MsgPack.Serialization.IMessagePackSingleObjectSerializer serializer;
+            if (!serializers.TryGetValue(typeof(T), out serializer)) {
+                serializer = MsgPack.Serialization.MessagePackSerializer.Create<T>();
+                serializers.TryAdd(typeof(T), serializer);
+            }
+            return (T)serializer.UnpackSingleObject(thing);
         }
     }
 }

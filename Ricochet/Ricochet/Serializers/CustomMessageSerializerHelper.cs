@@ -20,7 +20,7 @@ namespace Ricochet {
             // Length of handler (4 bytes)
             // handler
             // message data (rest of array)
-            byte[] handlerBytes = Encoding.Default.GetBytes(query.Handler);
+            byte[] handlerBytes = Encoding.Unicode.GetBytes(query.Handler);
 
             int len = 4 + 4 + handlerBytes.Length + query.MessageData.Length;
             byte[] bytes = new byte[len];
@@ -40,7 +40,7 @@ namespace Ricochet {
         public static Query DeserializeQuery(byte[] bytes) {
             int dispatch = BitConverter.ToInt32(bytes, 0);
             int handlerLen = BitConverter.ToInt32(bytes, 4);
-            string handler = Encoding.Default.GetString(bytes, 8, handlerLen);
+            string handler = Encoding.Unicode.GetString(bytes, 8, handlerLen);
             int messageDataLen = bytes.Length - 4 - 4 - handlerLen;
             byte[] messageData = new byte[messageDataLen];
             Array.Copy(bytes, 4 + 4 + handlerLen, messageData, 0, messageDataLen);
@@ -69,7 +69,7 @@ namespace Ricochet {
             if (response.ErrorMsg == null) {
                 errorBytes = new byte[0];
             } else {
-                errorBytes = Encoding.Default.GetBytes(response.ErrorMsg);
+                errorBytes = Encoding.Unicode.GetBytes(response.ErrorMsg);
             }
 
             int len = 9 + errorBytes.Length + response.MessageData.Length;
@@ -92,7 +92,7 @@ namespace Ricochet {
             bool ok = BitConverter.ToBoolean(bytes, 0);
             int dispatch = BitConverter.ToInt32(bytes, 1);
             int errorLen = BitConverter.ToInt32(bytes, 5);
-            string errorMsg = Encoding.Default.GetString(bytes, 9, errorLen);
+            string errorMsg = Encoding.Unicode.GetString(bytes, 9, errorLen);
             int messageDataLen = bytes.Length - 9 - errorLen;
             byte[] messageData = new byte[messageDataLen];
             Array.Copy(bytes, 9 + errorLen, messageData, 0, messageDataLen);
