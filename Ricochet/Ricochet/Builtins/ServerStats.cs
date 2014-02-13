@@ -13,6 +13,14 @@ namespace Ricochet {
         /// The length of the work queue.  I.e., incoming queries.
         /// </summary>
         public int WorkQueueLength { get; set; }
+        /// <summary>
+        /// Number of outstanding worker threads in the thread pool
+        /// </summary>
+        public int ActiveWorkerThreads { get; set; }
+        /// <summary>
+        /// Number of outstanding completion port threads in the thread pool
+        /// </summary>
+        public int ActiveCompletionPortThreads { get; set; }
         private List<ClientStats> _clients = new List<ClientStats>();
 
         /// <summary>
@@ -27,11 +35,7 @@ namespace Ricochet {
             get { return _clients; }
             set { _clients = value; }
         }
-
-        internal ServerStats(int workQueueLength) {
-            this.WorkQueueLength = workQueueLength;
-        }
-
+        
         internal void AddClient(ClientStats cs) {
             Clients.Add(cs);
         }

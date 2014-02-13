@@ -133,7 +133,10 @@ namespace TestClient {
                 }
                 if (!success) { continue; }
                 // Console.WriteLine("My outgoing queue length: {0}", client.)
+                Console.WriteLine("----------------------------------------------");
                 Console.WriteLine("Server queue length: {0}", ss.WorkQueueLength);
+                Console.WriteLine("Server worker threads: {0}", ss.ActiveWorkerThreads);
+                Console.WriteLine("Server completion port threads: {0}", ss.ActiveCompletionPortThreads);
                 foreach (var cs in ss.Clients) {
                     Console.WriteLine("A client:");
                     Console.WriteLine("  Client outgoing queue length: {0}", cs.OutgoingQueueLength);

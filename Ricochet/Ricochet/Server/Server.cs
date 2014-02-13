@@ -27,7 +27,14 @@ namespace Ricochet {
         private readonly ILog l = LogManager.GetCurrentClassLogger();
 
         const int maxQueueSize = 2000;
-        const int numWorkerThreads = 8;
+        const int maxWorkerThreads = 32;
+        private Semaphore workerSemaphore = new Semaphore(maxWorkerThreads, maxWorkerThreads);
+
+        //const int minWorkerThreads = 2;
+        //const int minCompletionPortThreads = 0; // 0 means don't change from default
+        //const int maxWorkerThreads = 64;
+        //const int maxCompletionPortThreads = 0; // 0 means don't change from default
+                
 
         Serializer serializer;
         private readonly IPAddress address;
@@ -40,7 +47,7 @@ namespace Ricochet {
         /// </summary>
         private BoundedQueue<QueryWithDestination> incomingQueries = new BoundedQueue<QueryWithDestination>(maxQueueSize);
         private ConcurrentBag<ClientManager> clients = new ConcurrentBag<ClientManager>();
-
+        private ConcurrentBag<Thread> workers = new ConcurrentBag<Thread>();
 
         /// <summary>
         /// Creates a new server that is not yet running.
@@ -55,11 +62,26 @@ namespace Ricochet {
             // l.Log(Logger.Flag.Info, "Configuring server as {0}:{1}", address, port);
             this.l.InfoFormat("Configuring server as {0}:{1}", address, port);
 
-            for (int i = 0; i < numWorkerThreads; i++) {
-                var t = new Thread(this.DoWork);
-                t.Start();
-            }
+            //int origMinWorkerThreads, origMinCompletionPortThreads, origMaxWorkerThreads, origMaxCompletionPortThreads;
+            //ThreadPool.GetMinThreads(out origMinWorkerThreads, out origMinCompletionPortThreads);
+            //ThreadPool.GetMaxThreads(out origMaxWorkerThreads, out origMaxCompletionPortThreads);
 
+            //int newMinWorkerThreads = (minWorkerThreads == 0 ? origMinWorkerThreads : minWorkerThreads);
+            //int newMinCompletionPortThreads = (maxCompletionPortThreads == 0 ? origMinCompletionPortThreads : maxCompletionPortThreads);
+            //int newMaxWorkerThreads = (maxWorkerThreads == 0 ? origMaxWorkerThreads : maxWorkerThreads);
+            //int newMaxCompletionPortThreads = (maxCompletionPortThreads == 0 ? origMaxCompletionPortThreads : maxCompletionPortThreads);
+
+            //ThreadPool.SetMinThreads(newMinWorkerThreads, newMinCompletionPortThreads);
+            //ThreadPool.SetMaxThreads(newMaxWorkerThreads, newMaxCompletionPortThreads);
+            
+
+            //for (int i = 0; i < numWorkerThreads; i++) {
+            //    var t = new Thread(this.DoWork);
+            //    workers.Add(t);
+            //    // t.Start();
+            //}
+
+            new Thread(this.WorkerHandler).Start();
             new Thread(this.CleanUp).Start();
 
             Register<int, int>("_ping", Ping);
@@ -139,21 +161,39 @@ namespace Ricochet {
             });
         }
 
-        private void DoWork() {
+        // TODO not limiting the number of pending requests
+        private void WorkerHandler() {
             while (true) {
                 try {
                     QueryWithDestination qwd;
-                    // TODO consider not allowing it to fail
+                    // TODO if TryDequeue fails, we're probably being shut down
                     if (!incomingQueries.TryDequeue(out qwd)) {
                         continue;
                     }
-                    // TODO what about doing work for connections that died
-                    Response response = GetResponseForQuery(qwd.Query);
-                    // l.Log(Logger.Flag.Warning, "Response calculated by thread {0}", Thread.CurrentThread.ManagedThreadId);
-                    qwd.Destination.EnqueueIfRoom(response);
-                } catch(Exception e) {
-                    l.WarnFormat("Problem doing work: {0}", e.Message);
+                    try {
+                        workerSemaphore.WaitOne();
+                        ThreadPool.QueueUserWorkItem(DoWork, qwd);
+                    } catch (Exception) {
+                        workerSemaphore.Release();
+                        throw;
+                    }
+                } catch (Exception e) {
+                    l.WarnFormat("Problem in WorkerHandler: {0}", e.Message);
                 }
+            }
+        }
+
+        private void DoWork(Object obj) {
+            try {
+                QueryWithDestination qwd = (QueryWithDestination)obj;
+                Response response = GetResponseForQuery(qwd.Query);
+                byte[] bytes = serializer.SerializeResponse(response);
+                // l.Log(Logger.Flag.Warning, "Response calculated by thread {0}", Thread.CurrentThread.ManagedThreadId);
+                qwd.Destination.EnqueueIfRoom(bytes);
+            } catch (Exception e) {
+                l.WarnFormat("Problem doing work: {0}", e.Message);
+            } finally {
+                workerSemaphore.Release();
             }
         }
 
@@ -165,11 +205,12 @@ namespace Ricochet {
                     l.WarnFormat("No query name given: {0}", query.MessageData);
                     throw new RPCException(String.Format("Do not handle query {0}", query.Handler));
                 }
-                if (!handlers.ContainsKey(query.Handler)) {
+                Func<Query, Response> fun;
+                if (!handlers.TryGetValue(query.Handler, out fun)) {
                     l.WarnFormat("Do not handle query {0}", query.Handler);
                     throw new RPCException(String.Format("Do not handle query {0}", query.Handler));
                 }
-                Func<Query, Response> fun = handlers[query.Handler];
+                // Func<Query, Response> fun = handlers[query.Handler];
                 l.InfoFormat("Calling handler {0}...", query.Handler);
                 response = fun(query);
                 l.InfoFormat("Back from handler {0}.", query.Handler);
@@ -189,7 +230,15 @@ namespace Ricochet {
         }
 
         private ServerStats GetStats(bool junk) {
-            ServerStats ss = new ServerStats(incomingQueries.Count);
+            int wt, cpt, awt, acpt;
+            ThreadPool.GetMaxThreads(out wt, out cpt);
+            ThreadPool.GetAvailableThreads(out awt, out acpt);
+
+            ServerStats ss = new ServerStats() {
+                WorkQueueLength = incomingQueries.Count,
+                ActiveWorkerThreads = wt - awt,
+                ActiveCompletionPortThreads = cpt - acpt,
+            };
             foreach (var client in clients) {
                 ClientStats cs = new ClientStats() {
                     OutgoingQueueLength = client.OutgoingCount,

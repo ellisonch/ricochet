@@ -45,7 +45,7 @@ namespace Ricochet {
         }
 
         readonly BoundedQueue<QueryWithDestination> incomingQueries;
-        private BoundedQueue<Response> outgoingResponses = new BoundedQueue<Response>(maxQueueSize);
+        private BoundedQueue<byte[]> outgoingResponses = new BoundedQueue<byte[]>(maxQueueSize);
 
         Thread readerThread;
         Thread writerThread;
@@ -129,11 +129,10 @@ namespace Ricochet {
         private void WriteResponses() {
             try {
                 while (!disposed) {
-                    Response response;
-                    if (!outgoingResponses.TryDequeue(out response)) {
+                    byte[] bytes;
+                    if (!outgoingResponses.TryDequeue(out bytes)) {
                         continue;
                     }
-                    byte[] bytes = serializer.SerializeResponse(response);
                     MessageStream.WriteToStream(writeStream, bytes);
                     Interlocked.Increment(ref responsesReturned);
                 }
