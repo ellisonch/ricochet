@@ -84,7 +84,7 @@ namespace Ricochet {
                     }
                     System.Threading.Thread.Sleep(2000);
                 } catch (Exception e) {
-                    l.WarnFormat("Unexpected exception in Cleanup: {0}", e);
+                    l.ErrorFormat("Unexpected exception in Cleanup: {0}", e.Message);
                 }
             }
         }
@@ -106,9 +106,9 @@ namespace Ricochet {
                     clientHandler.Start();
                 }
             } catch (AggregateException e) {
-                l.WarnFormat("Exception thrown: {0}", e.InnerException.Message);
+                l.ErrorFormat("Exception thrown: {0}", e.InnerException.Message);
             } catch (Exception e) {
-                l.WarnFormat("Exception thrown: {0}", e);
+                l.ErrorFormat("Exception thrown: {0}", e.Message);
             }
         }
 
