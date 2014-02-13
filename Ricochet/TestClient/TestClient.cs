@@ -34,8 +34,8 @@ namespace TestClient {
         static long failures = 0;
         static long done = 0;
         static long count = 0;
-        static Stopwatch osw = Stopwatch.StartNew();
-        static Stopwatch sw = Stopwatch.StartNew();
+        static Stopwatch osw;
+        static Stopwatch sw;
 
         static Client client;
 
@@ -46,12 +46,15 @@ namespace TestClient {
             // Interlocked.Increment(ref clients);
             client.WaitUntilConnected();
 
+            if (osw == null) { osw = Stopwatch.StartNew(); }
+            if (sw == null) { sw = Stopwatch.StartNew(); }
+
             if (shouldReportStats) {
                 new Thread(ReportStats).Start(client);
             }
 
             List<Thread> threads = new List<Thread>();
-            for (int i = 0; i < 128; i++) {
+            for (int i = 0; i < 256; i++) {
                 Thread t = new Thread(ClientWorker);
                 threads.Add(t);
                 t.Start();

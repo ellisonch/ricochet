@@ -7,12 +7,15 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Collections.Concurrent;
+using Common.Logging;
 
 namespace Ricochet {
     /// <summary>
     ///  Provides a ServiceStack.Text-based Serializer for Ricochet.
     /// </summary>
     public class MessagePackSerializer : Serializer {
+        private readonly ILog l = LogManager.GetCurrentClassLogger();
+
         ConcurrentDictionary<Type, MsgPack.Serialization.IMessagePackSingleObjectSerializer> serializers = new ConcurrentDictionary<Type, MsgPack.Serialization.IMessagePackSingleObjectSerializer>();
 
         /// <summary>
@@ -22,10 +25,12 @@ namespace Ricochet {
         /// <param name="thing"></param>
         /// <returns></returns>
         public override byte[] Serialize<T>(T thing) {
+            Type t = typeof(T);
             MsgPack.Serialization.IMessagePackSingleObjectSerializer serializer;
-            if (!serializers.TryGetValue(typeof(T), out serializer)) {
+            if (!serializers.TryGetValue(t, out serializer)) {
+                // l.WarnFormat("Creating serializer for {0}", typeof(T));
                 serializer = MsgPack.Serialization.MessagePackSerializer.Create<T>();
-                serializers.TryAdd(typeof(T), serializer);
+                serializers.TryAdd(t, serializer);
             }
             return serializer.PackSingleObject(thing);
         }
@@ -37,10 +42,12 @@ namespace Ricochet {
         /// <param name="thing"></param>
         /// <returns></returns>
         public override T Deserialize<T>(byte[] thing) {
+            Type t = typeof(T);
             MsgPack.Serialization.IMessagePackSingleObjectSerializer serializer;
-            if (!serializers.TryGetValue(typeof(T), out serializer)) {
+            if (!serializers.TryGetValue(t, out serializer)) {
+                // l.WarnFormat("Creating serializer for {0}", typeof(T));
                 serializer = MsgPack.Serialization.MessagePackSerializer.Create<T>();
-                serializers.TryAdd(typeof(T), serializer);
+                serializers.TryAdd(t, serializer);
             }
             return (T)serializer.UnpackSingleObject(thing);
         }
