@@ -97,8 +97,7 @@ namespace Ricochet {
                     continue;
                 }
                 if (!connection.Write(query)) {
-                    // TODO it's kind of weird we'd fail here.  may want to cause EnqueuAtFront to kick out old stuff
-                    outgoingQueries.EnqueAtFront(query);
+                    outgoingQueries.EnqueAtFrontWithoutFail(query);
                     System.Threading.Thread.Sleep(connectionTimeout);
                 }
             }

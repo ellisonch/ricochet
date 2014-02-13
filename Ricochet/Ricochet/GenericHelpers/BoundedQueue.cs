@@ -6,11 +6,19 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Concurrent;
+using System.Diagnostics;
 
 namespace Ricochet {
     // Based on Marc Gravell's code from http://stackoverflow.com/questions/530211/creating-a-blocking-queuet-in-net
     // Used here with permission
     // Changes to the original code made by Chucky Ellison
+
+    /// <summary>
+    /// Bounded, blocking queue.
+    /// 
+    /// Possible to exceed capacity by 1, in the event of someone calling <see cref="EnqueAtFrontWithoutFail"/>
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
     internal class BoundedQueue<T> {
         private readonly ILog l = LogManager.GetCurrentClassLogger();
 
@@ -31,12 +39,9 @@ namespace Ricochet {
         public BoundedQueue(int maxSize) {
             this.maxSize = maxSize;
         }
-        public bool EnqueAtFront(T item) {
+        public bool EnqueAtFrontWithoutFail(T item) {
             lock (queue) {
                 if (closed) { return false; }
-                if (queue.Count >= maxSize) {
-                    return false;
-                }
                 queue.AddFirst(item);
                 Monitor.Pulse(queue);
             }
