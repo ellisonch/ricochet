@@ -27,8 +27,8 @@ namespace Ricochet {
 
         private TcpClient client;
         Stream underlyingStream;
-        Stream writeStream;
-        Stream readStream;
+        MessageReadStream readStream;
+        MessageWriteStream writeStream;
 
         private long queriesReceived;
         private long responsesReturned;
@@ -66,8 +66,8 @@ namespace Ricochet {
             //this.underlyingStream.ReadTimeout = readTimeout;
             //this.underlyingStream.WriteTimeout = writeTimeout;
 
-            this.writeStream = new BufferedStream(underlyingStream);
-            this.readStream = new BufferedStream(underlyingStream);
+            this.writeStream = new MessageWriteStream(underlyingStream);
+            this.readStream = new MessageReadStream(underlyingStream);
 
 
             //l.Log(Logger.Flag.Warning, "RCanTimeout: {0}", underlyingStream.CanTimeout);
@@ -107,7 +107,7 @@ namespace Ricochet {
             try {
                 while (!disposed) {
                     // NetworkInstability();
-                    byte[] bytes = MessageStream.ReadFromStream(readStream);
+                    byte[] bytes = readStream.ReadFromStream();
                     if (bytes == null) {
                         l.WarnFormat("Invalid query received, ignoring it");
                         throw new RPCException("Error reading query");
@@ -133,7 +133,7 @@ namespace Ricochet {
                     if (!outgoingResponses.TryDequeue(out bytes)) {
                         continue;
                     }
-                    MessageStream.WriteToStream(writeStream, bytes);
+                    writeStream.WriteToStream(bytes);
                     Interlocked.Increment(ref responsesReturned);
                 }
             } catch (Exception e) {

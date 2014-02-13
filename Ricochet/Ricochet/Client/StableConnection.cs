@@ -27,8 +27,8 @@ namespace Ricochet {
 
         Serializer serializer;
         private TcpClient connection;
-        private BufferedStream writeStream;
-        private BufferedStream readStream;
+        private MessageReadStream readStream;
+        private MessageWriteStream writeStream;
 
         Thread reconnectThread;
 
@@ -61,7 +61,7 @@ namespace Ricochet {
                 if (connection == null) { return false; }
                 // NetworkInstability();
                 byte[] bytes = serializer.SerializeQuery(query);
-                MessageStream.WriteToStream(writeStream, bytes);
+                writeStream.WriteToStream(bytes);
             } catch (Exception e) {
                 l.InfoFormat("Error writing: {0}", e.Message);
                 // RequestReconnect();
@@ -83,7 +83,7 @@ namespace Ricochet {
             try {
                 if (disposed) { return false; }
                 if (connection == null) { return false; }
-                byte[] bytes = MessageStream.ReadFromStream(readStream);
+                byte[] bytes = readStream.ReadFromStream();
                 response = serializer.DeserializeResponse(bytes);
                     
                 if (response == null) {
@@ -119,14 +119,14 @@ namespace Ricochet {
             }
 
             if (readStream != null) {
-                try { readStream.Close(); } catch (Exception) { }
+                try { readStream.Dispose(); } catch (Exception) { }
             }
             if (writeStream != null) {
-                try { writeStream.Close(); } catch (Exception) { }
+                try { writeStream.Dispose(); } catch (Exception) { }
             }
 
-            writeStream = new BufferedStream(myConnection.GetStream());
-            readStream = new BufferedStream(myConnection.GetStream());
+            writeStream = new MessageWriteStream(myConnection.GetStream());
+            readStream = new MessageReadStream(myConnection.GetStream());
 
             connection = myConnection;
 
@@ -137,11 +137,11 @@ namespace Ricochet {
         public void Dispose() {
             disposed = true;
             if (writeStream != null) {
-                try { writeStream.Close(); } catch (Exception) { }
+                try { writeStream.Dispose(); } catch (Exception) { }
                 writeStream = null;
             }
             if (readStream != null) {
-                try { readStream.Close(); } catch (Exception) { }
+                try { readStream.Dispose(); } catch (Exception) { }
                 readStream = null;
             }
             if (connection != null) {

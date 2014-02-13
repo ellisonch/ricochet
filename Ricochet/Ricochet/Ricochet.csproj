@@ -61,7 +61,7 @@
     <Compile Include="GenericHelpers\BoundedQueueSingleConsumer.cs" />
     <Compile Include="GenericHelpers\BoundedQueue.cs" />
     <Compile Include="Client\Client.cs" />
-    <Compile Include="GenericHelpers\MessageStream.cs" />
+    <Compile Include="Streams\MessageReadStream.cs" />
     <Compile Include="Serializers\CustomMessageSerializerHelper.cs" />
     <Compile Include="Serializers\MessagePackWithCustomMessageSerializer.cs" />
     <Compile Include="Serializers\MessagePackSerializer.cs" />
@@ -80,6 +80,7 @@
     <Compile Include="Server\Server.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Client\SignaledResponse.cs" />
+    <Compile Include="Streams\MessageWriteStream.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
