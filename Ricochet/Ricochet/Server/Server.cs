@@ -62,9 +62,12 @@ namespace Ricochet {
             // l.Log(Logger.Flag.Info, "Configuring server as {0}:{1}", address, port);
             this.l.InfoFormat("Configuring server as {0}:{1}", address, port);
 
-            //int origMinWorkerThreads, origMinCompletionPortThreads, origMaxWorkerThreads, origMaxCompletionPortThreads;
-            //ThreadPool.GetMinThreads(out origMinWorkerThreads, out origMinCompletionPortThreads);
-            //ThreadPool.GetMaxThreads(out origMaxWorkerThreads, out origMaxCompletionPortThreads);
+            int origMinWorkerThreads, origMinCompletionPortThreads, origMaxWorkerThreads, origMaxCompletionPortThreads;
+            ThreadPool.GetMinThreads(out origMinWorkerThreads, out origMinCompletionPortThreads);
+            ThreadPool.GetMaxThreads(out origMaxWorkerThreads, out origMaxCompletionPortThreads);
+
+            this.l.WarnFormat("min/max worker threads: {0} / {1}", origMinWorkerThreads, origMaxWorkerThreads);
+            this.l.WarnFormat("min/max completion port threads: {0} / {1}", origMinCompletionPortThreads, origMaxCompletionPortThreads);
 
             //int newMinWorkerThreads = (minWorkerThreads == 0 ? origMinWorkerThreads : minWorkerThreads);
             //int newMinCompletionPortThreads = (maxCompletionPortThreads == 0 ? origMinCompletionPortThreads : maxCompletionPortThreads);

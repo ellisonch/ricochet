@@ -2,6 +2,7 @@
 using TestLib;
 using System;
 using System.Collections.Generic;
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
@@ -15,18 +16,16 @@ namespace TestClient {
     // x/y
     //  TODO consider moving out the serialization stuff from the reader/writer
     class TestClient {
-        // const double howUnreliable = 0.000005;
-        // const double howUnreliable = 0.01;
-        // const double howUnreliable = 0;
-        // const double howUnreliable = 0;
-        // public static Random r = new Random(0);
-
         private static IEnumerable<bool> IterateUntilFalse(Func<bool> condition) {
             while (condition()) yield return true;
         }
-        const int reportEvery = 50000;
-        const bool shouldReportStats = true;
-        const int reportStatsTimer = 5000;
+        // const int reportEvery = 50000;
+        const int reportServerStatsTimer = 5000;
+        const int reportClientStatsTimer = 2500;
+        const int numThreads = 4;
+
+        static ConcurrentBag<long> times = new ConcurrentBag<long>();
+        static ConcurrentDictionary<int, double> timeSums = new ConcurrentDictionary<int, double>();
 
         // long clients = 0;
         // long disposedClients = 0;
@@ -42,6 +41,11 @@ namespace TestClient {
         static int Main(string[] args) {
             TestClient tc = new TestClient();
 
+            string junk = smallPayload;
+            junk = bigPayload;
+
+            // Console.WriteLine("Accuracy: {0}", Stopwatch.IsHighResolution);
+
             client = new Client("127.0.0.1", 11000, WhichSerializer.Serializer);
             // Interlocked.Increment(ref clients);
             client.WaitUntilConnected();
@@ -49,15 +53,15 @@ namespace TestClient {
             if (osw == null) { osw = Stopwatch.StartNew(); }
             if (sw == null) { sw = Stopwatch.StartNew(); }
 
-            if (shouldReportStats) {
-                new Thread(ReportStats).Start(client);
-            }
+            // new Thread(ReportServerStats).Start(client);
+            new Thread(ReportClientStats).Start(client);
 
             List<Thread> threads = new List<Thread>();
-            for (int i = 0; i < 256; i++) {
+            for (int i = 0; i < numThreads; i++) {
+                timeSums[i] = 0.0;
                 Thread t = new Thread(ClientWorker);
                 threads.Add(t);
-                t.Start();
+                t.Start(i);
             }
             foreach (var thread in threads) {
                 thread.Join();
@@ -65,36 +69,17 @@ namespace TestClient {
             return 0;
         }
 
-        private static void ClientWorker() {
-            // long x = Interlocked.Read(ref clients);
-            // long y = Interlocked.Read(ref disposedClients);
-            // Debug.Assert(x == y, "The number of clients created isn't the same as the number of clients disposed");
-
-            
-            // var shouldContinue = true;
-
-            // ParallelOptions po = new ParallelOptions();
-            // po.MaxDegreeOfParallelism = 12;
-            // Parallel.ForEach(IterateUntilFalse(() => { return shouldContinue; }), po, (guard, loopstate) => {
+        private static void ClientWorker(object obj) {
+            int myThreadNum = (int)obj;
             while (true) {
-                //if (r.NextDouble() < howUnreliable) {
-                //    Console.WriteLine("Simulated network instability!");
-                //    client.Dispose();
-                //    Debug.Assert(!client.IsAlive, "Disposed client, but it's still alive");
-                //    // Interlocked.Increment(ref disposedClients);
-                //    shouldContinue = false;
-                //    loopstate.Stop();
-                //    return;
-                //}
                 var mycount = Interlocked.Increment(ref count);
-                var payload = "foo bar baz" + mycount;
-                //var payload = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent faucibus odio sollicitudin porta condimentum. Maecenas non rutrum sapien, dictum tincidunt nibh. Donec lacinia mattis interdum. Quisque pellentesque, ligula non elementum vulputate, massa lacus mattis justo, at iaculis mi lorem vel neque. Aenean cursus vitae nulla non vehicula. Vestibulum venenatis urna ac turpis semper, sed molestie nibh convallis. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Cras pharetra sodales ante dapibus malesuada. Morbi in lectus vulputate tortor elementum congue id quis sem. Duis eget commodo magna. Suspendisse luctus viverra pharetra. Nam lacinia eros id dictum posuere. Ut euismod, enim sit amet laoreet dictum, enim erat adipiscing eros, nec auctor nibh elit sit amet turpis. Morbi hendrerit nibh a urna congue, ac ultricies tellus vulputate. Integer ac velit venenatis, porttitor tellus eu, pretium sapien. Curabitur eget tincidunt odio, ut vehicula nisi. Praesent molestie diam nullam.";
-                // payload += payload + payload + payload + mycount;
+                var payload = smallPayload + mycount;
+                //var payload = bigPayload + mycount;
 
                 var q = new AQuery(payload);
-                // Query msg = Query.CreateQuery<AQuery>("double", q);
                 long myfailures;
 
+                Stopwatch mysw = Stopwatch.StartNew();
                 AResponse ar = null;
                 bool success;
                 try {
@@ -102,31 +87,67 @@ namespace TestClient {
                 } catch (ObjectDisposedException) {
                     success = false;
                 }
+                mysw.Stop();
 
                 if (!success) {
-                    // Console.WriteLine("Failure");
                     myfailures = Interlocked.Increment(ref failures);
                 } else {
+                    times.Add(mysw.ElapsedTicks);
+                    timeSums[myThreadNum] += mysw.ElapsedMilliseconds;
                     myfailures = Interlocked.Read(ref failures);
                     Debug.Assert(ar.res == payload + payload, String.Format("Something went wrong, {0} != {1}", ar.res, payload + payload));
                 }
 
                 var mydone = Interlocked.Increment(ref done);
-                if (mydone % reportEvery == 0) {
-                    double tps = (reportEvery / (sw.ElapsedMilliseconds / 1000.0));
-                    double atps = (mydone / (osw.ElapsedMilliseconds / 1000.0));
-                    double avg = sw.ElapsedMilliseconds / (double)reportEvery;
-                    double aavg = osw.ElapsedMilliseconds / (double)mydone;
-                    Console.WriteLine("{0:#,###.} => {4:#,###.} tps (avg time {3:0.000} => {5:0.0000} ms) (done: {1}, failures: {2})", tps, mydone, myfailures, avg, atps, aavg);
-                    sw.Restart();
-                }
+                //if (mydone % reportEvery == 0) {
+                //    // Console.WriteLine("Count: {0}", times.Count);
+                //    Console.WriteLine("Latency Avg: {0:0.000}; Max: {1:0.000}",
+                //        times.Average(),
+                //        times.Max()
+                //    );
+                //    times = new ConcurrentBag<long>();
+                //    // Console.WriteLine("{0}", mysw.ElapsedMilliseconds);
+                //    double tps = (reportEvery / (sw.ElapsedMilliseconds / 1000.0));
+                //    double atps = (mydone / (osw.ElapsedMilliseconds / 1000.0));
+                //    double avg = sw.ElapsedMilliseconds / (double)reportEvery;
+                //    double aavg = osw.ElapsedMilliseconds / (double)mydone;
+                //    Console.WriteLine("{0:#,###.} => {4:#,###.} tps (avg time {3:0.000} => {5:0.0000} ms) (done: {1}, failures: {2})", tps, mydone, myfailures, avg, atps, aavg);
+                //    sw.Restart();
+                //}
             }
         }
 
-        private static void ReportStats(object obj) {
+        static double ticksPerMS = (Stopwatch.Frequency / 1000.0);
+        private static void ReportClientStats(object obj) {
             Client client = (Client)obj;
             while (client.IsAlive) {
-                System.Threading.Thread.Sleep(reportStatsTimer);
+                var myTimes = times;
+                times = new ConcurrentBag<long>();
+                if (myTimes.Count > 0) {
+                    double avg = myTimes.Average() / ticksPerMS;
+                    double max = myTimes.Max() / ticksPerMS;
+                    double numer = myTimes.Sum(time => ((time / ticksPerMS) - avg) * ((time / ticksPerMS) - avg));
+                    double stddev = Math.Sqrt(numer / myTimes.Count());
+
+                    Console.WriteLine("{0:0.000} arl ({1:#,#00.} mrl, {2:0.000} stdrl); {3:#,###.} rps",
+                        avg,
+                        max,
+                        stddev,
+                        myTimes.Count / (reportClientStatsTimer / 1000.0)
+                    );
+
+                    //foreach (var time in myTimes) {
+                    //    Console.WriteLine(time / ticksPerMS);
+                    //}
+                }
+                System.Threading.Thread.Sleep(reportClientStatsTimer);
+            }
+        }
+
+        private static void ReportServerStats(object obj) {
+            Client client = (Client)obj;
+            while (client.IsAlive) {
+                System.Threading.Thread.Sleep(reportServerStatsTimer);
                 bool success;
                 ServerStats ss = null;
                 try {
@@ -146,8 +167,10 @@ namespace TestClient {
                     Console.WriteLine("  Client total queries: {0}", cs.IncomingTotal);
                     Console.WriteLine("  Client total responses: {0}", cs.OutgoingTotal);
                 }
-                
+                Console.WriteLine("----------------------------------------------");
             }
         }
+        private static string smallPayload = "foo bar baz";
+        private static string bigPayload = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent faucibus odio sollicitudin porta condimentum. Maecenas non rutrum sapien, dictum tincidunt nibh. Donec lacinia mattis interdum. Quisque pellentesque, ligula non elementum vulputate, massa lacus mattis justo, at iaculis mi lorem vel neque. Aenean cursus vitae nulla non vehicula. Vestibulum venenatis urna ac turpis semper, sed molestie nibh convallis. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Cras pharetra sodales ante dapibus malesuada. Morbi in lectus vulputate tortor elementum congue id quis sem. Duis eget commodo magna. Suspendisse luctus viverra pharetra. Nam lacinia eros id dictum posuere. Ut euismod, enim sit amet laoreet dictum, enim erat adipiscing eros, nec auctor nibh elit sit amet turpis. Morbi hendrerit nibh a urna congue, ac ultricies tellus vulputate. Integer ac velit venenatis, porttitor tellus eu, pretium sapien. Curabitur eget tincidunt odio, ut vehicula nisi. Praesent molestie diam nullam.";
     }
 }
