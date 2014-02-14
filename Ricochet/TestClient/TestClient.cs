@@ -14,27 +14,19 @@ namespace TestClient {
     // serialization based on interface
     // consider auto registering public methods/etc
     // x/y
-    //  TODO consider moving out the serialization stuff from the reader/writer
     class TestClient {
         private static IEnumerable<bool> IterateUntilFalse(Func<bool> condition) {
             while (condition()) yield return true;
         }
-        // const int reportEvery = 50000;
         const int reportServerStatsTimer = 5000;
         const int reportClientStatsTimer = 5000;
-        const int numThreads = 4;
+        const int numThreads = 16;
 
         static ConcurrentBag<long> times = new ConcurrentBag<long>();
         static ConcurrentDictionary<int, double> timeSums = new ConcurrentDictionary<int, double>();
 
-        // long clients = 0;
-        // long disposedClients = 0;
-
         static long failures = 0;
-        static long done = 0;
         static long count = 0;
-        static Stopwatch osw;
-        static Stopwatch sw;
 
         static Client client;
 
@@ -44,14 +36,8 @@ namespace TestClient {
             string junk = smallPayload;
             junk = bigPayload;
 
-            // Console.WriteLine("Accuracy: {0}", Stopwatch.IsHighResolution);
-
             client = new Client("127.0.0.1", 11000, WhichSerializer.Serializer);
-            // Interlocked.Increment(ref clients);
             client.WaitUntilConnected();
-
-            if (osw == null) { osw = Stopwatch.StartNew(); }
-            if (sw == null) { sw = Stopwatch.StartNew(); }
 
             // new Thread(ReportServerStats).Start(client);
             new Thread(ReportClientStats).Start(client);
@@ -97,23 +83,6 @@ namespace TestClient {
                     myfailures = Interlocked.Read(ref failures);
                     Debug.Assert(ar.res == payload + payload, String.Format("Something went wrong, {0} != {1}", ar.res, payload + payload));
                 }
-
-                var mydone = Interlocked.Increment(ref done);
-                //if (mydone % reportEvery == 0) {
-                //    // Console.WriteLine("Count: {0}", times.Count);
-                //    Console.WriteLine("Latency Avg: {0:0.000}; Max: {1:0.000}",
-                //        times.Average(),
-                //        times.Max()
-                //    );
-                //    times = new ConcurrentBag<long>();
-                //    // Console.WriteLine("{0}", mysw.ElapsedMilliseconds);
-                //    double tps = (reportEvery / (sw.ElapsedMilliseconds / 1000.0));
-                //    double atps = (mydone / (osw.ElapsedMilliseconds / 1000.0));
-                //    double avg = sw.ElapsedMilliseconds / (double)reportEvery;
-                //    double aavg = osw.ElapsedMilliseconds / (double)mydone;
-                //    Console.WriteLine("{0:#,###.} => {4:#,###.} tps (avg time {3:0.000} => {5:0.0000} ms) (done: {1}, failures: {2})", tps, mydone, myfailures, avg, atps, aavg);
-                //    sw.Restart();
-                //}
             }
         }
 
@@ -121,6 +90,8 @@ namespace TestClient {
         private static void ReportClientStats(object obj) {
             Client client = (Client)obj;
             while (client.IsAlive) {
+                var myCount = Interlocked.Read(ref count);
+                var myFailures = Interlocked.Read(ref failures);
                 var myTimes = times;
                 times = new ConcurrentBag<long>();
                 if (myTimes.Count > 0) {
@@ -129,11 +100,13 @@ namespace TestClient {
                     double numer = myTimes.Sum(time => ((time / ticksPerMS) - avg) * ((time / ticksPerMS) - avg));
                     double stddev = Math.Sqrt(numer / myTimes.Count());
 
-                    Console.WriteLine("{0:0.000} arl ({1:#,#00.} mrl, {2:0.000} stdrl); {3:#,###.} rps",
+                    Console.WriteLine("{0:0.000} arl ({1:#,#00.} mrl, {2:0.000} stdrl); {3:#,###.} rps (done: {4}, failures: {5})",
                         avg,
                         max,
                         stddev,
-                        myTimes.Count / (reportClientStatsTimer / 1000.0)
+                        myTimes.Count / (reportClientStatsTimer / 1000.0),
+                        myCount,
+                        myFailures
                     );
 
                     //foreach (var time in myTimes) {
