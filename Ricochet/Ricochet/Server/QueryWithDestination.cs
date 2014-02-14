@@ -19,8 +19,8 @@ namespace Ricochet {
                 return query;
             }
         }
-        internal BoundedQueueSingleConsumer<byte[]> Destination;
-        internal QueryWithDestination(byte[] bytes, BoundedQueueSingleConsumer<byte[]> destination, Serializer serializer) {
+        internal IBoundedQueue<byte[]> Destination;
+        internal QueryWithDestination(byte[] bytes, IBoundedQueue<byte[]> destination, Serializer serializer) {
             this.bytes = bytes;
             this.Destination = destination;
             this.serializer = serializer;

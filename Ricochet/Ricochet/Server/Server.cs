@@ -45,7 +45,7 @@ namespace Ricochet {
         /// <summary>
         /// Only contains non-null queries
         /// </summary>
-        private BoundedQueueSingleConsumer<QueryWithDestination> incomingQueries = new BoundedQueueSingleConsumer<QueryWithDestination>(maxQueueSize);
+        private IBoundedQueue<QueryWithDestination> incomingQueries = new BoundedQueue<QueryWithDestination>(maxQueueSize);
         private ConcurrentBag<ClientManager> clients = new ConcurrentBag<ClientManager>();
         private ConcurrentBag<Thread> workers = new ConcurrentBag<Thread>();
 

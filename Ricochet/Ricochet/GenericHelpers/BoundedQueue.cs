@@ -19,7 +19,7 @@ namespace Ricochet {
     /// Possible to exceed capacity by 1, in the event of someone calling <see cref="EnqueAtFrontWithoutFail"/>
     /// </summary>
     /// <typeparam name="T"></typeparam>
-    internal class BoundedQueue<T> {
+    internal class BoundedQueue<T> : IBoundedQueue<T> {
         private readonly ILog l = LogManager.GetCurrentClassLogger();
 
         /// <summary>
@@ -76,7 +76,7 @@ namespace Ricochet {
             }
         }
 
-        internal void Close() {
+        public void Close() {
             lock (queue) {
                 closed = true;
                 Monitor.PulseAll(queue);

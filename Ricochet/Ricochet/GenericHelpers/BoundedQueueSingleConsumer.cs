@@ -13,7 +13,7 @@ namespace Ricochet {
     /// The actual bound is maxSize + number of writer threads
     /// </summary>
     /// <typeparam name="T"></typeparam>
-    internal class BoundedQueueSingleConsumer<T> {
+    internal class BoundedQueueSingleConsumer<T> : IBoundedQueue<T> {
         private readonly ILog l = LogManager.GetCurrentClassLogger();
 
         /// <summary>
@@ -74,7 +74,7 @@ namespace Ricochet {
             return true;
         }
 
-        internal void Close() {
+        public void Close() {
             closed = true;
         }
     }

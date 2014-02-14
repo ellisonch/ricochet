@@ -21,7 +21,7 @@ namespace TestClient {
         }
         // const int reportEvery = 50000;
         const int reportServerStatsTimer = 5000;
-        const int reportClientStatsTimer = 2500;
+        const int reportClientStatsTimer = 5000;
         const int numThreads = 4;
 
         static ConcurrentBag<long> times = new ConcurrentBag<long>();

@@ -44,8 +44,8 @@ namespace Ricochet {
             }
         }
 
-        readonly BoundedQueueSingleConsumer<QueryWithDestination> incomingQueries;
-        private BoundedQueueSingleConsumer<byte[]> outgoingResponses = new BoundedQueueSingleConsumer<byte[]>(maxQueueSize);
+        readonly IBoundedQueue<QueryWithDestination> incomingQueries;
+        private IBoundedQueue<byte[]> outgoingResponses = new BoundedQueue<byte[]>(maxQueueSize);
 
         Thread readerThread;
         Thread writerThread;
@@ -57,7 +57,7 @@ namespace Ricochet {
         /// <param name="client">TcpClient to handle.</param>
         /// <param name="incomingQueries">Global queue in which to insert incoming queries.</param>
         /// <param name="serializer">Serializer user to send and receive messages over the wire.</param>
-        public ClientManager(TcpClient client, BoundedQueueSingleConsumer<QueryWithDestination> incomingQueries, Serializer serializer) {
+        public ClientManager(TcpClient client, IBoundedQueue<QueryWithDestination> incomingQueries, Serializer serializer) {
             this.client = client;
             this.incomingQueries = incomingQueries;
             this.serializer = serializer;
