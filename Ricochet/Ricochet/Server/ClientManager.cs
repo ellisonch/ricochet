@@ -45,7 +45,7 @@ namespace Ricochet {
         }
 
         readonly IBoundedQueue<QueryWithDestination> incomingQueries;
-        private IBoundedQueue<byte[]> outgoingResponses = new BoundedQueue<byte[]>(maxQueueSize);
+        private IBoundedQueue<byte[]> outgoingResponses = new BoundedQueueSingleConsumer<byte[]>(maxQueueSize);
 
         Thread readerThread;
         Thread writerThread;
