@@ -21,7 +21,7 @@ namespace TestClient {
         const bool reportClient = true;
         const int reportServerStatsTimer = 5000;
         const int reportClientStatsTimer = 5000;
-        const int numThreads = 16;
+        const int numThreads = 500;
         const string payloadPrefix = smallPayload; // or bigPayload
 
         // probably don't play with these
@@ -137,10 +137,10 @@ namespace TestClient {
 
             Console.WriteLine("\nThe output first shows stuff about instantaneous numbers (across the most recent {0} seconds).", reportClientStatsTimer/1000.0);
             Console.Write("Avg (inst) response time (ms)");
-            Console.Write(", (Max");
-            Console.Write(", Stddev");
+            Console.Write(", (Stddev");
             Console.Write(", 99 Pctile");
-            Console.Write(", 99.99 Pctile)");
+            Console.Write(", 99.99 Pctile");
+            Console.Write(", Max)");
             Console.Write(", Requests per second");
             Console.WriteLine("\n");
 
@@ -182,7 +182,7 @@ namespace TestClient {
 
                 arls.Add(avg);
 
-                Console.Write("{0:0.000} ({1:#,000.}, {2:0.00}, {3:00.00}, {4:00.00}), {5:#,###.} rps",
+                Console.Write("{0:0.000} ({2:0.00}, {3:00.00}, {4:00.00}, {1:#,000.}), {5:#,###.} rps",
                     avg,
                     max,
                     stddev,
