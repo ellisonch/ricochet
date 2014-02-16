@@ -4,15 +4,16 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{532992D4-AA21-4A9C-B05F-ACC3A4C9839E}</ProjectGuid>
-    <OutputType>Library</OutputType>
+    <ProjectGuid>{10CFFBCA-C0BE-4C0C-8D83-CA3FD89C895D}</ProjectGuid>
+    <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>TestLib</RootNamespace>
-    <AssemblyName>TestLib</AssemblyName>
+    <RootNamespace>TestClientRealistic</RootNamespace>
+    <AssemblyName>TestClientRealistic</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
@@ -20,9 +21,9 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <PlatformTarget>AnyCPU</PlatformTarget>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
@@ -40,16 +41,21 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="AQuery.cs" />
-    <Compile Include="AResponse.cs" />
-    <Compile Include="ClientHelper.cs" />
+    <Compile Include="TestClientRealistic.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="WhichSerializer.cs" />
+    <Compile Include="TestObject.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Ricochet\Ricochet.csproj">
       <Project>{aee87d42-27fb-4e1b-bf77-b773b22d2bcc}</Project>
       <Name>Ricochet</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\TestLib\TestLib.csproj">
+      <Project>{532992d4-aa21-4a9c-b05f-acc3a4c9839e}</Project>
+      <Name>TestLib</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

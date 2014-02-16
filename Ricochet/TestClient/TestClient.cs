@@ -22,11 +22,7 @@ namespace TestClient {
         const int reportServerStatsTimer = 5000;
         const int reportClientStatsTimer = 5000;
         const int numThreads = 500;
-        const string payloadPrefix = smallPayload; // or bigPayload
 
-        // probably don't play with these
-        const int numDistinctPayloads = 10;
-        const int numWarmupQueries = 5;
 
 
         static ConcurrentBag<long> times = new ConcurrentBag<long>();
@@ -41,7 +37,6 @@ namespace TestClient {
         static Client client;
 
         static ConcurrentDictionary<int, Thread> threads = new ConcurrentDictionary<int, Thread>();
-        static string[] payloads = new string[numDistinctPayloads];
 
         static int Main(string[] args) {
             TestClient tc = new TestClient();
@@ -59,10 +54,6 @@ namespace TestClient {
                 ReportClientStatsHeader();
                 new Thread(ReportClientStats).Start(client);
 #pragma warning restore 0162
-            }
-
-            for (int i = 0; i < numDistinctPayloads; i++) {
-                payloads[i] = payloadPrefix + i;
             }
 
             for (int i = 0; i < numThreads; i++) {
@@ -87,13 +78,13 @@ namespace TestClient {
                     threadsReady.Set();
                 }
             }
-            warmup();
+            ClientHelper.warmup(client);
 
             while (true) {
                 var mycount = Interlocked.Increment(ref count);
 
                 Stopwatch mysw = Stopwatch.StartNew();
-                bool success = doCall(mycount, payloads[mycount % numDistinctPayloads]);
+                bool success = ClientHelper.doCall(client, mycount);
                 mysw.Stop();
 
                 long myfailures;
@@ -106,31 +97,7 @@ namespace TestClient {
             }
         }
 
-        private static void warmup() {
-            var q = new AQuery("xxx");
-            AResponse ar = null;
-            for (int i = 0; i < numWarmupQueries; i++) {
-                client.TryCall<AQuery, AResponse>("double", q, out ar);
-            }
-        }
 
-        private static bool doCall(long myCount, string payload) {
-            var q = new AQuery(payload);
-            bool success = false;
-
-            try {
-                AResponse ar = null;
-                if (client.TryCall<AQuery, AResponse>("double", q, out ar)) {
-                    // Debug.Assert(ar.res == payload + payload, String.Format("Something went wrong, {0} != {1}", ar.res, payload + payload));
-                    Debug.Assert(ar.res == payload + payload, "Something went wrong, strings didn't match");
-                    success = true;
-                }
-            } catch (Exception e) {
-                Console.WriteLine("Something really unexpected happened: {0}", e);
-                success = false;
-            }
-            return success;
-        }
 
         private static void ReportClientStatsHeader() {
             Console.WriteLine("\nThe game is to maximize throughput (responses per second (rps)),\nwhile keeping individual response times low.\n");
@@ -225,7 +192,5 @@ namespace TestClient {
                 Console.WriteLine("----------------------------------------------");
             }
         }
-        const string smallPayload = "foo bar baz";
-        const string bigPayload = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent faucibus odio sollicitudin porta condimentum. Maecenas non rutrum sapien, dictum tincidunt nibh. Donec lacinia mattis interdum. Quisque pellentesque, ligula non elementum vulputate, massa lacus mattis justo, at iaculis mi lorem vel neque. Aenean cursus vitae nulla non vehicula. Vestibulum venenatis urna ac turpis semper, sed molestie nibh convallis. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Cras pharetra sodales ante dapibus malesuada. Morbi in lectus vulputate tortor elementum congue id quis sem. Duis eget commodo magna. Suspendisse luctus viverra pharetra. Nam lacinia eros id dictum posuere. Ut euismod, enim sit amet laoreet dictum, enim erat adipiscing eros, nec auctor nibh elit sit amet turpis. Morbi hendrerit nibh a urna congue, ac ultricies tellus vulputate. Integer ac velit venenatis, porttitor tellus eu, pretium sapien. Curabitur eget tincidunt odio, ut vehicula nisi. Praesent molestie diam nullam.";
     }
 }
