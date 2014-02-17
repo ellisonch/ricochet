@@ -11,6 +11,7 @@ namespace TestClientRealistic {
     internal class TestObject {
         public Client client { get; set; }
         public long done = 0;
+        public long failures = 0;
         public long threadsStarted = 0;
         public ManualResetEvent barrier = new ManualResetEvent(false);
         public int waitMax = 0;

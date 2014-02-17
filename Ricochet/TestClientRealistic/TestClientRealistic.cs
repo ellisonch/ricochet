@@ -68,10 +68,14 @@ namespace TestClientRealistic {
                 Thread.Sleep((int)targetRatePerThread);
 
                 Stopwatch sw = Stopwatch.StartNew();
-                ClientHelper.doCall(ch.client, mspc);
+                var res = ClientHelper.doCall(ch.client, mspc);
                 sw.Stop();
                 double time = sw.Elapsed.TotalMilliseconds;
                 ch.times.Add(time);
+
+                if (!res) {
+                    Interlocked.Increment(ref ch.failures);
+                }
 
                 Interlocked.Increment(ref ch.done);
             }
@@ -86,6 +90,7 @@ namespace TestClientRealistic {
             long done = 0;
             long pdone = 0;
             bool startedUp = false;
+            long failures = 0;
 
             while (true) {
                 Thread.Sleep(clientReportInterval);
@@ -105,6 +110,7 @@ namespace TestClientRealistic {
                 pdone = done;
                 done = Interlocked.Read(ref ch.done);
                 if (done == 0) { continue; }
+                failures = Interlocked.Read(ref ch.failures);
                 
                 var overallTime = sw.Elapsed.TotalMilliseconds / 1000.0;
                 var instTime = (double)clientReportInterval / 1000.0;
@@ -120,11 +126,14 @@ namespace TestClientRealistic {
                 var percentile9999 = myTimes[(int)(myTimes.Length * 0.9999)];
                 var max = myTimes.Max();
 
-                Console.Write("done: {0} | {1:0.000} => {2:0.000}", 
-                    instDone, irps, rps
+                Console.Write("{0:0.000} => {1:0.000}", 
+                    irps, rps
                 );
                 Console.Write(" | {0:0.000}, {1:0.000}, {2:0.000}, {3}",
                     percentile50, percentile99, percentile9999, max
+                );
+                Console.Write(" | done: {0}, total: {1}, fail: {2}",
+                    instDone, done, failures
                 );
                 Console.WriteLine();
 
