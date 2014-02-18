@@ -63,7 +63,7 @@ namespace Ricochet {
                 byte[] bytes = serializer.SerializeQuery(query);
                 writeStream.WriteToStream(bytes);
             } catch (Exception e) {
-                l.InfoFormat("Error writing: {0}", e.Message);
+                l.InfoFormat("Error writing", e);
                 // RequestReconnect();
                 return false;
             }
@@ -91,7 +91,7 @@ namespace Ricochet {
                     return false;
                 }
             } catch (Exception e) {
-                l.InfoFormat("Error reading: {0}", e.Message);
+                l.InfoFormat("Error reading:", e);
                 // RequestReconnect();
                 return false;
             }
@@ -114,7 +114,7 @@ namespace Ricochet {
             try {
                 myConnection.Connect(hostname, port);
             } catch (SocketException e) {
-                l.InfoFormat("Couldn't connect: {0}", e.Message);
+                l.InfoFormat("Couldn't connect:", e);
                 return false;
             }
 

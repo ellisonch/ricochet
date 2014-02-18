@@ -21,6 +21,12 @@ namespace Ricochet {
         /// Number of outstanding completion port threads in the thread pool
         /// </summary>
         public int ActiveCompletionPortThreads { get; set; }
+
+        /// <summary>
+        /// Work Queue times
+        /// </summary>
+        public Dictionary<string, BasicStats> Timers { get; set; }
+
         private List<ClientStats> _clients = new List<ClientStats>();
 
         /// <summary>

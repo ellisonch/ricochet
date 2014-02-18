@@ -1,6 +1,7 @@
 ﻿using Common.Logging;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -9,6 +10,7 @@ namespace Ricochet {
     internal class QueryWithDestination {
         private byte[] bytes;
         private Serializer serializer;
+        public Stopwatch sw = Stopwatch.StartNew();
 
         internal Query Query {
             get {
@@ -19,8 +21,8 @@ namespace Ricochet {
                 return query;
             }
         }
-        internal IBoundedQueue<byte[]> Destination;
-        internal QueryWithDestination(byte[] bytes, IBoundedQueue<byte[]> destination, Serializer serializer) {
+        internal IBoundedQueue<Tuple<byte[], Stopwatch>> Destination;
+        internal QueryWithDestination(byte[] bytes, IBoundedQueue<Tuple<byte[], Stopwatch>> destination, Serializer serializer) {
             this.bytes = bytes;
             this.Destination = destination;
             this.serializer = serializer;

@@ -45,7 +45,7 @@ namespace Ricochet {
         }
 
         readonly IBoundedQueue<QueryWithDestination> incomingQueries;
-        private IBoundedQueue<byte[]> outgoingResponses = new BoundedQueueSingleConsumer<byte[]>(maxQueueSize);
+        private IBoundedQueue<Tuple<byte[], Stopwatch>> outgoingResponses = new BoundedQueueSingleConsumer<Tuple<byte[], Stopwatch>>(maxQueueSize);
 
         Thread readerThread;
         Thread writerThread;
@@ -119,7 +119,7 @@ namespace Ricochet {
                     }
                 }
             } catch (Exception e) {
-                l.InfoFormat("Error in ReadQueries(): {0}", e.Message);
+                l.InfoFormat("Error in ReadQueries():", e);
             } finally {
                 Dispose();
             }
@@ -129,15 +129,19 @@ namespace Ricochet {
         private void WriteResponses() {
             try {
                 while (!disposed) {
-                    byte[] bytes;
-                    if (!outgoingResponses.TryDequeue(out bytes)) {
+                    Tuple<byte[], Stopwatch> tup;
+                    if (!outgoingResponses.TryDequeue(out tup)) {
                         continue;
                     }
+                    var sw = tup.Item2;
+                    // Console.WriteLine(sw.Elapsed.TotalMilliseconds);
+                    TimingHelper.Add("Response Queue", sw);
+                    var bytes = tup.Item1;
                     writeStream.WriteToStream(bytes);
                     Interlocked.Increment(ref responsesReturned);
                 }
             } catch (Exception e) {
-                l.WarnFormat("Error in WriteResponses(): {0}", e.Message);
+                l.WarnFormat("Error in WriteResponses()", e);
             } finally {
                 this.Dispose();
             }
@@ -159,24 +163,16 @@ namespace Ricochet {
             try { outgoingResponses.Close(); } catch (Exception) { }
 
             if (underlyingStream != null) {
-                try { underlyingStream.Close(); } catch (Exception) { 
-                    // l.Log(Logger.Flag.Warning, "Error closing stream: {0}", e.Message); 
-                }
+                try { underlyingStream.Close(); } catch (Exception) { }
             }
             if (writeStream != null) {
-                try { writeStream.Dispose(); } catch (Exception) {
-                    // l.Log(Logger.Flag.Warning, "Error closing write stream: {0}", e.Message);
-                }
+                try { writeStream.Dispose(); } catch (Exception) { }
             }
             if (readStream != null) {
-                try { readStream.Dispose(); } catch (Exception) {
-                    // l.Log(Logger.Flag.Warning, "Error closing read stream: {0}", e.Message);
-                }
+                try { readStream.Dispose(); } catch (Exception) { }
             }
             if (client != null) {
-                try { client.Close(); } catch (Exception) {
-                    // l.Log(Logger.Flag.Warning, "Error closing client: {0}", e.Message);
-                }
+                try { client.Close(); } catch (Exception) { }
                 client = null;
             }
 

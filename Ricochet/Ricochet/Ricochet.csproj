@@ -61,7 +61,10 @@
     <Compile Include="GenericHelpers\BoundedQueueSingleConsumer.cs" />
     <Compile Include="GenericHelpers\BoundedQueue.cs" />
     <Compile Include="Client\Client.cs" />
+    <Compile Include="GenericHelpers\CircularArrayList.cs" />
     <Compile Include="GenericHelpers\IBoundedQueue.cs" />
+    <Compile Include="GenericHelpers\BasicStats.cs" />
+    <Compile Include="GenericHelpers\TimingHelper.cs" />
     <Compile Include="Streams\MessageReadStream.cs" />
     <Compile Include="Serializers\CustomMessageSerializerHelper.cs" />
     <Compile Include="Serializers\MessagePackWithCustomMessageSerializer.cs" />

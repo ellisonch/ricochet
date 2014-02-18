@@ -17,10 +17,10 @@ namespace TestClient {
     // TODO need to start using volatile in places
     class TestClient {
         // play with these
-        const bool reportServer = false;
+        const bool reportServer = true;
         const bool reportClient = true;
-        const int reportServerStatsTimer = 5000;
-        const int reportClientStatsTimer = 5000;
+        const int reportServerStatsTimer = 2000;
+        const int reportClientStatsTimer = 2000;
         const int numThreads = 16;
 
 
@@ -179,6 +179,10 @@ namespace TestClient {
                 }
                 if (!success) { continue; }
                 // Console.WriteLine("My outgoing queue length: {0}", client.)
+                Console.WriteLine("----------------------------------------------");
+                foreach (var item in ss.Timers) {
+                    Console.WriteLine("{0,-20}: {1}", item.Key, item.Value);
+                }
                 Console.WriteLine("----------------------------------------------");
                 Console.WriteLine("Server queue length: {0}", ss.WorkQueueLength);
                 Console.WriteLine("Server worker threads: {0}", ss.ActiveWorkerThreads);

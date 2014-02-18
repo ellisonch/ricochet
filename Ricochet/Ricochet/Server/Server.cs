@@ -34,7 +34,6 @@ namespace Ricochet {
         //const int minCompletionPortThreads = 0; // 0 means don't change from default
         //const int maxWorkerThreads = 64;
         //const int maxCompletionPortThreads = 0; // 0 means don't change from default
-                
 
         Serializer serializer;
         private readonly IPAddress address;
@@ -45,7 +44,7 @@ namespace Ricochet {
         /// <summary>
         /// Only contains non-null queries
         /// </summary>
-        private IBoundedQueue<QueryWithDestination> incomingQueries = new BoundedQueue<QueryWithDestination>(maxQueueSize);
+        private IBoundedQueue<QueryWithDestination> workQueue = new BoundedQueue<QueryWithDestination>(maxQueueSize);
         private ConcurrentBag<ClientManager> clients = new ConcurrentBag<ClientManager>();
         private ConcurrentBag<Thread> workers = new ConcurrentBag<Thread>();
 
@@ -110,7 +109,7 @@ namespace Ricochet {
                     }
                     System.Threading.Thread.Sleep(2000);
                 } catch (Exception e) {
-                    l.ErrorFormat("Unexpected exception in Cleanup: {0}", e.Message);
+                    l.ErrorFormat("Unexpected exception in Cleanup:", e);
                 }
             }
         }
@@ -127,14 +126,14 @@ namespace Ricochet {
 
                     var client = listener.AcceptTcpClient();
                     l.InfoFormat("Client connected.");
-                    var clientHandler = new ClientManager(client, incomingQueries, serializer);
+                    var clientHandler = new ClientManager(client, workQueue, serializer);
                     clients.Add(clientHandler);
                     clientHandler.Start();
                 }
             } catch (AggregateException e) {
                 l.ErrorFormat("Exception thrown: {0}", e.InnerException.Message);
             } catch (Exception e) {
-                l.ErrorFormat("Exception thrown: {0}", e.Message);
+                l.ErrorFormat("Exception thrown", e);
             }
         }
 
@@ -155,7 +154,7 @@ namespace Ricochet {
                 try {
                     arg = serializer.Deserialize<T1>(query.MessageData);
                 } catch (Exception e) {
-                    l.WarnFormat("Something went wrong Deserializing the message data: {0}", e.Message);
+                    l.WarnFormat("Something went wrong Deserializing the message data:", e);
                     throw;
                 }
                 var res = fun(arg);
@@ -170,10 +169,13 @@ namespace Ricochet {
                 try {
                     QueryWithDestination qwd;
                     // TODO if TryDequeue fails, we're probably being shut down
-                    if (!incomingQueries.TryDequeue(out qwd)) {
+                    if (!workQueue.TryDequeue(out qwd)) {
                         l.WarnFormat("TryDequeue failed");
                         continue;
                     }
+                    qwd.sw.Stop();
+                    TimingHelper.Add("Work Queue", qwd.sw);
+                    qwd.sw.Restart();
                     try {
                         workerSemaphore.WaitOne();
                         ThreadPool.QueueUserWorkItem(DoWork, qwd);
@@ -182,7 +184,7 @@ namespace Ricochet {
                         throw;
                     }
                 } catch (Exception e) {
-                    l.WarnFormat("Problem in WorkerHandler: {0}", e.Message);
+                    l.WarnFormat("Problem in WorkerHandler:", e);
                 }
             }
         }
@@ -190,12 +192,20 @@ namespace Ricochet {
         private void DoWork(Object obj) {
             try {
                 QueryWithDestination qwd = (QueryWithDestination)obj;
+                qwd.sw.Stop();
+                TimingHelper.Add("WorkerSpawn", qwd.sw);
+
+                Stopwatch sw = Stopwatch.StartNew();
                 Response response = GetResponseForQuery(qwd.Query);
+                sw.Stop();
+                TimingHelper.Add("GetResponse", sw);
+
                 byte[] bytes = serializer.SerializeResponse(response);
                 // l.Log(Logger.Flag.Warning, "Response calculated by thread {0}", Thread.CurrentThread.ManagedThreadId);
-                qwd.Destination.EnqueueIfRoom(bytes);
+                sw.Restart();
+                qwd.Destination.EnqueueIfRoom(new Tuple<byte[], Stopwatch>(bytes, sw));
             } catch (Exception e) {
-                l.WarnFormat("Problem doing work: {0}", e.Message);
+                l.WarnFormat("Problem doing work:", e);
             } finally {
                 workerSemaphore.Release();
             }
@@ -216,10 +226,13 @@ namespace Ricochet {
                 }
                 // Func<Query, Response> fun = handlers[query.Handler];
                 l.InfoFormat("Calling handler {0}...", query.Handler);
+                Stopwatch sw = Stopwatch.StartNew();
                 response = fun(query);
+                sw.Stop();
+                TimingHelper.Add("handler", sw);
                 l.InfoFormat("Back from handler {0}.", query.Handler);
             } catch (Exception e) {
-                l.WarnFormat("Something went wrong calling handler: {0}", e.Message);
+                l.WarnFormat("Something went wrong calling handler:", e);
                 response = Response.Failure(e.Message);
             }
             response.Dispatch = query.Dispatch;
@@ -238,10 +251,15 @@ namespace Ricochet {
             ThreadPool.GetMaxThreads(out wt, out cpt);
             ThreadPool.GetAvailableThreads(out awt, out acpt);
 
+            //var times = workQueueTimes.ToArray();
+            //Array.Sort(times);
+            //var workQueueTime50 = times[(int)(times.Length * 0.50)];
+
             ServerStats ss = new ServerStats() {
-                WorkQueueLength = incomingQueries.Count,
+                WorkQueueLength = workQueue.Count,
                 ActiveWorkerThreads = wt - awt,
                 ActiveCompletionPortThreads = cpt - acpt,
+                Timers = TimingHelper.Summary()
             };
             foreach (var client in clients) {
                 ClientStats cs = new ClientStats() {

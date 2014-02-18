@@ -15,8 +15,6 @@ namespace Ricochet {
 
     /// <summary>
     /// Bounded, blocking queue.
-    /// 
-    /// Possible to exceed capacity by 1, in the event of someone calling <see cref="EnqueAtFrontWithoutFail"/>
     /// </summary>
     /// <typeparam name="T"></typeparam>
     internal class BoundedQueue<T> : IBoundedQueue<T> {
