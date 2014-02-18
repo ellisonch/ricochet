@@ -17,13 +17,11 @@ namespace TestClient {
     // TODO need to start using volatile in places
     class TestClient {
         // play with these
-        const bool reportServer = false;
+        const bool reportServer = true;
         const bool reportClient = true;
         const int reportServerStatsTimer = 5000;
         const int reportClientStatsTimer = 5000;
-        const int numThreads = 500;
-
-
+        const int numThreads = 16;
 
         static ConcurrentBag<long> times = new ConcurrentBag<long>();
         static ConcurrentDictionary<int, double> timeSums = new ConcurrentDictionary<int, double>();
@@ -68,7 +66,7 @@ namespace TestClient {
             return 0;
         }
 
-        private static void ClientWorker(object obj) {
+        private static async void ClientWorker(object obj) {
             int myThreadNum = (int)obj;
             numThreadsReady++;
 
@@ -78,13 +76,13 @@ namespace TestClient {
                     threadsReady.Set();
                 }
             }
-            ClientHelper.warmup(client);
+            // ClientHelper.warmup(client);
 
             while (true) {
                 var mycount = Interlocked.Increment(ref count);
 
                 Stopwatch mysw = Stopwatch.StartNew();
-                bool success = ClientHelper.doCall(client, mycount);
+                bool success = await ClientHelper.doCall(client, mycount);
                 mysw.Stop();
 
                 long myfailures;
@@ -170,13 +168,13 @@ namespace TestClient {
             Client client = (Client)obj;
             while (client.IsAlive) {
                 System.Threading.Thread.Sleep(reportServerStatsTimer);
-                bool success;
+                bool success = false;
                 ServerStats ss = null;
-                try {
-                    success = client.TryCall<bool, ServerStats>("_getStats", true, out ss);
-                } catch (ObjectDisposedException) {
-                    success = false;
-                }
+                //try {
+                //    success = client.TryCall<bool, ServerStats>("_getStats", true, out ss);
+                //} catch (ObjectDisposedException) {
+                //    success = false;
+                //}
                 if (!success) { continue; }
                 // Console.WriteLine("My outgoing queue length: {0}", client.)
                 Console.WriteLine("----------------------------------------------");

@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using System.IO;
 using System.Collections.Concurrent;
 using Common.Logging;
+using AsyncBridge;
 
 namespace Ricochet {
     /// <summary>
@@ -67,24 +68,24 @@ namespace Ricochet {
         /// </summary>
         public void WaitUntilConnected() {
             l.WarnFormat("Waiting...");
-            while (!Ping()) {
-                if (disposed) { throw new ObjectDisposedException("Client was disposed, so can't connect"); }
-                // Console.Write(".");
-                System.Threading.Thread.Sleep(100);
-            }
+            //while (!Ping()) {
+            //    if (disposed) { throw new ObjectDisposedException("Client was disposed, so can't connect"); }
+            //    // Console.Write(".");
+            //    System.Threading.Thread.Sleep(100);
+            //}
             l.WarnFormat("Connected.");
         }
 
-        private bool Ping() {
-            int pingResult;
-            if (!this.TryCall<int, int>("_ping", 9001, out pingResult)) {
-                return false;
-            }
-            if (pingResult != 9001) {
-                return false;
-            }
-            return true;
-        }
+        //private bool Ping() {
+        //    int pingResult;
+        //    if (!this.TryCall<int, int>("_ping", 9001, out pingResult)) {
+        //        return false;
+        //    }
+        //    if (pingResult != 9001) {
+        //        return false;
+        //    }
+        //    return true;
+        //}
 
         private void WriteQueries() {
             Query queryToRetry = null;
@@ -133,26 +134,44 @@ namespace Ricochet {
         /// <param name="input">Input to function</param>
         /// <param name="ret">Result from function</param>
         /// <returns>True if the call was successful, false otherwise.</returns>
-        public bool TryCall<T1, T2>(string name, T1 input, out T2 ret) {
-            ret = default(T2);
+        public async Task<Tuple<bool, T2>> TryCallAsync<T1, T2>(string name, T1 input) {
+            T2 ret = default(T2);
             if (disposed) { throw new ObjectDisposedException("This client has been disposed."); }
             Query query = Query.CreateQuery<T1>(name, input, serializer);
-            pendingRequests.Add(query);
+            var tcs = pendingRequests.Add(query);
             if (!outgoingQueries.EnqueueIfRoom(query)) {
                 // l.Log(Logger.Flag.Warning, "Reached maximum queue size!  Query dropped.");
                 pendingRequests.Delete(query.Dispatch);
-                return false;
+                return new Tuple<bool, T2>(false, ret);
             }
-            Response response = pendingRequests.Get(query.Dispatch);
+
+            Response response = await pendingRequests.Get(query.Dispatch);
+
             if (!response.OK) {
-                return false;
+                return new Tuple<bool, T2>(false, ret);
             }
 
             if (response.MessageData == null) {
-                return false;
+                return new Tuple<bool, T2>(false, ret);
             }
             ret = serializer.Deserialize<T2>(response.MessageData);
-            return true;
+            return new Tuple<bool, T2>(true, ret);
+        }
+
+        /// <summary>
+        /// Same as TryCallAsync, but synchronous.
+        /// </summary>
+        /// <typeparam name="T1"></typeparam>
+        /// <typeparam name="T2"></typeparam>
+        /// <param name="name"></param>
+        /// <param name="input"></param>
+        /// <returns></returns>
+        public Tuple<bool, T2> TryCall<T1, T2>(string name, T1 input) {
+            Tuple<bool, T2> ret = null;
+            using (var async = AsyncHelper.Wait) {
+                async.Run(TryCallAsync<T1, T2>(name, input), x => ret = x);
+            }
+            return ret;
         }
 
         /// <summary>

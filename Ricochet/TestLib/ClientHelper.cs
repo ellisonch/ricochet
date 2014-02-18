@@ -19,15 +19,15 @@ namespace TestLib {
             //    payloads[i] = payloadPrefix + i;
             //}
 
-        public static void warmup(Client client) {
-            var q = new AQuery("xxx");
-            AResponse ar = null;
-            for (int i = 0; i < numWarmupQueries; i++) {
-                client.TryCall<AQuery, AResponse>("double", q, out ar);
-            }
-        }
+        //public static void warmup(Client client) {
+        //    var q = new AQuery("xxx");
+        //    AResponse ar = null;
+        //    for (int i = 0; i < numWarmupQueries; i++) {
+        //        client.TryCall<AQuery, AResponse>("double", q, out ar);
+        //    }
+        //}
 
-        public static bool doCall(Client client, long myCount) {
+        public async static Task<bool> doCall(Client client, long myCount) {
             // string payload = payloads[mycount % numDistinctPayloads];
             string payload = payloadPrefix + myCount;
             var q = new AQuery(payload);
@@ -35,7 +35,13 @@ namespace TestLib {
 
             try {
                 AResponse ar = null;
-                if (client.TryCall<AQuery, AResponse>("double", q, out ar)) {
+
+                var tup = await client.TryCallAsync<AQuery, AResponse>("double", q);
+                // var tup = task.Result;
+                ar = tup.Item2;
+                bool mysuccess = tup.Item1;
+
+                if (mysuccess) {
                     // Debug.Assert(ar.res == payload + payload, String.Format("Something went wrong, {0} != {1}", ar.res, payload + payload));
                     Debug.Assert(ar.res == payload + payload, "Something went wrong, strings didn't match");
                     success = true;

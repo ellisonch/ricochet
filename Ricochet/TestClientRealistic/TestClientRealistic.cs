@@ -14,7 +14,7 @@ namespace TestClientRealistic {
 
     class TestClientRealistic {
         // per client settings
-        const int meanRPS = 100;
+        const int meanRPS = 10000;
         const int threadsPerClient = 100;
         const int clientReportInterval = 1000;
 
@@ -41,7 +41,7 @@ namespace TestClientRealistic {
         static void OneClient() {
             Client client = new Client("127.0.0.1", 11000, WhichSerializer.Serializer);
             client.WaitUntilConnected();
-            ClientHelper.warmup(client);
+            // ClientHelper.warmup(client);
 
             TestObject ch = new TestObject() {
                 client = client
@@ -57,7 +57,7 @@ namespace TestClientRealistic {
             ch.barrier.Set();
         }
 
-        static void OneClientThread(object obj) {
+        static async void OneClientThread(object obj) {
             TestObject ch = (TestObject)obj;
             ch.barrier.WaitOne();
             Thread.Sleep(r.Next(0, 1000));
@@ -68,7 +68,7 @@ namespace TestClientRealistic {
                 Thread.Sleep((int)targetRatePerThread);
 
                 Stopwatch sw = Stopwatch.StartNew();
-                var res = ClientHelper.doCall(ch.client, mspc);
+                var res = await ClientHelper.doCall(ch.client, mspc);
                 sw.Stop();
                 double time = sw.Elapsed.TotalMilliseconds;
                 ch.times.Add(time);

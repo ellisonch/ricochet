@@ -12,7 +12,7 @@ namespace Ricochet {
         private ConcurrentDictionary<int, SignaledResponse> requests = new ConcurrentDictionary<int, SignaledResponse>();
         private readonly ILog l = LogManager.GetCurrentClassLogger();
 
-        internal Response Get(int ticket) {
+        internal async Task<Response> Get(int ticket) {
             var sr = requests[ticket];
 
             int remainingTime = (int)(Client.HardQueryTimeout - sr.SW.ElapsedMilliseconds);
@@ -24,7 +24,16 @@ namespace Ricochet {
             }
 
             Response res;
-            bool canProceed = sr.WaitUntil(remainingTime);
+
+            // bool canProceed = sr.WaitUntil(remainingTime);
+            bool canProceed;
+            Response r = await sr.WaitResponse(remainingTime);
+            if (r == null) {
+                canProceed = false;
+            } else {
+                canProceed = true;
+            }
+
             if (!canProceed) { // if timeout...
                 l.InfoFormat("Hard timeout reached");
                 res = Response.Timeout(ticket);
@@ -45,8 +54,10 @@ namespace Ricochet {
             }
         }
 
-        internal void Add(Query query) {
-            requests[query.Dispatch] = new SignaledResponse(query.SW);
+        internal Task<Response> Add(Query query) {
+            var tcs = new TaskCompletionSource<Response>();
+            requests[query.Dispatch] = new SignaledResponse(query.SW, tcs);
+            return tcs.Task;
         }
 
         internal void Delete(int ticket) {
