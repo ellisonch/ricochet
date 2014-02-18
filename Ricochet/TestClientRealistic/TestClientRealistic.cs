@@ -123,17 +123,17 @@ namespace TestClientRealistic {
                 Array.Sort(myTimes);
                 var percentile50 = myTimes[(int)(myTimes.Length * 0.50)];
                 var percentile99 = myTimes[(int)(myTimes.Length * 0.99)];
-                var percentile9999 = myTimes[(int)(myTimes.Length * 0.9999)];
+                var percentile999 = myTimes[(int)(myTimes.Length * 0.999)];
                 var max = myTimes.Max();
 
                 Console.Write("{0:0.000} => {1:0.000}", 
                     irps, rps
                 );
                 Console.Write(" | {0:0.000}, {1:0.000}, {2:0.000}, {3}",
-                    percentile50, percentile99, percentile9999, max
+                    percentile50, percentile99, percentile999, max
                 );
-                Console.Write(" | done: {0}, total: {1}, fail: {2}",
-                    instDone, done, failures
+                Console.Write(" | total: {0}, fail: {1}",
+                    done, failures
                 );
                 Console.WriteLine();
 

@@ -27,7 +27,7 @@ namespace Ricochet {
         private bool disposed = false;
         Serializer serializer;
 
-        private BoundedQueue<Query> outgoingQueries = new BoundedQueue<Query>(maxQueueSize);
+        private IBoundedQueue<Query> outgoingQueries = new BoundedQueue<Query>(maxQueueSize);
         private PendingRequests pendingRequests = new PendingRequests();
 
         Thread readerThread;
@@ -87,17 +87,25 @@ namespace Ricochet {
         }
 
         private void WriteQueries() {
+            Query queryToRetry = null;
+
             while (!disposed) {
                 Query query;
-                if (!outgoingQueries.TryDequeue(out query)) {
-                    continue;
+                if (queryToRetry == null) {
+                    if (!outgoingQueries.TryDequeue(out query)) {
+                        continue;
+                    }
+                } else {
+                    query = queryToRetry;
+                    queryToRetry = null;
                 }
                 if (query.SW.ElapsedMilliseconds > softQueryTimeout) {
                     l.InfoFormat("Soft timeout reached");
                     continue;
                 }
                 if (!connection.Write(query)) {
-                    outgoingQueries.EnqueAtFrontWithoutFail(query);
+                    queryToRetry = query;
+                    // outgoingQueries.EnqueAtFrontWithoutFail(query);
                     System.Threading.Thread.Sleep(connectionTimeout);
                 }
             }

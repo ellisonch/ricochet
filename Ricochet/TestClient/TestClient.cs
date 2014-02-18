@@ -106,7 +106,7 @@ namespace TestClient {
             Console.Write("Avg (inst) response time (ms)");
             Console.Write(", (Stddev");
             Console.Write(", 99 Pctile");
-            Console.Write(", 99.99 Pctile");
+            Console.Write(", 99.9 Pctile");
             Console.Write(", Max)");
             Console.Write(", Requests per second");
             Console.WriteLine("\n");
@@ -137,7 +137,7 @@ namespace TestClient {
                 
                 Array.Sort(myTimes);
                 var percentile99 = myTimes[(int)(myTimes.Length * 0.99)] / ticksPerMS;
-                var percentile9999 = myTimes[(int)(myTimes.Length * 0.9999)] / ticksPerMS;
+                var percentile999 = myTimes[(int)(myTimes.Length * 0.999)] / ticksPerMS;
                 var myCount = myTimes.Count();
                 var myFailures = Interlocked.Read(ref failures);
                 
@@ -149,15 +149,15 @@ namespace TestClient {
 
                 arls.Add(avg);
 
-                Console.Write("{0:0.000} ({2:0.00}, {3:00.00}, {4:00.00}, {1:#,000.}), {5:#,###.} rps",
+                Console.Write("{0:0.000} ({1:0.0}, {2:00.0}, {3:00.0}, {4:#,###.}), {5:#,###.} rps",
                     avg,
-                    max,
                     stddev,
                     percentile99,
-                    percentile9999,
+                    percentile999,
+                    max,
                     myTimes.Length / (reportClientStatsTimer / 1000.0)
                 );
-                Console.Write(" | {0:0.000} {1:0.000} {2:0.000}", arls.Min(), arls.Average(), arls.Max());
+                Console.Write(" | {0:0.00} {1:0.00} {2:0.00}", arls.Min(), arls.Average(), arls.Max());
                 Console.Write(" | done: {0:#,###.}; fail: {1}",
                     theTotal,
                     myFailures

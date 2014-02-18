@@ -39,14 +39,14 @@ namespace Ricochet {
         public BoundedQueue(int maxSize) {
             this.maxSize = maxSize;
         }
-        public bool EnqueAtFrontWithoutFail(T item) {
-            lock (queue) {
-                if (closed) { return false; }
-                queue.AddFirst(item);
-                Monitor.Pulse(queue);
-            }
-            return true;
-        }
+        //public bool EnqueAtFrontWithoutFail(T item) {
+        //    lock (queue) {
+        //        if (closed) { return false; }
+        //        queue.AddFirst(item);
+        //        Monitor.Pulse(queue);
+        //    }
+        //    return true;
+        //}
 
         public bool EnqueueIfRoom(T item) {
             lock (queue) {
