@@ -21,7 +21,7 @@ namespace TestClient {
         const bool reportClient = true;
         const int reportServerStatsTimer = 5000;
         const int reportClientStatsTimer = 5000;
-        const int numThreads = 500;
+        const int numThreads = 16;
 
 
 
