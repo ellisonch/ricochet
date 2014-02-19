@@ -20,10 +20,19 @@ namespace Ricochet {
             0.99,
             0.999,
         };
+
+        private double[] _percentiles = new double[percentileIndices.Length];
         /// <summary>
         /// The values of the percentiles given in percentileIndicies
         /// </summary>
-        public double[] Percentiles = new double[percentileIndices.Length];
+        public double[] Percentiles {
+            get {
+                return _percentiles;
+            }
+            set {
+                _percentiles = value;
+            }
+        }
         /// <summary>
         /// Mean of data
         /// </summary>
