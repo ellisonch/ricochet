@@ -17,20 +17,21 @@ namespace TestClient {
         bool show_help = false;
         readonly string requestName;
 
+        int clientReportInterval = 2000;
+
         public TestClient(string[] args, string requestName) {
             this.requestName = requestName;
             OptionSet p = new OptionSet() {
-                { "m|mode=", "Which mode to use.  Either 'realistic' or 'flood'.",
+                { "m|mode=", "Which mode to use.  Either 'realistic' or 'flood'.  \nDefault is " + mode + ".",
                    v => mode = v },
-                { "s|serializer=", "Which serializer to use.  Either 'messagepack' or 'servicestack'.",
+                { "s|serializer=", "Which serializer to use.  Either 'messagepack' or 'servicestack'.  \nDefault is " + serializerName + ".",
                    v => serializerName = v },
-                //{ "r|repeat=", 
-                //   "the number of {TIMES} to repeat the greeting.\n" + 
-                //      "this must be an integer.",
-                //    (int v) => repeat = v },
+                { "cri|clientReportInterval=", 
+                   "Frequency (in ms) client stats should be reported.  \nSet to 0 to disable.  \nDefault is " + clientReportInterval + ".",
+                    (int v) => clientReportInterval = v },
                 //{ "v", "increase debug message verbosity",
                 //   v => { if (v != null) ++verbosity; } },
-                { "h|help",  "show this message and exit", 
+                { "h|help",  "Show this message and exit.", 
                    v => show_help = v != null },
             };
             try {
@@ -50,6 +51,9 @@ namespace TestClient {
         protected void Start() {
             Serializer serializer = GetSerializer();
             BenchClient<T1, T2> client = GetClient(serializer);
+
+            client.reportClientStatsInterval = clientReportInterval;
+
             client.Start();
         }
 

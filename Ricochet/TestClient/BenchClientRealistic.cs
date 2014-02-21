@@ -13,7 +13,7 @@ namespace TestClient {
         // per client settings
         const int meanRPS = 100;
         const int threadsPerClient = 100;
-        const int clientReportInterval = 1000;
+        // const int clientReportInterval = 1000;
 
         const int targetRatePerThread = (int)(1000.0 / ((double)meanRPS / (double)threadsPerClient));
         const int lowWait = 1;
@@ -97,7 +97,7 @@ namespace TestClient {
             long failures = 0;
 
             while (true) {
-                Thread.Sleep(clientReportInterval);
+                Thread.Sleep(reportClientStatsInterval);
 
                 var threads = Interlocked.Read(ref ch.threadsStarted);
                 if (!startedUp) {
@@ -117,7 +117,7 @@ namespace TestClient {
                 failures = Interlocked.Read(ref ch.failures);
 
                 var overallTime = sw.Elapsed.TotalMilliseconds / 1000.0;
-                var instTime = (double)clientReportInterval / 1000.0;
+                var instTime = (double)reportClientStatsInterval / 1000.0;
                 var instDone = (done - pdone);
                 double irps = (double)(instDone) / instTime;
                 double rps = (double)done / overallTime;

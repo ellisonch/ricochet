@@ -17,9 +17,9 @@ namespace TestClient {
     public class BenchClientFlood<T1, T2> : BenchClient<T1, T2> {
         // play with these
         const bool reportServer = true;
-        const bool reportClient = true;
+        // const bool reportClient = true;
 
-        const int reportClientStatsTimer = 2000;
+        // const int reportClientStatsTimer = 2000;
         const int numThreads = 16;
 
         static ConcurrentBag<long> times = new ConcurrentBag<long>();
@@ -48,7 +48,7 @@ namespace TestClient {
             if (reportServer) {
                 new Thread(ReportServerStats).Start(client);
             }
-            if (reportClient) {
+            if (reportClientStatsInterval != 0) {
                 ReportClientStatsHeader();
                 new Thread(ReportClientStats).Start(client);
             }
@@ -95,10 +95,10 @@ namespace TestClient {
 
 
 
-        private static void ReportClientStatsHeader() {
+        private void ReportClientStatsHeader() {
             Console.WriteLine("\nThe game is to maximize throughput (responses per second (rps)),\nwhile keeping individual response times low.\n");
 
-            Console.WriteLine("\nThe output first shows stuff about instantaneous numbers (across the most recent {0} seconds).", reportClientStatsTimer / 1000.0);
+            Console.WriteLine("\nThe output first shows stuff about instantaneous numbers (across the most recent {0} seconds).", reportClientStatsInterval / 1000.0);
             Console.Write("Avg (inst) response time (ms)");
             Console.Write(", (Stddev");
             Console.Write(", 99 Pctile");
@@ -120,10 +120,10 @@ namespace TestClient {
         }
         static double ticksPerMS = (Stopwatch.Frequency / 1000.0);
         static List<double> arls = new List<double>();
-        private static void ReportClientStats(object obj) {
+        private void ReportClientStats(object obj) {
             Client client = (Client)obj;
             while (client.IsAlive) {
-                System.Threading.Thread.Sleep(reportClientStatsTimer);
+                System.Threading.Thread.Sleep(reportClientStatsInterval);
 
                 var myTimes = times.ToArray();
                 if (myTimes.Length == 0) {
@@ -152,7 +152,7 @@ namespace TestClient {
                     percentile99,
                     percentile999,
                     max,
-                    myTimes.Length / (reportClientStatsTimer / 1000.0)
+                    myTimes.Length / (reportClientStatsInterval / 1000.0)
                 );
                 Console.Write(" | {0:0.00} {1:0.00} {2:0.00}", arls.Min(), arls.Average(), arls.Max());
                 Console.Write(" | done: {0:#,###.}; fail: {1}",

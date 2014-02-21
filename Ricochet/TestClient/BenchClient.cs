@@ -21,6 +21,9 @@ namespace TestClient {
 
         const int reportServerStatsTimer = 5000;
 
+        
+        public int reportClientStatsInterval = 2000;
+
         //for (int i = 0; i < numDistinctPayloads; i++) {
         //    payloads[i] = payloadPrefix + i;
         //}
