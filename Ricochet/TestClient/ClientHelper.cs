@@ -5,9 +5,10 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using TestLib;
 
-namespace TestLib {
-    public class ClientHelper {
+namespace TestClient {
+    public class BenchHelper {
         const int numDistinctPayloads = 10;
         static string[] payloads = new string[numDistinctPayloads];
 
@@ -21,10 +22,11 @@ namespace TestLib {
             //}
 
         public static void warmup(Client client) {
-            var q = new AQuery("xxx");
-            AResponse ar = null;
+            // var q = new AQuery("xxx");
+            // AResponse ar = null;
             for (int i = 0; i < numWarmupQueries; i++) {
-                client.TryCall<AQuery, AResponse>("double", q, out ar);
+                // client.TryCall<AQuery, AResponse>("double", q, out ar);
+                client.Ping();
             }
         }
 

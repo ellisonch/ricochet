@@ -32,6 +32,9 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="NDesk.Options">
+      <HintPath>..\packages\NDesk.Options.0.2.1\lib\NDesk.Options.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -41,11 +44,17 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="BenchClient.cs" />
+    <Compile Include="BenchClientFlood.cs" />
+    <Compile Include="BenchClientRealistic.cs" />
+    <Compile Include="ClientHelper.cs" />
     <Compile Include="TestClient.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="TestObject.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\TestLib\TestLib.csproj">

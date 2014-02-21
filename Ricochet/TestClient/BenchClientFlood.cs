@@ -1,0 +1,165 @@
+﻿using Ricochet;
+using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
+
+namespace TestClient {
+    // TODO: consider interface with async
+    // serialization based on interface
+    // consider auto registering public methods/etc
+    // x/y
+    // TODO need to start using volatile in places
+    public class BenchClientFlood : BenchClient {
+        // play with these
+        const bool reportServer = true;
+        const bool reportClient = true;
+
+        const int reportClientStatsTimer = 2000;
+        const int numThreads = 16;
+
+        static ConcurrentBag<long> times = new ConcurrentBag<long>();
+        static ConcurrentDictionary<int, double> timeSums = new ConcurrentDictionary<int, double>();
+
+        static long failures = 0;
+        static long count = 0;
+
+        static ManualResetEvent threadsReady = new ManualResetEvent(false);
+        static volatile int numThreadsReady = 0;
+
+        static Client client;
+
+        static ConcurrentDictionary<int, Thread> threads = new ConcurrentDictionary<int, Thread>();
+        readonly Serializer serializer;
+
+        public BenchClientFlood(Serializer serializer) {
+            this.serializer = serializer;
+        }
+        public override void Start() {
+            // TestClient tc = new TestClient();
+
+            client = new Client("127.0.0.1", 11000, serializer);
+            client.WaitUntilConnected();
+
+            if (reportServer) {
+                new Thread(BenchHelper.ReportServerStats).Start(client);
+            }
+            if (reportClient) {
+                ReportClientStatsHeader();
+                new Thread(ReportClientStats).Start(client);
+            }
+
+            for (int i = 0; i < numThreads; i++) {
+                timeSums[i] = 0.0;
+                Thread t = new Thread(ClientWorker);
+                threads[i] = t;
+                t.Start(i);
+            }
+            foreach (var thread in threads.Values) {
+                thread.Join();
+            }  
+        }
+
+        private static void ClientWorker(object obj) {
+            int myThreadNum = (int)obj;
+            numThreadsReady++;
+
+            // this waits until all the threads have been created and are here
+            while (threadsReady.WaitOne(1)) {
+                if (numThreadsReady == numThreads) {
+                    threadsReady.Set();
+                }
+            }
+            BenchHelper.warmup(client);
+
+            while (true) {
+                var mycount = Interlocked.Increment(ref count);
+
+                Stopwatch mysw = Stopwatch.StartNew();
+                bool success = BenchHelper.doCall(client, mycount);
+                mysw.Stop();
+
+                long myfailures;
+                if (success) {
+                    times.Add(mysw.ElapsedTicks);
+                    timeSums[myThreadNum] += mysw.ElapsedMilliseconds;
+                } else {
+                    myfailures = Interlocked.Increment(ref failures);
+                }
+            }
+        }
+
+
+
+        private static void ReportClientStatsHeader() {
+            Console.WriteLine("\nThe game is to maximize throughput (responses per second (rps)),\nwhile keeping individual response times low.\n");
+
+            Console.WriteLine("\nThe output first shows stuff about instantaneous numbers (across the most recent {0} seconds).", reportClientStatsTimer / 1000.0);
+            Console.Write("Avg (inst) response time (ms)");
+            Console.Write(", (Stddev");
+            Console.Write(", 99 Pctile");
+            Console.Write(", 99.9 Pctile");
+            Console.Write(", Max)");
+            Console.Write(", Requests per second");
+            Console.WriteLine("\n");
+
+            Console.WriteLine("Next come overall numbers from the duration of the program.");
+            Console.Write("Min");
+            Console.Write(", Avg");
+            Console.Write(", Max");
+            Console.WriteLine("\n");
+
+            Console.WriteLine("Finally are general stats.");
+            Console.Write("Total requests processed, total failures");
+            Console.WriteLine("\n");
+
+        }
+        static double ticksPerMS = (Stopwatch.Frequency / 1000.0);
+        static List<double> arls = new List<double>();
+        private static void ReportClientStats(object obj) {
+            Client client = (Client)obj;
+            while (client.IsAlive) {
+                System.Threading.Thread.Sleep(reportClientStatsTimer);
+
+                var myTimes = times.ToArray();
+                if (myTimes.Length == 0) {
+                    continue;
+                }
+                var theTotal = Interlocked.Read(ref count);
+
+                Array.Sort(myTimes);
+                var percentile99 = myTimes[(int)(myTimes.Length * 0.99)] / ticksPerMS;
+                var percentile999 = myTimes[(int)(myTimes.Length * 0.999)] / ticksPerMS;
+                var myCount = myTimes.Count();
+                var myFailures = Interlocked.Read(ref failures);
+
+                times = new ConcurrentBag<long>();
+                double avg = myTimes.Average() / ticksPerMS;
+                double max = myTimes.Max() / ticksPerMS;
+                double numer = myTimes.Sum(time => ((time / ticksPerMS) - avg) * ((time / ticksPerMS) - avg));
+                double stddev = Math.Sqrt(numer / myCount);
+
+                arls.Add(avg);
+
+                Console.Write("{0:0.000} ({1:0.0}, {2:00.0}, {3:00.0}, {4:#,###.}), {5:#,###.} rps",
+                    avg,
+                    stddev,
+                    percentile99,
+                    percentile999,
+                    max,
+                    myTimes.Length / (reportClientStatsTimer / 1000.0)
+                );
+                Console.Write(" | {0:0.00} {1:0.00} {2:0.00}", arls.Min(), arls.Average(), arls.Max());
+                Console.Write(" | done: {0:#,###.}; fail: {1}",
+                    theTotal,
+                    myFailures
+                );
+                Console.WriteLine();
+            }
+        }
+    }
+}

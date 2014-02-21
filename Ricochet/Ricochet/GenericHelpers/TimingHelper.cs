@@ -37,5 +37,9 @@ namespace Ricochet {
         }
         // public 
         // static CircularArrayList<double> workQueueTimes = new CircularArrayList<double>(20000, 20000);
+
+        internal static void Reset() {
+            stats = new ConcurrentDictionary<string, CircularArrayList<double>>();
+        }
     }
 }

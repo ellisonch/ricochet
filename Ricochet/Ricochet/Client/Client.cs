@@ -75,7 +75,7 @@ namespace Ricochet {
             l.WarnFormat("Connected.");
         }
 
-        private bool Ping() {
+        public bool Ping() {
             int pingResult;
             if (!this.TryCall<int, int>("_ping", 9001, out pingResult)) {
                 return false;

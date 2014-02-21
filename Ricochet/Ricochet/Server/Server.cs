@@ -226,10 +226,10 @@ namespace Ricochet {
                 }
                 // Func<Query, Response> fun = handlers[query.Handler];
                 l.InfoFormat("Calling handler {0}...", query.Handler);
-                Stopwatch sw = Stopwatch.StartNew();
+                // Stopwatch sw = Stopwatch.StartNew();
                 response = fun(query);
-                sw.Stop();
-                TimingHelper.Add("handler", sw);
+                // sw.Stop();
+                // TimingHelper.Add("handler", sw);
                 l.InfoFormat("Back from handler {0}.", query.Handler);
             } catch (Exception e) {
                 l.WarnFormat("Something went wrong calling handler:", e);
@@ -246,7 +246,13 @@ namespace Ricochet {
             return x;
         }
 
+        // private bool warmedUp = false;
         private ServerStats GetStats(bool junk) {
+            
+            //if (!warmedUp) {
+            //    TimingHelper.Reset();
+            //    warmedUp = true;
+            //}
             int wt, cpt, awt, acpt;
             ThreadPool.GetMaxThreads(out wt, out cpt);
             ThreadPool.GetAvailableThreads(out awt, out acpt);
@@ -269,6 +275,7 @@ namespace Ricochet {
                 };
                 ss.AddClient(cs);
             }
+            TimingHelper.Reset();
             return ss;
         }
 
