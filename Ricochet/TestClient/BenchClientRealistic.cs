@@ -9,7 +9,7 @@ using System.Threading;
 using System.Threading.Tasks;
 
 namespace TestClient {
-    public class BenchClientRealistic : BenchClient {
+    public class BenchClientRealistic<T1, T2> : BenchClient<T1, T2> {
         // per client settings
         const int meanRPS = 100;
         const int threadsPerClient = 100;
@@ -24,7 +24,7 @@ namespace TestClient {
         static Random r = new Random();
         Serializer serializer;
 
-        public BenchClientRealistic(Serializer s) {
+        public BenchClientRealistic(Serializer s, Func<long, T1> fun, string name) : base(fun, name) {
             this.serializer = s;
         }
 
@@ -43,9 +43,9 @@ namespace TestClient {
         private void OneClient() {
             Client client = new Client("127.0.0.1", 11000, serializer);
             client.WaitUntilConnected();
-            BenchHelper.warmup(client);
+            warmup(client);
 
-            new Thread(BenchHelper.ReportServerStats).Start(client);
+            new Thread(ReportServerStats).Start(client);
 
             TestObject ch = new TestObject() {
                 client = client
@@ -61,7 +61,7 @@ namespace TestClient {
             ch.barrier.Set();
         }
 
-        static void OneClientThread(object obj) {
+        void OneClientThread(object obj) {
             TestObject ch = (TestObject)obj;
             ch.barrier.WaitOne();
             Thread.Sleep(r.Next(0, 1000));
@@ -72,7 +72,7 @@ namespace TestClient {
                 Thread.Sleep((int)targetRatePerThread);
 
                 Stopwatch sw = Stopwatch.StartNew();
-                var res = BenchHelper.doCall(ch.client, mspc);
+                var res = doCall(ch.client, mspc);
                 sw.Stop();
                 double time = sw.Elapsed.TotalMilliseconds;
                 ch.times.Add(time);
@@ -85,8 +85,8 @@ namespace TestClient {
             }
         }
 
-        static SortedDictionary<int, int> workDone = new SortedDictionary<int, int>();
-        static void ClientMonitor(object obj) {
+        SortedDictionary<int, int> workDone = new SortedDictionary<int, int>();
+        void ClientMonitor(object obj) {
             TestObject ch = (TestObject)obj;
             ch.barrier.WaitOne();
             Stopwatch sw = Stopwatch.StartNew();

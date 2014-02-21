@@ -14,7 +14,7 @@ namespace TestClient {
     // consider auto registering public methods/etc
     // x/y
     // TODO need to start using volatile in places
-    public class BenchClientFlood : BenchClient {
+    public class BenchClientFlood<T1, T2> : BenchClient<T1, T2> {
         // play with these
         const bool reportServer = true;
         const bool reportClient = true;
@@ -36,7 +36,7 @@ namespace TestClient {
         static ConcurrentDictionary<int, Thread> threads = new ConcurrentDictionary<int, Thread>();
         readonly Serializer serializer;
 
-        public BenchClientFlood(Serializer serializer) {
+        public BenchClientFlood(Serializer serializer, Func<long, T1> fun, string name) : base(fun, name) {
             this.serializer = serializer;
         }
         public override void Start() {
@@ -46,7 +46,7 @@ namespace TestClient {
             client.WaitUntilConnected();
 
             if (reportServer) {
-                new Thread(BenchHelper.ReportServerStats).Start(client);
+                new Thread(ReportServerStats).Start(client);
             }
             if (reportClient) {
                 ReportClientStatsHeader();
@@ -64,7 +64,7 @@ namespace TestClient {
             }  
         }
 
-        private static void ClientWorker(object obj) {
+        private void ClientWorker(object obj) {
             int myThreadNum = (int)obj;
             numThreadsReady++;
 
@@ -74,13 +74,13 @@ namespace TestClient {
                     threadsReady.Set();
                 }
             }
-            BenchHelper.warmup(client);
+            warmup(client);
 
             while (true) {
                 var mycount = Interlocked.Increment(ref count);
 
                 Stopwatch mysw = Stopwatch.StartNew();
-                bool success = BenchHelper.doCall(client, mycount);
+                bool success = doCall(client, mycount);
                 mysw.Stop();
 
                 long myfailures;
@@ -127,6 +127,7 @@ namespace TestClient {
 
                 var myTimes = times.ToArray();
                 if (myTimes.Length == 0) {
+                    Console.WriteLine("No successes yet");
                     continue;
                 }
                 var theTotal = Interlocked.Read(ref count);
