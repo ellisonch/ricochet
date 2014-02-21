@@ -45,7 +45,9 @@ namespace TestClient {
             client.WaitUntilConnected();
             warmup(client);
 
-            new Thread(ReportServerStats).Start(client);
+            if (reportServerStatsInterval != 0) {
+                new Thread(ReportServerStats).Start(client);
+            }
 
             TestObject ch = new TestObject() {
                 client = client
@@ -57,7 +59,9 @@ namespace TestClient {
                 threads.Add(t);
                 t.Start(ch);
             }
-            new Thread(ClientMonitor).Start(ch);
+            if (reportClientStatsInterval != 0) {
+                new Thread(ClientMonitor).Start(ch);
+            }
             ch.barrier.Set();
         }
 

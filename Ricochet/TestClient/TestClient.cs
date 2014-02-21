@@ -18,6 +18,7 @@ namespace TestClient {
         readonly string requestName;
 
         int clientReportInterval = 2000;
+        int serverReportInterval = 5000;
 
         public TestClient(string[] args, string requestName) {
             this.requestName = requestName;
@@ -29,6 +30,9 @@ namespace TestClient {
                 { "cri|clientReportInterval=", 
                    "Frequency (in ms) client stats should be reported.  \nSet to 0 to disable.  \nDefault is " + clientReportInterval + ".",
                     (int v) => clientReportInterval = v },
+                { "sri|serverReportInterval=", 
+                   "Frequency (in ms) server stats should be reported.  \nSet to 0 to disable.  \nDefault is " + serverReportInterval + ".",
+                    (int v) => serverReportInterval = v },
                 //{ "v", "increase debug message verbosity",
                 //   v => { if (v != null) ++verbosity; } },
                 { "h|help",  "Show this message and exit.", 
@@ -53,6 +57,7 @@ namespace TestClient {
             BenchClient<T1, T2> client = GetClient(serializer);
 
             client.reportClientStatsInterval = clientReportInterval;
+            client.reportServerStatsInterval = serverReportInterval;
 
             client.Start();
         }

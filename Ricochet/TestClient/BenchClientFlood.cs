@@ -16,10 +16,7 @@ namespace TestClient {
     // TODO need to start using volatile in places
     public class BenchClientFlood<T1, T2> : BenchClient<T1, T2> {
         // play with these
-        const bool reportServer = true;
-        // const bool reportClient = true;
-
-        // const int reportClientStatsTimer = 2000;
+        // const bool reportServer = true;
         const int numThreads = 16;
 
         static ConcurrentBag<long> times = new ConcurrentBag<long>();
@@ -45,7 +42,7 @@ namespace TestClient {
             client = new Client("127.0.0.1", 11000, serializer);
             client.WaitUntilConnected();
 
-            if (reportServer) {
+            if (reportServerStatsInterval != 0) {
                 new Thread(ReportServerStats).Start(client);
             }
             if (reportClientStatsInterval != 0) {

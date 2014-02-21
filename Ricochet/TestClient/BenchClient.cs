@@ -19,9 +19,7 @@ namespace TestClient {
         const int numWarmupQueries = 5;
         const string payloadPrefix = smallPayload; // or bigPayload
 
-        const int reportServerStatsTimer = 5000;
-
-        
+        public int reportServerStatsInterval = 5000;
         public int reportClientStatsInterval = 2000;
 
         //for (int i = 0; i < numDistinctPayloads; i++) {
@@ -71,7 +69,7 @@ namespace TestClient {
         protected void ReportServerStats(object obj) {
             Client client = (Client)obj;
             while (client.IsAlive) {
-                System.Threading.Thread.Sleep(reportServerStatsTimer);
+                System.Threading.Thread.Sleep(reportServerStatsInterval);
                 bool success;
                 ServerStats ss = null;
                 try {
