@@ -23,7 +23,7 @@ namespace Ricochet {
         const int connectionTimeout = 50;
         static int softQueryTimeout = 500; // time (ms) before it gets sent
         internal static int HardQueryTimeout = 2000; // total time of round trip (still takes this long to give up even if soft is hit)
-
+        Random r = new Random();
         private bool disposed = false;
         Serializer serializer;
 
@@ -75,12 +75,18 @@ namespace Ricochet {
             l.WarnFormat("Connected.");
         }
 
+        /// <summary>
+        /// Pings the server once.
+        /// </summary>
+        /// <returns>Returns true on success, false on failure.</returns>
         public bool Ping() {
             int pingResult;
-            if (!this.TryCall<int, int>("_ping", 9001, out pingResult)) {
+            int pingVal = r.Next();
+            if (!this.TryCall<int, int>("_ping", pingVal, out pingResult)) {
                 return false;
             }
-            if (pingResult != 9001) {
+            if (pingResult != pingVal) {
+                l.ErrorFormat("Ping() returned the wrong value");
                 return false;
             }
             return true;
