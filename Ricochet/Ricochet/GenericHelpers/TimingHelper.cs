@@ -11,10 +11,11 @@ namespace Ricochet {
         static ConcurrentDictionary<string, CircularArrayList<double>> stats = new ConcurrentDictionary<string, CircularArrayList<double>>();
 
         public static void Add(string s, double v) {
-            if (!stats.ContainsKey(s)) {
-                stats[s] = new CircularArrayList<double>(200000, 200000);
+            var mystats = stats;
+            if (!mystats.ContainsKey(s)) {
+                mystats[s] = new CircularArrayList<double>(200000, 200000);
             }
-            stats[s].Add(v);
+            mystats[s].Add(v);
         }
         public static void Add(string s, Stopwatch sw) {
             Add(s, sw.Elapsed.TotalMilliseconds);
