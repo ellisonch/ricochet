@@ -27,7 +27,7 @@ namespace Ricochet {
         private readonly ILog l = LogManager.GetCurrentClassLogger();
 
         const int maxQueueSize = 2000;
-        const int maxWorkerThreads = 32;
+        const int maxWorkerThreads = 4;
         private Semaphore workerSemaphore = new Semaphore(maxWorkerThreads, maxWorkerThreads);
 
         //const int minWorkerThreads = 2;
@@ -150,9 +150,20 @@ namespace Ricochet {
             }
             handlers[name] = (Func<Query, Response>)((query) => {
                 try {
+                    Stopwatch sw = Stopwatch.StartNew();
                     T1 arg = serializer.Deserialize<T1>(query.MessageData);
+                    TimingHelper.Add("DeserializeMessage", sw);
+                    sw.Restart();
+
                     T2 res = fun(arg);
-                    return Response.CreateResponse<T2>(query, res, serializer);
+                    TimingHelper.Add("ActualHandler", sw);
+                    sw.Restart();
+
+                    var response = Response.CreateResponse<T2>(query, res, serializer);
+                    TimingHelper.Add("SerializeMessage", sw);
+                    sw.Restart();
+
+                    return response;
                 } catch (Exception e) {
                     l.WarnFormat("Something went wrong handling {0}:", e, name);
                     throw;
@@ -170,12 +181,14 @@ namespace Ricochet {
                         l.WarnFormat("TryDequeue failed");
                         continue;
                     }
-                    qwd.sw.Stop();
                     TimingHelper.Add("Work Queue", qwd.sw);
                     qwd.sw.Restart();
                     try {
                         workerSemaphore.WaitOne();
+                        TimingHelper.Add("WorkerSemaphore", qwd.sw);
+                        qwd.sw.Restart();
                         ThreadPool.QueueUserWorkItem(DoWork, qwd);
+                        // DoWork(qwd);
                     } catch (Exception) {
                         workerSemaphore.Release();
                         throw;
@@ -192,14 +205,15 @@ namespace Ricochet {
                 qwd.sw.Stop();
                 TimingHelper.Add("WorkerSpawn", qwd.sw);
 
-                Stopwatch sw = Stopwatch.StartNew();
+                // Stopwatch sw = Stopwatch.StartNew();
                 Response response = GetResponseForQuery(qwd.Query);
-                sw.Stop();
-                TimingHelper.Add("GetResponse", sw);
+                // sw.Stop();
+                // TimingHelper.Add("GetResponse", sw);
 
                 byte[] bytes = serializer.SerializeResponse(response);
                 // l.Log(Logger.Flag.Warning, "Response calculated by thread {0}", Thread.CurrentThread.ManagedThreadId);
-                sw.Restart();
+                // sw.Restart();
+                Stopwatch sw = Stopwatch.StartNew();
                 qwd.Destination.EnqueueIfRoom(new Tuple<byte[], Stopwatch>(bytes, sw));
             } catch (Exception e) {
                 l.WarnFormat("Problem doing work:", e);
@@ -211,6 +225,7 @@ namespace Ricochet {
         private Response GetResponseForQuery(Query query) {
             Response response;
             try {
+                
                 l.InfoFormat("Data is: {0}", query.MessageData);
                 if (query.Handler == null) {
                     l.WarnFormat("No query name given: {0}", query.MessageData);
@@ -221,10 +236,14 @@ namespace Ricochet {
                     l.WarnFormat("Do not handle query {0}", query.Handler);
                     throw new RPCException(String.Format("Do not handle query {0}", query.Handler));
                 }
+                // TimingHelper.Add("GetHandler", sw);
+                // Stopwatch sw = Stopwatch.StartNew();
                 // Func<Query, Response> fun = handlers[query.Handler];
                 l.InfoFormat("Calling handler {0}...", query.Handler);
                 // Stopwatch sw = Stopwatch.StartNew();
                 response = fun(query);
+                // TimingHelper.Add("ActualHandler", sw);
+                // sw.Stop();
                 // sw.Stop();
                 // TimingHelper.Add("handler", sw);
                 l.InfoFormat("Back from handler {0}.", query.Handler);
