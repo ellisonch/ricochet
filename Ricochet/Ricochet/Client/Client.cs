@@ -137,8 +137,7 @@ namespace Ricochet {
         /// <typeparam name="T2">Type of output.</typeparam>
         /// <param name="name">Name of function call</param>
         /// <param name="input">Input to function</param>
-        /// <param name="ret">Result from function</param>
-        /// <returns>True if the call was successful, false otherwise.</returns>
+        /// <returns>An option type, possibly containing the result</returns>
         public Option<T2> TryCall<T1, T2>(string name, T1 input) {
             if (disposed) { return Option<T2>.None(); }
             Query query = Query.CreateQuery<T1>(name, input, serializer);

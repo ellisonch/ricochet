@@ -26,7 +26,7 @@ namespace Ricochet {
         /// </summary>
         const int dequeueWaitTimeout = 50;
 
-        private LinkedList<T> queue = new LinkedList<T>();
+        private Queue<T> queue = new Queue<T>();
         private readonly int maxSize;
         bool closed = false;
 
@@ -53,7 +53,7 @@ namespace Ricochet {
                     l.WarnFormat("Reached maximum queue size!  Item dropped.");
                     return false;
                 }
-                queue.AddLast(item);
+                queue.Enqueue(item);
                 Monitor.Pulse(queue);
             }
             return true;
@@ -68,8 +68,7 @@ namespace Ricochet {
                     }
                     Monitor.Wait(queue, dequeueWaitTimeout);
                 }
-                value = queue.First();
-                queue.RemoveFirst();
+                value = queue.Dequeue();
                 return true;
             }
         }
