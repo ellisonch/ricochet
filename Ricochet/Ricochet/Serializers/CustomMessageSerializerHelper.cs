@@ -72,15 +72,21 @@ namespace Ricochet {
             } else {
                 errorBytes = Encoding.Unicode.GetBytes(response.ErrorMsg);
             }
+            byte[] messageData;
+            if (response.MessageData == null) {
+                messageData = zeroLenByteArray;
+            } else {
+                messageData = response.MessageData;
+            }
 
-            int len = 9 + errorBytes.Length + response.MessageData.Length;
+            int len = 9 + errorBytes.Length + messageData.Length;
             byte[] bytes = new byte[len];
 
             BitConverter.GetBytes(response.OK).CopyTo(bytes, 0);
             BitConverter.GetBytes(response.Dispatch).CopyTo(bytes, 1);
             BitConverter.GetBytes(errorBytes.Length).CopyTo(bytes, 5);
             errorBytes.CopyTo(bytes, 9);
-            response.MessageData.CopyTo(bytes, 9 + errorBytes.Length);
+            messageData.CopyTo(bytes, 9 + errorBytes.Length);
             return bytes;
         }
 
