@@ -27,7 +27,7 @@ namespace Ricochet {
         private readonly ILog l = LogManager.GetCurrentClassLogger();
 
         const int maxQueueSize = 2000;
-        const int maxWorkerThreads = 4;
+        const int maxWorkerThreads = 16;
         private Semaphore workerSemaphore = new Semaphore(maxWorkerThreads, maxWorkerThreads);
 
         //const int minWorkerThreads = 2;
@@ -75,15 +75,15 @@ namespace Ricochet {
 
             //ThreadPool.SetMinThreads(newMinWorkerThreads, newMinCompletionPortThreads);
             //ThreadPool.SetMaxThreads(newMaxWorkerThreads, newMaxCompletionPortThreads);
-            
 
-            //for (int i = 0; i < numWorkerThreads; i++) {
+
+            //for (int i = 0; i < maxWorkerThreads; i++) {
             //    var t = new Thread(this.DoWork);
             //    workers.Add(t);
-            //    // t.Start();
+            //    t.Start();
             //}
-
             new Thread(this.WorkerHandler).Start();
+
             new Thread(this.CleanUp).Start();
 
             Register<int, int>("_ping", Ping);
@@ -183,12 +183,11 @@ namespace Ricochet {
                     }
                     TimingHelper.Add("Work Queue", qwd.sw);
                     qwd.sw.Restart();
+                    workerSemaphore.WaitOne();                    
                     try {
-                        workerSemaphore.WaitOne();
                         TimingHelper.Add("WorkerSemaphore", qwd.sw);
                         qwd.sw.Restart();
-                        ThreadPool.QueueUserWorkItem(DoWork, qwd);
-                        // DoWork(qwd);
+                        ThreadPool.QueueUserWorkItem(DoWork2, qwd);
                     } catch (Exception) {
                         workerSemaphore.Release();
                         throw;
@@ -199,7 +198,7 @@ namespace Ricochet {
             }
         }
 
-        private void DoWork(Object obj) {
+        private void DoWork2(Object obj) {
             try {
                 QueryWithDestination qwd = (QueryWithDestination)obj;
                 qwd.sw.Stop();
@@ -221,6 +220,30 @@ namespace Ricochet {
                 workerSemaphore.Release();
             }
         }
+        //private void DoWork() {
+        //    while (true) {
+        //        try {
+        //            QueryWithDestination qwd;
+        //             TODO if TryDequeue fails, we're probably being shut down
+        //            if (!workQueue.TryDequeue(out qwd)) {
+        //                l.WarnFormat("TryDequeue failed");
+        //                continue;
+        //            }
+        //             Stopwatch sw = Stopwatch.StartNew();
+        //            Response response = GetResponseForQuery(qwd.Query);
+        //             sw.Stop();
+        //             TimingHelper.Add("GetResponse", sw);
+
+        //            byte[] bytes = serializer.SerializeResponse(response);
+        //             l.Log(Logger.Flag.Warning, "Response calculated by thread {0}", Thread.CurrentThread.ManagedThreadId);
+        //             sw.Restart();
+        //            Stopwatch sw = Stopwatch.StartNew();
+        //            qwd.Destination.EnqueueIfRoom(new Tuple<byte[], Stopwatch>(bytes, sw));
+        //        } catch (Exception e) {
+        //            l.WarnFormat("Problem doing work:", e);
+        //        }
+        //    }
+        //}
 
         private Response GetResponseForQuery(Query query) {
             Response response;
