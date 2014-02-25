@@ -123,9 +123,10 @@ namespace ClientTestHelper {
             while (client.IsAlive) {
                 System.Threading.Thread.Sleep(reportClientStatsInterval);
 
+                var myFailures = Interlocked.Read(ref failures);
                 var myTimes = times.ToArray();
                 if (myTimes.Length == 0) {
-                    Console.WriteLine("No successes yet");
+                    Console.WriteLine("No successes this round ({0} failures)", myFailures);
                     continue;
                 }
                 var theTotal = Interlocked.Read(ref count);
@@ -134,7 +135,7 @@ namespace ClientTestHelper {
                 var percentile99 = myTimes[(int)(myTimes.Length * 0.99)] / ticksPerMS;
                 var percentile999 = myTimes[(int)(myTimes.Length * 0.999)] / ticksPerMS;
                 var myCount = myTimes.Count();
-                var myFailures = Interlocked.Read(ref failures);
+                
 
                 times = new ConcurrentBag<long>();
                 double avg = myTimes.Average() / ticksPerMS;
