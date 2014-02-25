@@ -139,16 +139,45 @@ namespace Ricochet {
         /// <param name="input">Input to function</param>
         /// <returns>An option type, possibly containing the result</returns>
         public Option<T2> TryCall<T1, T2>(string name, T1 input) {
-            if (disposed) { return Option<T2>.None(); }
+            int? id = StartCall(name, input);
+            if (!id.HasValue) {
+                return Option<T2>.None();
+            }
+            Response response = pendingRequests.Get(id.Value);
+            return ExtractResult<T2>(response);
+        }
+
+        /// <summary>
+        /// Tries to make an RPC call.  May timeout or otherwise fail.
+        /// </summary>
+        /// <typeparam name="T1">Type of input.</typeparam>
+        /// <typeparam name="T2">Type of output.</typeparam>
+        /// <param name="name">Name of function call</param>
+        /// <param name="input">Input to function</param>
+        /// <returns>An option type, possibly containing the result</returns>
+        public async Task<Option<T2>> TryCallAsync<T1, T2>(string name, T1 input) {
+            int? id = StartCall(name, input);
+            if (!id.HasValue) {
+                return Option<T2>.None();
+            }
+            Response response = await pendingRequests.GetAsync(id.Value);
+            return ExtractResult<T2>(response);
+        }
+
+        private int? StartCall<T1>(string name, T1 input) {
+            if (disposed) { return null; }
             Query query = Query.CreateQuery<T1>(name, input, serializer);
             pendingRequests.Add(query);
 
             if (!outgoingQueries.EnqueueIfRoom(query)) {
                 // l.Log(Logger.Flag.Warning, "Reached maximum queue size!  Query dropped.");
                 pendingRequests.Delete(query.Dispatch);
-                return Option<T2>.None();
+                return null;
             }
-            Response response = pendingRequests.Get(query.Dispatch);
+            return query.Dispatch;
+        }
+
+        private Option<T2> ExtractResult<T2>(Response response) {
             if (!response.OK) {
                 return Option<T2>.None();
             }

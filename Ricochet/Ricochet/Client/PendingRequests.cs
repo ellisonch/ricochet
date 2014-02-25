@@ -23,14 +23,41 @@ namespace Ricochet {
                 remainingTime = 0;
             }
 
-            Response res;
-            bool canProceed = sr.WaitUntil(remainingTime);
-            if (!canProceed) { // if timeout...
-                l.InfoFormat("Hard timeout reached");
-                res = Response.Timeout(ticket);
-            } else {
-                res = sr.Response;
+            //Response res;
+            //bool canProceed = sr.WaitUntil(remainingTime);
+            //if (!canProceed) { // if timeout...
+            //    l.InfoFormat("Hard timeout reached");
+            //    res = Response.Timeout(ticket);
+            //} else {
+            //    res = sr.response;
+            //}
+            Response res = sr.Get(remainingTime);
+
+            Delete(ticket);
+
+            return res;
+        }
+
+        internal async Task<Response> GetAsync(int ticket) {
+            var sr = requests[ticket];
+
+            int remainingTime = (int)(Client.HardQueryTimeout - sr.SW.ElapsedMilliseconds);
+            if (remainingTime > Client.HardQueryTimeout) {
+                remainingTime = 0;
             }
+            if (remainingTime < 0) {
+                remainingTime = 0;
+            }
+
+            //Response res;
+            //bool canProceed = sr.WaitUntil(remainingTime);
+            //if (!canProceed) { // if timeout...
+            //    l.InfoFormat("Hard timeout reached");
+            //    res = Response.Timeout(ticket);
+            //} else {
+            //    res = sr.Response;
+            //}
+            Response res = await sr.GetAsync(remainingTime);
 
             Delete(ticket);
 
@@ -40,13 +67,12 @@ namespace Ricochet {
         internal void Set(int dispatch, Response response) {
             SignaledResponse sr;
             if (requests.TryGetValue(dispatch, out sr)) {
-                sr.Response = response;
-                sr.Set();
+                sr.Set(response);
             }
         }
 
         internal void Add(Query query) {
-            requests[query.Dispatch] = new SignaledResponse(query.SW);
+            requests[query.Dispatch] = new SignaledResponse(query.Dispatch, query.SW);
         }
 
         internal void Delete(int ticket) {

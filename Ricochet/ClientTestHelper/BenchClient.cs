@@ -47,25 +47,11 @@ namespace ClientTestHelper {
             // Console.WriteLine("Warmed up.");
         }
 
-
-
         protected bool doCall(Client client, long myCount) {
-            // string payload = payloads[mycount % numDistinctPayloads];
-            //string payload = payloadPrefix + myCount;
-            //var q = new AQuery(payload);
             T1 request = requestGen(myCount);
-            // bool success = false;
-            Option<T2> result; 
+            Option<T2> result;
             try {
-                // T2 res = default(T2);
-                // Console.WriteLine("Calling {0}", requestName);
                 result = client.TryCall<T1, T2>(requestName, request);
-                //AResponse ar = null;
-                //if (client.TryCall<AQuery, AResponse>("double", q, out ar)) {
-                //    // Debug.Assert(ar.res == payload + payload, String.Format("Something went wrong, {0} != {1}", ar.res, payload + payload));
-                //    Debug.Assert(ar.res == payload + payload, "Something went wrong, strings didn't match");
-                //    success = true;
-                //}
             } catch (Exception e) {
                 Console.WriteLine("Something really unexpected happened: {0}", e);
                 return false;
