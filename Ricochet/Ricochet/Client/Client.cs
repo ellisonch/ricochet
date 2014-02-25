@@ -80,12 +80,12 @@ namespace Ricochet {
         /// </summary>
         /// <returns>Returns true on success, false on failure.</returns>
         public bool Ping() {
-            int pingResult;
             int pingVal = r.Next();
-            if (!this.TryCall<int, int>("_ping", pingVal, out pingResult)) {
+            var pingResult = this.TryCall<int, int>("_ping", pingVal);
+            if (!pingResult.OK) {
                 return false;
             }
-            if (pingResult != pingVal) {
+            if (pingResult.Value != pingVal) {
                 l.ErrorFormat("Ping() returned the wrong value");
                 return false;
             }
@@ -139,26 +139,26 @@ namespace Ricochet {
         /// <param name="input">Input to function</param>
         /// <param name="ret">Result from function</param>
         /// <returns>True if the call was successful, false otherwise.</returns>
-        public bool TryCall<T1, T2>(string name, T1 input, out T2 ret) {
-            ret = default(T2);
-            if (disposed) { throw new ObjectDisposedException("This client has been disposed."); }
+        public Option<T2> TryCall<T1, T2>(string name, T1 input) {
+            if (disposed) { return Option<T2>.None(); }
             Query query = Query.CreateQuery<T1>(name, input, serializer);
             pendingRequests.Add(query);
+
             if (!outgoingQueries.EnqueueIfRoom(query)) {
                 // l.Log(Logger.Flag.Warning, "Reached maximum queue size!  Query dropped.");
                 pendingRequests.Delete(query.Dispatch);
-                return false;
+                return Option<T2>.None();
             }
             Response response = pendingRequests.Get(query.Dispatch);
             if (!response.OK) {
-                return false;
+                return Option<T2>.None();
             }
 
             if (response.MessageData == null) {
-                return false;
+                return Option<T2>.None();
             }
-            ret = serializer.Deserialize<T2>(response.MessageData);
-            return true;
+            var ret = serializer.Deserialize<T2>(response.MessageData);
+            return Option<T2>.Some(ret);
         }
 
         /// <summary>
