@@ -58,8 +58,8 @@ namespace ClientTestHelper {
 
             try {
                 T2 res = default(T2);
-                client.TryCall<T1, T2>(requestName, request, out res);
-                success = true;
+                // Console.WriteLine("Calling {0}", requestName);
+                success = client.TryCall<T1, T2>(requestName, request, out res);
                 //AResponse ar = null;
                 //if (client.TryCall<AQuery, AResponse>("double", q, out ar)) {
                 //    // Debug.Assert(ar.res == payload + payload, String.Format("Something went wrong, {0} != {1}", ar.res, payload + payload));

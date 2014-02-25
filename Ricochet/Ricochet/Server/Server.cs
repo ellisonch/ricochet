@@ -149,17 +149,14 @@ namespace Ricochet {
                 throw new Exception(String.Format("A handler is already registered for the name '{0}'", name));
             }
             handlers[name] = (Func<Query, Response>)((query) => {
-                // T1 arg = Serialization.DeserializeFromString<T1>(query.MessageData);
-                T1 arg = default(T1);
                 try {
-                    arg = serializer.Deserialize<T1>(query.MessageData);
+                    T1 arg = serializer.Deserialize<T1>(query.MessageData);
+                    T2 res = fun(arg);
+                    return Response.CreateResponse<T2>(query, res, serializer);
                 } catch (Exception e) {
-                    l.WarnFormat("Something went wrong Deserializing the message data:", e);
+                    l.WarnFormat("Something went wrong handling {0}:", e, name);
                     throw;
                 }
-                var res = fun(arg);
-                Response resp = Response.CreateResponse<T2>(query, res, serializer);
-                return resp;
             });
         }
 
