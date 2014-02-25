@@ -4,16 +4,15 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{10CFFBCA-C0BE-4C0C-8D83-CA3FD89C895D}</ProjectGuid>
+    <ProjectGuid>{532992D4-AA21-4A9C-B05F-ACC3A4C9839E}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>TestClientRealistic</RootNamespace>
-    <AssemblyName>TestClientRealistic</AssemblyName>
+    <RootNamespace>ClientTestExample</RootNamespace>
+    <AssemblyName>ClientTestExample</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
@@ -21,15 +20,18 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <PlatformTarget>AnyCPU</PlatformTarget>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup>
+    <StartupObject />
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
@@ -41,21 +43,21 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="TestClientRealistic.cs" />
+    <Compile Include="AQuery.cs" />
+    <Compile Include="AResponse.cs" />
+    <Compile Include="ClientHelper.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="TestObject.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="App.config" />
+    <Compile Include="SimpleTestClient.cs" />
+    <Compile Include="WhichSerializer.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Ricochet\Ricochet.csproj">
       <Project>{aee87d42-27fb-4e1b-bf77-b773b22d2bcc}</Project>
       <Name>Ricochet</Name>
     </ProjectReference>
-    <ProjectReference Include="..\TestLib\TestLib.csproj">
-      <Project>{532992d4-aa21-4a9c-b05f-acc3a4c9839e}</Project>
-      <Name>TestLib</Name>
+    <ProjectReference Include="..\ClientTestHelper\ClientTestHelper.csproj">
+      <Project>{16ffe37b-d284-4260-9a4d-a5cf1d3c3cfd}</Project>
+      <Name>ClientTestHelper</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

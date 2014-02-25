@@ -6,7 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace TestClient {
+namespace ClientTestHelper {
     public abstract class BenchClient<T1, T2> {
         public abstract void Start();
 

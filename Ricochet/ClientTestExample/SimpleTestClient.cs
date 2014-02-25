@@ -3,16 +3,17 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using TestLib;
+using ClientTestExample;
+using ClientTestHelper;
 
-namespace TestClient {
-    class SimpleTestClient : TestClient<AQuery, AResponse> {
+namespace ClientTestExample {
+    class ClientTestExample : TestClient<AQuery, AResponse> {
         static void Main(string[] args) {
-            var tc = new SimpleTestClient(args);
+            var tc = new ClientTestExample(args);
             tc.Start();
         }
 
-        public SimpleTestClient(string[] args) : base(args, "double") { }
+        public ClientTestExample(string[] args) : base(args, "double") { }
 
         protected override AQuery QueryGen(long num) {
             // string payload = payloads[mycount % numDistinctPayloads];

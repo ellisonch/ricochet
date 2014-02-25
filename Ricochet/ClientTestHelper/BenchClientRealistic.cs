@@ -8,7 +8,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace TestClient {
+namespace ClientTestHelper {
     public class BenchClientRealistic<T1, T2> : BenchClient<T1, T2> {
         // per client settings
         const int meanRPS = 100;

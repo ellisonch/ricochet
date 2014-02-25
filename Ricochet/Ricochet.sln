@@ -5,11 +5,11 @@ VisualStudioVersion = 12.0.21005.1
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ricochet", "Ricochet\Ricochet.csproj", "{AEE87D42-27FB-4E1B-BF77-B773B22D2BCC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestServer", "TestServer\TestServer.csproj", "{86DC828F-E8AB-42B0-9FFB-A0F318659A1C}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ServerTestExample", "ServerTestExample\ServerTestExample.csproj", "{86DC828F-E8AB-42B0-9FFB-A0F318659A1C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestClient", "TestClient\TestClient.csproj", "{16FFE37B-D284-4260-9A4D-A5CF1D3C3CFD}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ClientTestHelper", "ClientTestHelper\ClientTestHelper.csproj", "{16FFE37B-D284-4260-9A4D-A5CF1D3C3CFD}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestLib", "TestLib\TestLib.csproj", "{532992D4-AA21-4A9C-B05F-ACC3A4C9839E}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ClientTestExample", "ClientTestExample\ClientTestExample.csproj", "{532992D4-AA21-4A9C-B05F-ACC3A4C9839E}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{86FAC218-941C-4504-B8B5-1021189A3A59}"
 	ProjectSection(SolutionItems) = preProject
@@ -23,6 +23,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		Performance8.psess = Performance8.psess
 		Performance9.psess = Performance9.psess
 	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Testing", "Testing", "{FBB72311-813B-4F34-89EA-1C386B704A13}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -49,6 +51,11 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{16FFE37B-D284-4260-9A4D-A5CF1D3C3CFD} = {FBB72311-813B-4F34-89EA-1C386B704A13}
+		{532992D4-AA21-4A9C-B05F-ACC3A4C9839E} = {FBB72311-813B-4F34-89EA-1C386B704A13}
+		{86DC828F-E8AB-42B0-9FFB-A0F318659A1C} = {FBB72311-813B-4F34-89EA-1C386B704A13}
 	EndGlobalSection
 	GlobalSection(Performance) = preSolution
 		HasPerformanceSessions = true

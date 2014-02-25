@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace TestLib {
+namespace ClientTestExample {
     public class AQuery {
         public string msg { get; set; }
 

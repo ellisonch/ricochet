@@ -1,5 +1,4 @@
 ﻿using Ricochet;
-using TestLib;
 using System;
 using System.Collections.Generic;
 using System.Collections.Concurrent;
@@ -10,8 +9,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using NDesk.Options;
 
-namespace TestClient {
-    internal abstract class TestClient<T1, T2> {
+namespace ClientTestHelper {
+    public abstract class TestClient<T1, T2> {
         string mode = "realistic";
         string serializerName = "messagepack";
         bool show_help = false;

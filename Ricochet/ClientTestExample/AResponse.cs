@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace TestLib {
+namespace ClientTestExample {
     public class AResponse {
         public string res { get; set; }
 

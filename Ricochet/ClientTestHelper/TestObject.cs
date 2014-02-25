@@ -7,7 +7,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace TestClient {
+namespace ClientTestHelper {
     internal class TestObject {
         public Client client { get; set; }
         public long done = 0;

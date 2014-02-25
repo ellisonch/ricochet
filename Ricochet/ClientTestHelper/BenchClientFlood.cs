@@ -8,7 +8,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace TestClient {
+namespace ClientTestHelper {
     // TODO: consider interface with async
     // serialization based on interface
     // consider auto registering public methods/etc
