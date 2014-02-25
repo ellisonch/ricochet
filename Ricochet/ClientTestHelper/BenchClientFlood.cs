@@ -33,13 +33,14 @@ namespace ClientTestHelper {
         static ConcurrentDictionary<int, Thread> threads = new ConcurrentDictionary<int, Thread>();
         readonly Serializer serializer;
 
-        public BenchClientFlood(Serializer serializer, Func<long, T1> fun, string name) : base(fun, name) {
+        public BenchClientFlood(string address, int port, Serializer serializer, Func<long, T1> fun, string name)
+            : base(address, port, fun, name) {
             this.serializer = serializer;
         }
         public override void Start() {
             // TestClient tc = new TestClient();
 
-            client = new Client("127.0.0.1", 11000, serializer);
+            client = new Client(address, port, serializer);
             client.WaitUntilConnected();
 
             if (reportServerStatsInterval != 0) {

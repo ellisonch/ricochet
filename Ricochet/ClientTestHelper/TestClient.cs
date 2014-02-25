@@ -15,6 +15,8 @@ namespace ClientTestHelper {
         string serializerName = "messagepack";
         bool show_help = false;
         readonly string requestName;
+        string address = "127.0.0.1";
+        int port = 11000;
 
         int clientReportInterval = 2000;
         int serverReportInterval = 5000;
@@ -32,9 +34,15 @@ namespace ClientTestHelper {
                 { "sri|serverReportInterval=", 
                    "Frequency (in ms) server stats should be reported.  \nSet to 0 to disable.  \nDefault is " + serverReportInterval + ".",
                     (int v) => serverReportInterval = v },
+                { "h|host=", 
+                   "Address to connect to.  \nDefault is " + address + ".",
+                    (string v) => address = v },
+                { "p|port=", 
+                   "Port to use.  \nDefault is " + port + ".",
+                    (int v) => port = v },
                 //{ "v", "increase debug message verbosity",
                 //   v => { if (v != null) ++verbosity; } },
-                { "h|help",  "Show this message and exit.", 
+                { "help",  "Show this message and exit.", 
                    v => show_help = v != null },
             };
             try {
@@ -67,10 +75,10 @@ namespace ClientTestHelper {
             BenchClient<T1, T2> client = null;
             switch (mode) {
                 case "realistic":
-                    client = new BenchClientRealistic<T1, T2>(serializer, QueryGen, requestName);
+                    client = new BenchClientRealistic<T1, T2>(address, port, serializer, QueryGen, requestName);
                     break;
                 case "flood":
-                    client = new BenchClientFlood<T1, T2>(serializer, QueryGen, requestName);
+                    client = new BenchClientFlood<T1, T2>(address, port, serializer, QueryGen, requestName);
                     break;
                 default:
                     throw new Exception("Didn't expect your mode");

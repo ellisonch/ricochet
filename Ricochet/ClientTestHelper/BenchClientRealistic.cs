@@ -24,7 +24,8 @@ namespace ClientTestHelper {
         static Random r = new Random();
         Serializer serializer;
 
-        public BenchClientRealistic(Serializer s, Func<long, T1> fun, string name) : base(fun, name) {
+        public BenchClientRealistic(string address, int port, Serializer s, Func<long, T1> fun, string name)
+            : base(address, port, fun, name) {
             this.serializer = s;
         }
 
@@ -41,7 +42,7 @@ namespace ClientTestHelper {
         }
 
         private void OneClient() {
-            Client client = new Client("127.0.0.1", 11000, serializer);
+            Client client = new Client(address, port, serializer);
             client.WaitUntilConnected();
             warmup(client);
 

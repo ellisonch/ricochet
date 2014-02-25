@@ -10,6 +10,9 @@ namespace ClientTestHelper {
     public abstract class BenchClient<T1, T2> {
         public abstract void Start();
 
+        protected readonly string address;
+        protected readonly int port;
+
         readonly Func<long, T1> requestGen;
         readonly string requestName;
 
@@ -26,7 +29,9 @@ namespace ClientTestHelper {
         //    payloads[i] = payloadPrefix + i;
         //}
 
-        public BenchClient(Func<long, T1> requestGen, string requestName) {
+        public BenchClient(string address, int port, Func<long, T1> requestGen, string requestName) {
+            this.address = address;
+            this.port = port;
             this.requestGen = requestGen;
             this.requestName = requestName;
         }
@@ -34,10 +39,12 @@ namespace ClientTestHelper {
         protected void warmup(Client client) {
             // var q = new AQuery("xxx");
             // AResponse ar = null;
+            // Console.WriteLine("Warming up...");
             for (int i = 0; i < numWarmupQueries; i++) {
                 // client.TryCall<AQuery, AResponse>("double", q, out ar);
                 client.Ping();
             }
+            // Console.WriteLine("Warmed up.");
         }
 
 
