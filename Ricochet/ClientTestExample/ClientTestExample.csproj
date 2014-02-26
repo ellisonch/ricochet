@@ -45,19 +45,17 @@
   <ItemGroup>
     <Compile Include="AQuery.cs" />
     <Compile Include="AResponse.cs" />
-    <Compile Include="ClientHelper.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ClientTestExample.cs" />
-    <Compile Include="WhichSerializer.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Ricochet\Ricochet.csproj">
-      <Project>{aee87d42-27fb-4e1b-bf77-b773b22d2bcc}</Project>
-      <Name>Ricochet</Name>
-    </ProjectReference>
     <ProjectReference Include="..\ClientTestHelper\ClientTestHelper.csproj">
       <Project>{16ffe37b-d284-4260-9a4d-a5cf1d3c3cfd}</Project>
       <Name>ClientTestHelper</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Ricochet\Ricochet.csproj">
+      <Project>{aee87d42-27fb-4e1b-bf77-b773b22d2bcc}</Project>
+      <Name>Ricochet</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

@@ -23,7 +23,7 @@ namespace ServerTestExample {
 
 
 
-            var server = new Server(IPAddress.Any, 11000, WhichSerializer.Serializer);
+            var server = new Server(IPAddress.Any, 11000, new MessagePackWithCustomMessageSerializer());
 
             server.Register<AQuery, AResponse>("reverse", Reverse);
             server.Register<AQuery, AResponse>("double", Double);

@@ -171,7 +171,6 @@ namespace Ricochet {
             });
         }
 
-        // TODO not limiting the number of pending requests
         private void WorkerHandler() {
             while (true) {
                 try {

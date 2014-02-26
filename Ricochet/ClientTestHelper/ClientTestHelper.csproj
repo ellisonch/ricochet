@@ -7,8 +7,8 @@
     <ProjectGuid>{16FFE37B-D284-4260-9A4D-A5CF1D3C3CFD}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>ClientTestHelper</RootNamespace>
-    <AssemblyName>ClientTestHelper</AssemblyName>
+    <RootNamespace>ClientHelper</RootNamespace>
+    <AssemblyName>Ricochet.ClientHelper</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
