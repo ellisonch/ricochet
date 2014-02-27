@@ -26,7 +26,7 @@ namespace Ricochet {
             //Response res;
             //bool canProceed = sr.WaitUntil(remainingTime);
             //if (!canProceed) { // if timeout...
-            //    l.InfoFormat("Hard timeout reached");
+            //    l.DebugFormat("Hard timeout reached");
             //    res = Response.Timeout(ticket);
             //} else {
             //    res = sr.response;
@@ -52,7 +52,7 @@ namespace Ricochet {
             //Response res;
             //bool canProceed = sr.WaitUntil(remainingTime);
             //if (!canProceed) { // if timeout...
-            //    l.InfoFormat("Hard timeout reached");
+            //    l.DebugFormat("Hard timeout reached");
             //    res = Response.Timeout(ticket);
             //} else {
             //    res = sr.Response;

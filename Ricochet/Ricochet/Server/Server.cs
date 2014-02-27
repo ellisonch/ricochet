@@ -59,14 +59,14 @@ namespace Ricochet {
             this.port = port;
             this.serializer = serializer;
             // l.Log(Logger.Flag.Info, "Configuring server as {0}:{1}", address, port);
-            this.l.InfoFormat("Configuring server as {0}:{1}", address, port);
+            this.l.DebugFormat("Configuring server as {0}:{1}", address, port);
 
             int origMinWorkerThreads, origMinCompletionPortThreads, origMaxWorkerThreads, origMaxCompletionPortThreads;
             ThreadPool.GetMinThreads(out origMinWorkerThreads, out origMinCompletionPortThreads);
             ThreadPool.GetMaxThreads(out origMaxWorkerThreads, out origMaxCompletionPortThreads);
 
-            this.l.WarnFormat("min/max worker threads: {0} / {1}", origMinWorkerThreads, origMaxWorkerThreads);
-            this.l.WarnFormat("min/max completion port threads: {0} / {1}", origMinCompletionPortThreads, origMaxCompletionPortThreads);
+            this.l.InfoFormat("min/max worker threads: {0} / {1}", origMinWorkerThreads, origMaxWorkerThreads);
+            this.l.InfoFormat("min/max completion port threads: {0} / {1}", origMinCompletionPortThreads, origMaxCompletionPortThreads);
 
             //int newMinWorkerThreads = (minWorkerThreads == 0 ? origMinWorkerThreads : minWorkerThreads);
             //int newMinCompletionPortThreads = (maxCompletionPortThreads == 0 ? origMinCompletionPortThreads : maxCompletionPortThreads);
@@ -102,7 +102,7 @@ namespace Ricochet {
                     // replace the good entries
                     while (toAddBack.TryTake(out client)) {
                         if (!client.IsAlive) {
-                            l.WarnFormat("Dropping a client");
+                            l.InfoFormat("Dropping a client");
                             continue;
                         }
                         clients.Add(client);
@@ -122,10 +122,10 @@ namespace Ricochet {
                 TcpListener listener = new TcpListener(address, port);
                 listener.Start();
                 while (true) {
-                    l.InfoFormat("Waiting for new client...");
+                    l.DebugFormat("Waiting for new client...");
 
                     var client = listener.AcceptTcpClient();
-                    l.InfoFormat("Client connected.");
+                    l.DebugFormat("Client connected.");
                     var clientHandler = new ClientManager(client, workQueue, serializer);
                     clients.Add(clientHandler);
                     clientHandler.Start();
@@ -177,7 +177,7 @@ namespace Ricochet {
                     QueryWithDestination qwd;
                     // TODO if TryDequeue fails, we're probably being shut down
                     if (!workQueue.TryDequeue(out qwd)) {
-                        l.WarnFormat("TryDequeue failed");
+                        l.InfoFormat("TryDequeue failed");
                         continue;
                     }
                     TimingHelper.Add("Work Queue", qwd.sw);
@@ -248,7 +248,7 @@ namespace Ricochet {
             Response response;
             try {
                 
-                l.InfoFormat("Data is: {0}", query.MessageData);
+                l.DebugFormat("Data is: {0}", query.MessageData);
                 if (query.Handler == null) {
                     l.WarnFormat("No query name given: {0}", query.MessageData);
                     throw new RPCException(String.Format("Do not handle query {0}", query.Handler));
@@ -261,14 +261,14 @@ namespace Ricochet {
                 // TimingHelper.Add("GetHandler", sw);
                 // Stopwatch sw = Stopwatch.StartNew();
                 // Func<Query, Response> fun = handlers[query.Handler];
-                l.InfoFormat("Calling handler {0}...", query.Handler);
+                l.DebugFormat("Calling handler {0}...", query.Handler);
                 // Stopwatch sw = Stopwatch.StartNew();
                 response = fun(query);
                 // TimingHelper.Add("ActualHandler", sw);
                 // sw.Stop();
                 // sw.Stop();
                 // TimingHelper.Add("handler", sw);
-                l.InfoFormat("Back from handler {0}.", query.Handler);
+                l.DebugFormat("Back from handler {0}.", query.Handler);
             } catch (Exception e) {
                 l.WarnFormat("Something went wrong calling handler:", e);
                 response = Response.Failure(e.Message);
@@ -280,7 +280,7 @@ namespace Ricochet {
         #region Builtin procedures
 
         private int Ping(int x) {
-            l.InfoFormat("ping of {0}", x);
+            l.DebugFormat("ping of {0}", x);
             return x;
         }
 

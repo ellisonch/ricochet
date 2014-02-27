@@ -106,7 +106,7 @@ namespace Ricochet {
                     queryToRetry = null;
                 }
                 if (query.SW.ElapsedMilliseconds > softQueryTimeout) {
-                    l.InfoFormat("Soft timeout reached");
+                    l.DebugFormat("Soft timeout reached");
                     continue;
                 }
                 if (!connection.Write(query)) {

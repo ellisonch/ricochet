@@ -63,7 +63,7 @@ namespace Ricochet {
                 byte[] bytes = serializer.SerializeQuery(query);
                 writeStream.WriteToStream(bytes);
             } catch (Exception e) {
-                l.InfoFormat("Error writing", e);
+                l.DebugFormat("Error writing", e);
                 // RequestReconnect();
                 return false;
             }
@@ -73,7 +73,7 @@ namespace Ricochet {
         public static Random r = new Random(0);
         private void NetworkInstability() {
             if (r.NextDouble() < 0.00001) {
-                l.WarnFormat("Network Instability!");
+                l.InfoFormat("Network Instability!");
                 this.connection.Close();
             }
         }
@@ -91,7 +91,7 @@ namespace Ricochet {
                     return false;
                 }
             } catch (Exception e) {
-                l.InfoFormat("Error reading:", e);
+                l.DebugFormat("Error reading:", e);
                 // RequestReconnect();
                 return false;
             }
@@ -109,12 +109,12 @@ namespace Ricochet {
             TcpClient myConnection = new TcpClient();
             //sender.ReceiveBufferSize = 1024 * 32;
             //sender.SendBufferSize = 1024 * 32;
-            l.InfoFormat("Connecting to {0}:{1}...", hostname, port);
+            l.DebugFormat("Connecting to {0}:{1}...", hostname, port);
             // await sender.ConnectAsync(hostname, port);
             try {
                 myConnection.Connect(hostname, port);
             } catch (SocketException e) {
-                l.InfoFormat("Couldn't connect:", e);
+                l.DebugFormat("Couldn't connect:", e);
                 return false;
             }
 
@@ -130,7 +130,7 @@ namespace Ricochet {
 
             connection = myConnection;
 
-            l.InfoFormat("Connected to {0}:{1}", hostname, port);
+            l.DebugFormat("Connected to {0}:{1}", hostname, port);
             return true;
         }
 

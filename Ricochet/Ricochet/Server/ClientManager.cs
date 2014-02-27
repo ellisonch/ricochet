@@ -119,7 +119,7 @@ namespace Ricochet {
                     }
                 }
             } catch (Exception e) {
-                l.InfoFormat("Error in ReadQueries():", e);
+                l.DebugFormat("Error in ReadQueries():", e);
             } finally {
                 Dispose();
             }
