@@ -1,2 +1,2 @@
-nuget pack ../Ricochet/Ricochet/Ricochet.csproj -IncludeReferencedProjects -Prop Configuration=Release -Symbols
-nuget pack ../Ricochet/ClientTestHelper/ClientTestHelper.csproj -IncludeReferencedProjects -Prop Configuration=Release -Symbols
+packRicochet.bat
+packClientHelper.bat
