@@ -26,7 +26,7 @@ namespace ClientTestHelper {
             OptionSet p = new OptionSet() {
                 { "m|mode=", "Which mode to use.  Either 'realistic' or 'flood'.  \nDefault is " + mode + ".",
                    v => mode = v },
-                { "s|serializer=", "Which serializer to use.  Either 'messagepack' or 'servicestack'.  \nDefault is " + serializerName + ".",
+                { "s|serializer=", "Which serializer to use.  'messagepack' is the only option for now.  \nDefault is " + serializerName + ".",
                    v => serializerName = v },
                 { "cri|clientReportInterval=", 
                    "Frequency (in ms) client stats should be reported.  \nSet to 0 to disable.  \nDefault is " + clientReportInterval + ".",
@@ -89,9 +89,9 @@ namespace ClientTestHelper {
         private Serializer GetSerializer() {
             Serializer serializer = null;
             switch (serializerName) {
-                case "servicestack":
-                    serializer = new ServiceStackWithCustomMessageSerializer();
-                    break;
+                //case "servicestack":
+                //    serializer = new ServiceStackWithCustomMessageSerializer();
+                //    break;
                 case "messagepack":
                     serializer = new MessagePackWithCustomMessageSerializer();
                     break;

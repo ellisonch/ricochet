@@ -30,10 +30,11 @@ namespace Ricochet {
         /// <param name="serializer">Serializer to use to serialize the embedded data</param>
         /// <returns></returns>
         public static Response CreateResponse<T>(Query query, T data, Serializer serializer) {
+            var serialized = serializer.Serialize<T>(data);
             return new Response {
                 OK = true,
                 Dispatch = query.Dispatch,
-                MessageData = serializer.Serialize<T>(data)
+                MessageData = serialized
             };
         }
 

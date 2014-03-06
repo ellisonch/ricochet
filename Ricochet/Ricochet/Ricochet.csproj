@@ -38,9 +38,6 @@
     <Reference Include="MsgPack">
       <HintPath>..\packages\MsgPack.Cli.0.4.1\lib\net40-client\MsgPack.dll</HintPath>
     </Reference>
-    <Reference Include="ServiceStack.Text">
-      <HintPath>..\packages\ServiceStack.Text.4.0.8\lib\net40\ServiceStack.Text.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -64,9 +61,6 @@
     <Compile Include="Serializers\CustomMessageSerializerHelper.cs" />
     <Compile Include="Serializers\MessagePackWithCustomMessageSerializer.cs" />
     <Compile Include="Serializers\MessagePackSerializer.cs" />
-    <Compile Include="Serializers\ServiceStackWithCustomMessageSerializer2.cs" />
-    <Compile Include="Serializers\ServiceStackWithCustomMessageSerializer.cs" />
-    <Compile Include="Serializers\ServiceStackSerializer.cs" />
     <Compile Include="Serializers\Serializer.cs" />
     <Compile Include="Server\ClientManager.cs" />
     <Compile Include="Client\StableConnection.cs" />
