@@ -10,6 +10,8 @@ using System.IO;
 using System.Collections.Concurrent;
 using Common.Logging;
 
+// TODO comments aren't showing up from NuGet import
+
 namespace Ricochet {
     /// <summary>
     /// An RPC Client represents a client through which RPC requests can be

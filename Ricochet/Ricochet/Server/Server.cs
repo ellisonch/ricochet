@@ -152,15 +152,15 @@ namespace Ricochet {
                 try {
                     Stopwatch sw = Stopwatch.StartNew();
                     T1 arg = serializer.Deserialize<T1>(query.MessageData);
-                    TimingHelper.Add("DeserializeMessage", sw);
+                    // TODO TimingHelper.Add("DeserializeMessage", sw);
                     sw.Restart();
 
                     T2 res = fun(arg);
-                    TimingHelper.Add("ActualHandler", sw);
+                    // TODO TimingHelper.Add("ActualHandler", sw);
                     sw.Restart();
 
                     var response = Response.CreateResponse<T2>(query, res, serializer);
-                    TimingHelper.Add("SerializeMessage", sw);
+                    // TODO TimingHelper.Add("SerializeMessage", sw);
                     sw.Restart();
 
                     return response;
@@ -180,11 +180,11 @@ namespace Ricochet {
                         l.InfoFormat("TryDequeue failed");
                         continue;
                     }
-                    TimingHelper.Add("Work Queue", qwd.sw);
+                    // TODO TimingHelper.Add("Work Queue", qwd.sw);
                     qwd.sw.Restart();
                     workerSemaphore.WaitOne();                    
                     try {
-                        TimingHelper.Add("WorkerSemaphore", qwd.sw);
+                        // TODO TimingHelper.Add("WorkerSemaphore", qwd.sw);
                         qwd.sw.Restart();
                         ThreadPool.QueueUserWorkItem(DoWork2, qwd);
                     } catch (Exception) {
@@ -201,7 +201,7 @@ namespace Ricochet {
             try {
                 QueryWithDestination qwd = (QueryWithDestination)obj;
                 qwd.sw.Stop();
-                TimingHelper.Add("WorkerSpawn", qwd.sw);
+                // TODO TimingHelper.Add("WorkerSpawn", qwd.sw);
 
                 // Stopwatch sw = Stopwatch.StartNew();
                 Response response = GetResponseForQuery(qwd.Query);

@@ -94,7 +94,7 @@ namespace Ricochet {
         /// Starts managing the client using new threads.  Returns immediately.
         /// </summary>
         internal void Start() {
-            l.WarnFormat("Accepted client");
+            l.InfoFormat("Accepted client");
 
             this.readerThread = new Thread(this.ReadQueries);
             readerThread.Start();
@@ -134,7 +134,8 @@ namespace Ricochet {
                     }
                     var sw = tup.Item2;
                     // Console.WriteLine(sw.Elapsed.TotalMilliseconds);
-                    TimingHelper.Add("Response Queue", sw);
+
+                    // TODO TimingHelper.Add("Response Queue", sw);
                     var bytes = tup.Item1;
                     writeStream.WriteToStream(bytes);
                     Interlocked.Increment(ref responsesReturned);
