@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using ClientTestExample;
 using ClientTestHelper;
+using Ricochet;
 
 namespace ClientTestExample {
     class ClientTestExample : TestClient<AQuery, AResponse> {
@@ -13,7 +14,7 @@ namespace ClientTestExample {
             tc.Start();
         }
 
-        public ClientTestExample(string[] args) : base(args, "double") { }
+        public ClientTestExample(string[] args) : base(args, "double", new MessagePackWithCustomMessageSerializer()) { }
 
         protected override AQuery QueryGen(long num) {
             // string payload = payloads[mycount % numDistinctPayloads];
