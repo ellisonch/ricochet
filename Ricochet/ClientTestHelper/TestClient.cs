@@ -12,6 +12,7 @@ using NDesk.Options;
 namespace ClientTestHelper {
     public abstract class TestClient<T1, T2> {
         string mode = "realistic";
+        int rate = 100;
         // string serializerName = "messagepack";
         readonly Serializer serializer;
         bool show_help = false;
@@ -28,6 +29,8 @@ namespace ClientTestHelper {
             OptionSet p = new OptionSet() {
                 { "m|mode=", "Which mode to use.  Either 'realistic' or 'flood'.  \nDefault is " + mode + ".",
                    v => mode = v },
+                { "rate=", "For realistic mode, the target rate in rps.  \nDefault is " + rate + ".",
+                   (int v) => rate = v },
                 //{ "s|serializer=", "Which serializer to use.  'messagepack' is the only option for now.  \nDefault is " + serializerName + ".",
                 //   v => serializerName = v },
                 { "cri|clientReportInterval=", 
@@ -77,7 +80,7 @@ namespace ClientTestHelper {
             BenchClient<T1, T2> client = null;
             switch (mode) {
                 case "realistic":
-                    client = new BenchClientRealistic<T1, T2>(address, port, serializer, QueryGen, requestName);
+                    client = new BenchClientRealistic<T1, T2>(address, port, serializer, QueryGen, requestName, rate);
                     break;
                 case "flood":
                     client = new BenchClientFlood<T1, T2>(address, port, serializer, QueryGen, requestName);

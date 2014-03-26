@@ -11,21 +11,31 @@ using System.Threading.Tasks;
 namespace ClientTestHelper {
     public class BenchClientRealistic<T1, T2> : BenchClient<T1, T2> {
         // per client settings
-        const int meanRPS = 100;
+        readonly int meanRPS = 100;
         const int threadsPerClient = 100;
-        // const int clientReportInterval = 1000;
 
-        const int targetRatePerThread = (int)(1000.0 / ((double)meanRPS / (double)threadsPerClient));
+        int targetRatePerThread {
+            get {
+                return (int)(1000.0 / ((double)meanRPS / (double)threadsPerClient));
+            }
+        }
         const int lowWait = 1;
-        const int highWait = targetRatePerThread + (targetRatePerThread - 1);
+        int highWait {
+            get {
+                return targetRatePerThread + (targetRatePerThread - 1);
+            }
+        }
+
+
 
         const int numberOfClients = 1;
 
         static Random r = new Random();
         Serializer serializer;
 
-        public BenchClientRealistic(string address, int port, Serializer s, Func<long, T1> fun, string name)
+        public BenchClientRealistic(string address, int port, Serializer s, Func<long, T1> fun, string name, int rate)
             : base(address, port, fun, name) {
+            this.meanRPS = rate;
             this.serializer = s;
         }
 
