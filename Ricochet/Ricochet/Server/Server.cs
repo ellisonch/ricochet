@@ -8,6 +8,7 @@ using System.Net.Sockets;
 using System.Collections.Generic;
 using Common.Logging;
 using System.Diagnostics;
+using System.Threading.Tasks;
 
 namespace Ricochet {
     /// <summary>
@@ -39,7 +40,7 @@ namespace Ricochet {
         private readonly IPAddress address;
         private readonly int port;
 
-        private ConcurrentDictionary<string, Func<Query, Response>> handlers = new ConcurrentDictionary<string, Func<Query, Response>>();
+        private ConcurrentDictionary<string, Func<Query, Task<Response>>> handlers = new ConcurrentDictionary<string, Func<Query, Task<Response>>>();
 
         /// <summary>
         /// Only contains non-null queries
@@ -144,30 +145,36 @@ namespace Ricochet {
         /// <typeparam name="T2">Output type</typeparam>
         /// <param name="name">External name of function</param>
         /// <param name="fun">Function definition</param>
-        public void Register<T1, T2>(string name, Func<T1, T2> fun) {
+        public void RegisterAsync<T1, T2>(string name, Func<T1, Task<T2>> fun) {
             if (handlers.ContainsKey(name)) {
                 throw new Exception(String.Format("A handler is already registered for the name '{0}'", name));
             }
-            handlers[name] = (Func<Query, Response>)((query) => {
+            handlers[name] = (Func<Query, Task<Response>>)(async (query) => {
                 try {
-                    Stopwatch sw = Stopwatch.StartNew();
+                    // Stopwatch sw = Stopwatch.StartNew();
                     T1 arg = serializer.Deserialize<T1>(query.MessageData);
                     // TODO TimingHelper.Add("DeserializeMessage", sw);
-                    sw.Restart();
+                    // sw.Restart();
 
-                    T2 res = fun(arg);
+                    T2 res = await fun(arg);
                     // TODO TimingHelper.Add("ActualHandler", sw);
-                    sw.Restart();
+                    // sw.Restart();
 
                     var response = Response.CreateResponse<T2>(query, res, serializer);
                     // TODO TimingHelper.Add("SerializeMessage", sw);
-                    sw.Restart();
+                    // sw.Restart();
 
                     return response;
                 } catch (Exception e) {
                     l.WarnFormat("Something went wrong handling {0}:", e, name);
                     throw;
                 }
+            });
+        }
+
+        public void Register<T1, T2>(string name, Func<T1, T2> fun) {
+            RegisterAsync(name, (T1 x) => {
+                return Task.FromResult(fun(x));
             });
         }
 
@@ -186,7 +193,10 @@ namespace Ricochet {
                     try {
                         // TODO TimingHelper.Add("WorkerSemaphore", qwd.sw);
                         qwd.sw.Restart();
-                        ThreadPool.QueueUserWorkItem(DoWork2, qwd);
+                        // ThreadPool.Queue
+                        Task.Run(() => DoWork2(qwd));
+
+                        // ThreadPool.QueueUserWorkItem(DoWork2, qwd);
                     } catch (Exception) {
                         workerSemaphore.Release();
                         throw;
@@ -197,14 +207,14 @@ namespace Ricochet {
             }
         }
 
-        private void DoWork2(Object obj) {
+        private async void DoWork2(Object obj) {
             try {
                 QueryWithDestination qwd = (QueryWithDestination)obj;
                 qwd.sw.Stop();
                 // TODO TimingHelper.Add("WorkerSpawn", qwd.sw);
 
                 // Stopwatch sw = Stopwatch.StartNew();
-                Response response = GetResponseForQuery(qwd.Query);
+                Response response = await GetResponseForQuery(qwd.Query);
                 // sw.Stop();
                 // TimingHelper.Add("GetResponse", sw);
 
@@ -244,7 +254,7 @@ namespace Ricochet {
         //    }
         //}
 
-        private Response GetResponseForQuery(Query query) {
+        private async Task<Response> GetResponseForQuery(Query query) {
             Response response;
             try {
                 
@@ -253,7 +263,7 @@ namespace Ricochet {
                     l.WarnFormat("No query name given: {0}", query.MessageData);
                     throw new RPCException(String.Format("Do not handle query {0}", query.Handler));
                 }
-                Func<Query, Response> fun;
+                Func<Query, Task<Response>> fun;
                 if (!handlers.TryGetValue(query.Handler, out fun)) {
                     l.WarnFormat("Do not handle query {0}", query.Handler);
                     throw new RPCException(String.Format("Do not handle query {0}", query.Handler));
@@ -263,7 +273,7 @@ namespace Ricochet {
                 // Func<Query, Response> fun = handlers[query.Handler];
                 l.DebugFormat("Calling handler {0}...", query.Handler);
                 // Stopwatch sw = Stopwatch.StartNew();
-                response = fun(query);
+                response = await fun(query);
                 // TimingHelper.Add("ActualHandler", sw);
                 // sw.Stop();
                 // sw.Stop();
