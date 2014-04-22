@@ -11,17 +11,6 @@ using System.Diagnostics;
 using System.Threading.Tasks;
 
 namespace Ricochet {
-    
-    public static class ClassEx {
-        public static bool HasValue<T>(this T obj)  {
-            return (null != obj);
-        }
-
-        public static bool HasValue<T>(Nullable<T> obj) where T : struct {
-            return obj.HasValue;
-        }
-    }
-
     /// <summary>
     /// An RPC Server represents a server capable of handling RPC requests.  
     /// A server can be made to understand different kinds of queries (through
@@ -64,11 +53,6 @@ namespace Ricochet {
         /// <param name="port">The port to use</param>
         /// <param name="serializer">Serializer to use for serialization</param>
         public Server(IPAddress address, int port, Serializer serializer) {
-            object o = null;
-
-            if (o.HasValue()) {
-                // do something with o
-            }
             this.address = address;
             this.port = port;
             this.serializer = serializer;
