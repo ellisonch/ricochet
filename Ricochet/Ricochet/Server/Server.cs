@@ -11,6 +11,17 @@ using System.Diagnostics;
 using System.Threading.Tasks;
 
 namespace Ricochet {
+    
+    public static class ClassEx {
+        public static bool HasValue<T>(this T obj)  {
+            return (null != obj);
+        }
+
+        public static bool HasValue<T>(Nullable<T> obj) where T : struct {
+            return obj.HasValue;
+        }
+    }
+
     /// <summary>
     /// An RPC Server represents a server capable of handling RPC requests.  
     /// A server can be made to understand different kinds of queries (through
@@ -22,9 +33,6 @@ namespace Ricochet {
     /// A server currently does not release its resources if things go bad.
     /// </summary>
     public class Server {
-        // Logger l = new Logger(Logger.Flag.Default);
-        // private readonly Logger l = new Logger(LogManager.GetCurrentClassLogger());
-        // private readonly ILog l;
         private readonly ILog l = LogManager.GetCurrentClassLogger();
 
         const int maxQueueSize = 2000;
@@ -56,6 +64,11 @@ namespace Ricochet {
         /// <param name="port">The port to use</param>
         /// <param name="serializer">Serializer to use for serialization</param>
         public Server(IPAddress address, int port, Serializer serializer) {
+            object o = null;
+
+            if (o.HasValue()) {
+                // do something with o
+            }
             this.address = address;
             this.port = port;
             this.serializer = serializer;
@@ -138,6 +151,7 @@ namespace Ricochet {
             }
         }
 
+
         /// <summary>
         /// Register a new RPC function.
         /// </summary>
@@ -145,26 +159,35 @@ namespace Ricochet {
         /// <typeparam name="T2">Output type</typeparam>
         /// <param name="name">External name of function</param>
         /// <param name="fun">Function definition</param>
-        public void RegisterAsync<T1, T2>(string name, Func<T1, Task<T2>> fun) {
+        public void RegisterAsync<T1, T2>(string name, Func<T1, Task<T2>> fun, Action<T2> cleanup) {
             if (handlers.ContainsKey(name)) {
                 throw new Exception(String.Format("A handler is already registered for the name '{0}'", name));
             }
-            handlers[name] = (Func<Query, Task<Response>>)(async (query) => {
+            handlers[name] = NewHandler<T1, T2>(name, fun, cleanup);
+        }
+        public void RegisterAsync<T1, T2>(string name, Func<T1, Task<T2>> fun) {
+            RegisterAsync(name, fun, (x) => { });
+        }
+
+        public void Register<T1, T2>(string name, Func<T1, T2> fun, Action<T2> cleanup) {
+            RegisterAsync(
+                name,
+                (T1 x) => {
+                    return Task.FromResult(fun(x));
+                },
+                cleanup
+           );
+        }
+        public void Register<T1, T2>(string name, Func<T1, T2> fun) {
+            Register(name, fun, (x) => { });
+        }
+
+
+        private Func<Query, Task<Response>> NewHandler<T1, T2>(string name, Func<T1, Task<T2>> fun, Action<T2> cleanup) {
+            return (Func<Query, Task<Response>>)(async (query) => {
                 try {
-                    // Stopwatch sw = Stopwatch.StartNew();
                     T1 arg = serializer.Deserialize<T1>(query.MessageData);
-                    // TODO TimingHelper.Add("DeserializeMessage", sw);
-                    // sw.Restart();
-
-                    T2 res = await fun(arg);
-                    // TODO TimingHelper.Add("ActualHandler", sw);
-                    // sw.Restart();
-
-                    var response = Response.CreateResponse<T2>(query, res, serializer);
-                    // TODO TimingHelper.Add("SerializeMessage", sw);
-                    // sw.Restart();
-
-                    return response;
+                    return await HandlerBody<T1, T2>(fun, query, arg, cleanup);
                 } catch (Exception e) {
                     l.WarnFormat("Something went wrong handling {0}:", e, name);
                     throw;
@@ -172,11 +195,19 @@ namespace Ricochet {
             });
         }
 
-        public void Register<T1, T2>(string name, Func<T1, T2> fun) {
-            RegisterAsync(name, (T1 x) => {
-                return Task.FromResult(fun(x));
-            });
+        private async Task<Response> HandlerBody<T1, T2>(Func<T1, Task<T2>> fun, Query query, T1 arg, Action<T2> cleanup) {
+            // TODO TimingHelper.Add("DeserializeMessage", sw);
+            // sw.Restart();
+
+            T2 res = await fun(arg);
+            // TODO TimingHelper.Add("ActualHandler", sw);
+            // sw.Restart();
+
+            var response = Response.CreateResponse<T2>(query, res, serializer);
+            cleanup(res);
+            return response;
         }
+
 
         private void WorkerHandler() {
             while (true) {
