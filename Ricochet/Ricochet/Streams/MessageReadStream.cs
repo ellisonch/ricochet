@@ -26,24 +26,65 @@ namespace Ricochet {
         /// 
         /// Assumes this thread has exclusive access to the Stream.
         /// </summary>
-        internal byte[] ReadFromStream() {
-            byte[] lenBytes = read4();
+        internal async Task<byte[]> ReadFromStream() {
+            byte[] lenBytes = await read4();
             int len = BitConverter.ToInt32(lenBytes, 0);
             // Console.WriteLine("Read length {0}", len);
-            byte[] bytes = readn(len);
+            byte[] bytes = await readn(len);
             return bytes;
         }
 
         private byte[] buffer4 = new byte[4];
-        private byte[] read4() {
-            return readnHelper(4, buffer4);
+        private async Task<byte[]> read4() {
+            return await readnHelper(4, buffer4);
         }
 
-        private byte[] readn(int len) {
-            return readnHelper(len, new byte[len]);
+        private async Task<byte[]> readn(int len) {
+            return await readnHelper(len, new byte[len]);
         }
 
-        private byte[] readnHelper(int len, byte[] buffer) {
+        private async Task<byte[]> readnHelper(int len, byte[] buffer) {
+            Debug.Assert(buffer.Length == len, "Length of buffer should be same as len");
+            int remaining = len;
+            int done = 0;
+            do {
+                int got = await stream.ReadAsync(buffer, done, remaining);
+                if (got == 0) {
+                    l.WarnFormat("Y stream.Read returned 0 bytes");
+                    throw new Exception("Stream was closed out from under us");
+                }
+                done += got;
+                remaining -= got;
+            } while (remaining > 0);
+            Debug.Assert(done == len, "The number of bytes received was not the same as the number of bytes asked for");
+            Debug.Assert(remaining == 0, "The number of bytes remaining was not 0");
+            return buffer;
+        }
+
+
+
+
+
+
+
+        internal byte[] ReadFromStreamSync() {
+            byte[] lenBytes = read4Sync();
+            int len = BitConverter.ToInt32(lenBytes, 0);
+            // Console.WriteLine("Read length {0}", len);
+            byte[] bytes = readnSync(len);
+            return bytes;
+        }
+
+        // private byte[] buffer4 = new byte[4];
+        private byte[] read4Sync() {
+            return readnHelperSync(4, buffer4);
+        }
+
+        private byte[] readnSync(int len) {
+            return readnHelperSync(len, new byte[len]);
+        }
+
+        private byte[] readnHelperSync(int len, byte[] buffer) {
             Debug.Assert(buffer.Length == len, "Length of buffer should be same as len");
             int remaining = len;
             int done = 0;
@@ -60,6 +101,10 @@ namespace Ricochet {
             Debug.Assert(remaining == 0, "The number of bytes remaining was not 0");
             return buffer;
         }
+
+
+
+
 
         //private int read(byte[] buffer, int offset, int count) {
         //    // Debug.Assert(count > 0, "Wasn't asked for any bytes");

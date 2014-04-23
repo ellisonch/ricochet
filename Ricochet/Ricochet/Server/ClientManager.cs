@@ -7,6 +7,7 @@ using System.IO;
 using System.Linq;
 using System.Net.Sockets;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace Ricochet {
     // TODO: should really be using timeout that comes from the client
@@ -43,12 +44,13 @@ namespace Ricochet {
             }
         }
 
-        readonly IBoundedQueue<QueryWithDestination> incomingQueries;
-        private IBoundedQueue<Tuple<byte[], Stopwatch>> outgoingResponses = new BoundedQueue<Tuple<byte[], Stopwatch>>(maxQueueSize);
+        // readonly IBoundedQueue<QueryWithDestination> incomingQueries;
+        // private IBoundedQueue<Tuple<byte[], Stopwatch>> outgoingResponses = new BoundedQueue<Tuple<byte[], Stopwatch>>(maxQueueSize);
 
         Thread readerThread;
         Thread writerThread;
         Serializer serializer;
+        Server server;
 
         /// <summary>
         /// Creates a new ClientManager that is not yet running.
@@ -56,9 +58,10 @@ namespace Ricochet {
         /// <param name="client">TcpClient to handle.</param>
         /// <param name="incomingQueries">Global queue in which to insert incoming queries.</param>
         /// <param name="serializer">Serializer user to send and receive messages over the wire.</param>
-        public ClientManager(TcpClient client, IBoundedQueue<QueryWithDestination> incomingQueries, Serializer serializer) {
+        public ClientManager(TcpClient client, Serializer serializer, Server server) {
             this.client = client;
-            this.incomingQueries = incomingQueries;
+            this.server = server;
+            // this.incomingQueries = incomingQueries;
             this.serializer = serializer;
             this.underlyingStream = client.GetStream();
 
@@ -74,16 +77,16 @@ namespace Ricochet {
             //l.Log(Logger.Flag.Warning, "WriteTimeout: {0}", underlyingStream.ReadTimeout);
         }
 
-        internal int IncomingCount {
-            get {
-                return incomingQueries.Count;
-            }
-        }
-        internal int OutgoingCount {
-            get {
-                return outgoingResponses.Count;
-            }
-        }
+        //internal int IncomingCount {
+        //    get {
+        //        return incomingQueries.Count;
+        //    }
+        //}
+        //internal int OutgoingCount {
+        //    get {
+        //        return outgoingResponses.Count;
+        //    }
+        //}
         internal bool IsAlive {
             get {
                 return !disposed;
@@ -93,58 +96,151 @@ namespace Ricochet {
         /// <summary>
         /// Starts managing the client using new threads.  Returns immediately.
         /// </summary>
-        internal void Start() {
+        internal async Task Start() {
             l.InfoFormat("Accepted client");
-
-            this.readerThread = new Thread(this.ReadQueries);
-            readerThread.Start();
-            this.writerThread = new Thread(this.WriteResponses);
-            writerThread.Start();
-        }
-
-        private void ReadQueries() {
             try {
+
+                Task wor = WriteOutResponses();
+
                 while (!disposed) {
                     // NetworkInstability();
-                    byte[] bytes = readStream.ReadFromStream();
-                    if (bytes == null) {
+                    byte[] queryBytes = await readStream.ReadFromStream();
+                    if (queryBytes == null) {
                         l.WarnFormat("Invalid query received, ignoring it");
                         throw new RPCException("Error reading query");
                     }
                     Interlocked.Increment(ref queriesReceived);
-                    var qwd = new QueryWithDestination(bytes, outgoingResponses, serializer);
-                    if (!incomingQueries.EnqueueIfRoom(qwd)) {
-                        l.WarnFormat("Reached maximum queue size!  Query dropped.");
-                    }
+
+                    // l.InfoFormat("Handling bytes...");
+                    var task = HandleBytes(queryBytes);
+                    // l.InfoFormat("Handled bytes.");
+                    
+                    // Stopwatch sw = Stopwatch.StartNew();
+                    //qwd.Destination.EnqueueIfRoom(new Tuple<byte[], Stopwatch>(responseBytes, sw));
+
+                    //var qwd = new QueryWithDestination(bytes, outgoingResponses, serializer);
+                    //if (!incomingQueries.EnqueueIfRoom(qwd)) {
+                    //    l.WarnFormat("Reached maximum queue size!  Query dropped.");
+                    //}
+
                 }
             } catch (Exception e) {
-                l.DebugFormat("Error in ReadQueries():", e);
+                l.InfoFormat("Error in ReadQueries():", e);
             } finally {
                 Dispose();
             }
             // l.Log(Logger.Flag.Warning, "Finishing Reader");
         }
 
-        private void WriteResponses() {
-            try {
-                while (!disposed) {
-                    Tuple<byte[], Stopwatch> tup;
-                    if (!outgoingResponses.TryDequeue(out tup)) {
-                        continue;
+        private async Task WriteOutResponses() {
+            while (true) {
+                while (outgoingQueue.Count > 0) {
+                    // l.InfoFormat("Thread: {0}", Thread.CurrentThread.ManagedThreadId);
+                    byte[] bytes;
+                    bytes = outgoingQueue.Dequeue();
+                    // if (!outgoingQueue.TryDequeue(out bytes)) {
+                    //     l.InfoFormat("Couldn't dequeue");
+                    // }
+                    if (bytes == null) {
+                        l.WarnFormat("bytes is null :(");
+                        throw new RPCException("Bytes shouldn't be null");
                     }
-                    var sw = tup.Item2;
-                    // Console.WriteLine(sw.Elapsed.TotalMilliseconds);
-
-                    // TODO TimingHelper.Add("Response Queue", sw);
-                    var bytes = tup.Item1;
-                    writeStream.WriteToStream(bytes);
-                    Interlocked.Increment(ref responsesReturned);
+                    await WriteResponses(bytes);
+                    // l.InfoFormat("Wrote responses");
                 }
+                // await Task.Yield();
+                //l.InfoFormat("Waiting for queue to have stuff");
+                await slimshim.WaitAsync();
+                //l.InfoFormat("Through WaitAsync");
+                // slimshim.Release();
+                // QueueHasStuff = new TaskCompletionSource<int>();
+            }
+        }
+
+        Queue<byte[]> outgoingQueue = new Queue<byte[]>();
+
+        // TaskCompletionSource<int> QueueHasStuff = new TaskCompletionSource<int>();
+        SemaphoreSlim slimshim = new SemaphoreSlim(0, 1);
+
+        private async System.Threading.Tasks.Task HandleBytes(byte[] queryBytes) {
+            Query query = serializer.DeserializeQuery(queryBytes);
+            if (query == null) {
+                throw new RPCException("Error deserializing query");
+            }
+
+            // l.DebugFormat("Getting response");
+            Response response = await server.GetResponseForQuery(query);
+            // l.DebugFormat("Got response");
+            byte[] responseBytes = serializer.SerializeResponse(response);
+            // l.DebugFormat("Got response bytes");
+
+            // l.InfoFormat("Enqueing Thread: {0}", Thread.CurrentThread.ManagedThreadId);
+            if (responseBytes == null) {
+                l.WarnFormat("responseBytes is null :(");
+                Environment.Exit(1);
+                throw new RPCException("Bytes shouldn't be null");
+            }
+
+            // l.InfoFormat("Signaling");
+            if (slimshim.CurrentCount == 0) {
+                slimshim.Release();
+            }
+            // l.InfoFormat("bytes: {0}", responseBytes.Length);
+            outgoingQueue.Enqueue(responseBytes);
+            // await WriteResponses(responseBytes);
+            // WriteResponsesSync(responseBytes);
+            
+            // QueueHasStuff.TrySetResult(1);
+            // l.InfoFormat("Signaled");
+
+            // l.DebugFormat("Wrote response");
+        }
+
+        //private async void ReadQueries() {
+            
+        //}
+
+        private async Task WriteResponses(byte[] bytes) {
+            try {
+                // Tuple<byte[], Stopwatch> tup;
+                //if (!outgoingResponses.TryDequeue(out tup)) {
+                //    continue;
+                //}
+                //var sw = tup.Item2;
+                // Console.WriteLine(sw.Elapsed.TotalMilliseconds);
+
+                // TODO TimingHelper.Add("Response Queue", sw);
+                // var bytes = tup.Item1;
+                await writeStream.WriteToStreamAsync(bytes);
+                Interlocked.Increment(ref responsesReturned);
             } catch (Exception e) {
                 l.WarnFormat("Error in WriteResponses()", e);
-            } finally {
-                this.Dispose();
             }
+            //finally {
+            //    this.Dispose();
+            //}
+            // l.Log(Logger.Flag.Warning, "Finishing Writer");
+        }
+
+        private void WriteResponsesSync(byte[] bytes) {
+            try {
+                // Tuple<byte[], Stopwatch> tup;
+                //if (!outgoingResponses.TryDequeue(out tup)) {
+                //    continue;
+                //}
+                //var sw = tup.Item2;
+                // Console.WriteLine(sw.Elapsed.TotalMilliseconds);
+
+                // TODO TimingHelper.Add("Response Queue", sw);
+                // var bytes = tup.Item1;
+                writeStream.WriteToStream(bytes);
+                Interlocked.Increment(ref responsesReturned);
+            } catch (Exception e) {
+                l.WarnFormat("Error in WriteResponses()", e);
+            }
+            //finally {
+            //    this.Dispose();
+            //}
             // l.Log(Logger.Flag.Warning, "Finishing Writer");
         }
 
@@ -160,7 +256,7 @@ namespace Ricochet {
 
         public void Dispose() {
             if (disposed) { return; }
-            try { outgoingResponses.Close(); } catch (Exception) { }
+            // try { outgoingResponses.Close(); } catch (Exception) { }
 
             if (underlyingStream != null) {
                 try { underlyingStream.Close(); } catch (Exception) { }
@@ -176,6 +272,7 @@ namespace Ricochet {
                 client = null;
             }
 
+            l.InfoFormat("Disposing ClientManager");
             disposed = true;
         }
     }

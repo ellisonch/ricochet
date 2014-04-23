@@ -83,7 +83,7 @@ namespace Ricochet {
             try {
                 if (disposed) { return false; }
                 if (connection == null) { return false; }
-                byte[] bytes = readStream.ReadFromStream();
+                byte[] bytes = readStream.ReadFromStreamSync();
                 response = serializer.DeserializeResponse(bytes);
                     
                 if (response == null) {

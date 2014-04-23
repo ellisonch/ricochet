@@ -6,11 +6,14 @@ using System.Linq;
 using System.Net;
 using System.Text;
 using System.Threading.Tasks;
+using Common.Logging;
+using Common.Logging.Simple;
 
 namespace ServerTestExample {
     class TestServer {
         delegate string ReverseDel(string s);
         static void Main(string[] args) {
+            // LogManager.Adapter = new ConsoleOutLoggerFactoryAdapter(LogLevel.Debug, true, false, false, "HH:mm:ss:fff");
 //            GC.GetTotalMemory(true);
 
 
@@ -28,7 +31,9 @@ namespace ServerTestExample {
             server.Register<AQuery, AResponse>("reverse", Reverse);
             server.Register<AQuery, AResponse>("double", Double);
             try {
-                server.Start();
+                using (var A = AsyncBridge.AsyncHelper.Wait) {
+                    A.Run(server.Start());
+                }
             } catch (RPCException e) {
                 Console.WriteLine(" Couldn't start server... \n{0}", e.ToString());
             }

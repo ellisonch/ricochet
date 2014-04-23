@@ -6,10 +6,13 @@ using System.Threading.Tasks;
 using ClientTestExample;
 using ClientTestHelper;
 using Ricochet;
+using Common.Logging;
+using Common.Logging.Simple;
 
 namespace ClientTestExample {
     class ClientTestExample : TestClient<AQuery, AResponse> {
         static void Main(string[] args) {
+            // LogManager.Adapter = new ConsoleOutLoggerFactoryAdapter(LogLevel.Debug, true, false, false, "HH:mm:ss:fff");
             var tc = new ClientTestExample(args);
             tc.Start();
         }

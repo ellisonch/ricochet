@@ -25,13 +25,6 @@ namespace Ricochet {
         private readonly ILog l = LogManager.GetCurrentClassLogger();
 
         const int maxQueueSize = 2000;
-        const int maxWorkerThreads = 16;
-        private Semaphore workerSemaphore = new Semaphore(maxWorkerThreads, maxWorkerThreads);
-
-        //const int minWorkerThreads = 2;
-        //const int minCompletionPortThreads = 0; // 0 means don't change from default
-        //const int maxWorkerThreads = 64;
-        //const int maxCompletionPortThreads = 0; // 0 means don't change from default
 
         Serializer serializer;
         private readonly IPAddress address;
@@ -42,9 +35,9 @@ namespace Ricochet {
         /// <summary>
         /// Only contains non-null queries
         /// </summary>
-        private IBoundedQueue<QueryWithDestination> workQueue = new BoundedQueue<QueryWithDestination>(maxQueueSize);
+        // private IBoundedQueue<QueryWithDestination> workQueue = new BoundedQueue<QueryWithDestination>(maxQueueSize);
         private ConcurrentBag<ClientManager> clients = new ConcurrentBag<ClientManager>();
-        private ConcurrentBag<Thread> workers = new ConcurrentBag<Thread>();
+        // private ConcurrentBag<Thread> workers = new ConcurrentBag<Thread>();
 
         /// <summary>
         /// Creates a new server that is not yet running.
@@ -59,12 +52,12 @@ namespace Ricochet {
             // l.Log(Logger.Flag.Info, "Configuring server as {0}:{1}", address, port);
             this.l.DebugFormat("Configuring server as {0}:{1}", address, port);
 
-            int origMinWorkerThreads, origMinCompletionPortThreads, origMaxWorkerThreads, origMaxCompletionPortThreads;
-            ThreadPool.GetMinThreads(out origMinWorkerThreads, out origMinCompletionPortThreads);
-            ThreadPool.GetMaxThreads(out origMaxWorkerThreads, out origMaxCompletionPortThreads);
+            //int origMinWorkerThreads, origMinCompletionPortThreads, origMaxWorkerThreads, origMaxCompletionPortThreads;
+            //ThreadPool.GetMinThreads(out origMinWorkerThreads, out origMinCompletionPortThreads);
+            //ThreadPool.GetMaxThreads(out origMaxWorkerThreads, out origMaxCompletionPortThreads);
 
-            this.l.InfoFormat("min/max worker threads: {0} / {1}", origMinWorkerThreads, origMaxWorkerThreads);
-            this.l.InfoFormat("min/max completion port threads: {0} / {1}", origMinCompletionPortThreads, origMaxCompletionPortThreads);
+            //this.l.InfoFormat("min/max worker threads: {0} / {1}", origMinWorkerThreads, origMaxWorkerThreads);
+            //this.l.InfoFormat("min/max completion port threads: {0} / {1}", origMinCompletionPortThreads, origMaxCompletionPortThreads);
 
             //int newMinWorkerThreads = (minWorkerThreads == 0 ? origMinWorkerThreads : minWorkerThreads);
             //int newMinCompletionPortThreads = (maxCompletionPortThreads == 0 ? origMinCompletionPortThreads : maxCompletionPortThreads);
@@ -80,12 +73,14 @@ namespace Ricochet {
             //    workers.Add(t);
             //    t.Start();
             //}
-            new Thread(this.WorkerHandler).Start();
-
-            new Thread(this.CleanUp).Start();
 
             Register<int, int>("_ping", Ping);
             Register<bool, ServerStats>("_getStats", GetStats);
+
+            // new Thread(this.WorkerHandler).Start();
+            // this.WorkerHandler();
+
+            new Thread(this.CleanUp).Start();
         }
 
         private void CleanUp() {
@@ -115,7 +110,7 @@ namespace Ricochet {
         /// <summary>
         /// Starts the server.  Blocks while server is running.
         /// </summary>
-        public void Start() {
+        public async Task Start() {
             try {
                 TcpListener listener = new TcpListener(address, port);
                 listener.Start();
@@ -124,9 +119,9 @@ namespace Ricochet {
 
                     var client = listener.AcceptTcpClient();
                     l.DebugFormat("Client connected.");
-                    var clientHandler = new ClientManager(client, workQueue, serializer);
+                    var clientHandler = new ClientManager(client, serializer, this);
                     clients.Add(clientHandler);
-                    clientHandler.Start();
+                    await clientHandler.Start();
                 }
             } catch (AggregateException e) {
                 l.ErrorFormat("Exception thrown: {0}", e.InnerException.Message);
@@ -193,57 +188,55 @@ namespace Ricochet {
         }
 
 
-        private void WorkerHandler() {
-            while (true) {
-                try {
-                    QueryWithDestination qwd;
-                    // TODO if TryDequeue fails, we're probably being shut down
-                    if (!workQueue.TryDequeue(out qwd)) {
-                        l.InfoFormat("TryDequeue failed");
-                        continue;
-                    }
-                    // TODO TimingHelper.Add("Work Queue", qwd.sw);
-                    qwd.sw.Restart();
-                    workerSemaphore.WaitOne();                    
-                    try {
-                        // TODO TimingHelper.Add("WorkerSemaphore", qwd.sw);
-                        qwd.sw.Restart();
-                        // ThreadPool.Queue
-                        Task.Run(() => DoWork2(qwd));
+        //private void WorkerHandler() {
+        //    while (true) {
+        //        try {
+        //            QueryWithDestination qwd;
+        //            // TODO if TryDequeue fails, we're probably being shut down
+        //            if (!workQueue.TryDequeue(out qwd)) {
+        //                l.InfoFormat("TryDequeue failed");
+        //                continue;
+        //            }
+        //            // TODO TimingHelper.Add("Work Queue", qwd.sw);
+        //            qwd.sw.Restart();
+        //            workerSemaphore.WaitOne();                    
+        //            try {
+        //                // TODO TimingHelper.Add("WorkerSemaphore", qwd.sw);
+        //                qwd.sw.Restart();
+        //                // ThreadPool.Queue
+        //                Task.Run(() => DoWork2(qwd));
 
-                        // ThreadPool.QueueUserWorkItem(DoWork2, qwd);
-                    } catch (Exception) {
-                        workerSemaphore.Release();
-                        throw;
-                    }
-                } catch (Exception e) {
-                    l.WarnFormat("Problem in WorkerHandler:", e);
-                }
-            }
-        }
+        //                // ThreadPool.QueueUserWorkItem(DoWork2, qwd);
+        //            } catch (Exception) {
+        //                workerSemaphore.Release();
+        //                throw;
+        //            }
+        //        } catch (Exception e) {
+        //            l.WarnFormat("Problem in WorkerHandler:", e);
+        //        }
+        //    }
+        //}
 
-        private async void DoWork2(Object obj) {
-            try {
-                QueryWithDestination qwd = (QueryWithDestination)obj;
-                qwd.sw.Stop();
-                // TODO TimingHelper.Add("WorkerSpawn", qwd.sw);
+        //private async void DoWork2(Object obj) {
+        //    try {
+        //        QueryWithDestination qwd = (QueryWithDestination)obj;
+        //        qwd.sw.Stop();
+        //        // TODO TimingHelper.Add("WorkerSpawn", qwd.sw);
 
-                // Stopwatch sw = Stopwatch.StartNew();
-                Response response = await GetResponseForQuery(qwd.Query);
-                // sw.Stop();
-                // TimingHelper.Add("GetResponse", sw);
+        //        // Stopwatch sw = Stopwatch.StartNew();
+        //        Response response = await GetResponseForQuery(qwd.Query);
+        //        // sw.Stop();
+        //        // TimingHelper.Add("GetResponse", sw);
 
-                byte[] bytes = serializer.SerializeResponse(response);
-                // l.Log(Logger.Flag.Warning, "Response calculated by thread {0}", Thread.CurrentThread.ManagedThreadId);
-                // sw.Restart();
-                Stopwatch sw = Stopwatch.StartNew();
-                qwd.Destination.EnqueueIfRoom(new Tuple<byte[], Stopwatch>(bytes, sw));
-            } catch (Exception e) {
-                l.WarnFormat("Problem doing work:", e);
-            } finally {
-                workerSemaphore.Release();
-            }
-        }
+        //        byte[] bytes = serializer.SerializeResponse(response);
+        //        // l.Log(Logger.Flag.Warning, "Response calculated by thread {0}", Thread.CurrentThread.ManagedThreadId);
+        //        // sw.Restart();
+        //        Stopwatch sw = Stopwatch.StartNew();
+        //        qwd.Destination.EnqueueIfRoom(new Tuple<byte[], Stopwatch>(bytes, sw));
+        //    } catch (Exception e) {
+        //        l.WarnFormat("Problem doing work:", e);
+        //    }
+        //}
         //private void DoWork() {
         //    while (true) {
         //        try {
@@ -269,7 +262,7 @@ namespace Ricochet {
         //    }
         //}
 
-        private async Task<Response> GetResponseForQuery(Query query) {
+        internal async Task<Response> GetResponseForQuery(Query query) {
             Response response;
             try {
                 
@@ -325,14 +318,14 @@ namespace Ricochet {
             //var workQueueTime50 = times[(int)(times.Length * 0.50)];
 
             ServerStats ss = new ServerStats() {
-                WorkQueueLength = workQueue.Count,
+                // WorkQueueLength = workQueue.Count,
                 ActiveWorkerThreads = wt - awt,
                 ActiveCompletionPortThreads = cpt - acpt,
                 Timers = TimingHelper.Summary()
             };
             foreach (var client in clients) {
                 ClientStats cs = new ClientStats() {
-                    OutgoingQueueLength = client.OutgoingCount,
+                    // OutgoingQueueLength = client.OutgoingCount,
                     IncomingTotal = client.QueriesReceived,
                     OutgoingTotal = client.ResponsesReturned,
                 };

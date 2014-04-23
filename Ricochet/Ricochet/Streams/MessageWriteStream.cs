@@ -25,6 +25,32 @@ namespace Ricochet {
         /// Assumes this thread has exclusive access to the Stream.
         /// </summary>
         /// <param name="bytes"></param>
+        internal async Task WriteToStreamAsync(byte[] bytes) {
+            int len = bytes.Length;
+            // Console.WriteLine("Writing length {0}", len);
+            byte[] lenBytes = BitConverter.GetBytes(len);
+            Debug.Assert(lenBytes.Length == 4, "Header should be 4 bytes");
+            await stream.WriteAsync(lenBytes, 0, lenBytes.Length);
+            await stream.WriteAsync(bytes, 0, bytes.Length);
+
+            //byte[] allBytes = new byte[bytes.Length + 4];
+            //lenBytes.CopyTo(allBytes, 0);
+            //bytes.CopyTo(allBytes, 4);
+            // stream.Write(allBytes, 0, allBytes.Length);
+
+            await stream.FlushAsync();
+        }
+
+
+
+
+
+        /// <summary>
+        /// Writes bytes to the Stream.
+        /// 
+        /// Assumes this thread has exclusive access to the Stream.
+        /// </summary>
+        /// <param name="bytes"></param>
         internal void WriteToStream(byte[] bytes) {
             int len = bytes.Length;
             // Console.WriteLine("Writing length {0}", len);
@@ -37,9 +63,13 @@ namespace Ricochet {
             //lenBytes.CopyTo(allBytes, 0);
             //bytes.CopyTo(allBytes, 4);
             // stream.Write(allBytes, 0, allBytes.Length);
-                        
+
             stream.Flush();
         }
+
+
+
+
 
         public void Dispose() {
             if (disposed) { return; }
