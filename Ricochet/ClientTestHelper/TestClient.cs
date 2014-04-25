@@ -89,7 +89,7 @@ namespace ClientTestHelper {
                     client = new BenchClientFloodAsync<T1, T2>(address, port, serializer, QueryGen, requestName);
                     break;
                 default:
-                    throw new Exception("Didn't expect your mode");
+                    throw new Exception(String.Format("Didn't expect mode '{0}'", mode));
             }
             return client;
         }

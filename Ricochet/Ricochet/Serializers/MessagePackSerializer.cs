@@ -12,7 +12,7 @@ namespace Ricochet {
     ///  Provides a ServiceStack.Text-based Serializer for Ricochet.
     /// </summary>
     public class MessagePackSerializer : Serializer {
-        private readonly ILog l = LogManager.GetCurrentClassLogger();
+        private static readonly ILog l = LogManager.GetCurrentClassLogger();
 
         ConcurrentDictionary<Type, MsgPack.Serialization.IMessagePackSingleObjectSerializer> serializers = new ConcurrentDictionary<Type, MsgPack.Serialization.IMessagePackSingleObjectSerializer>();
 

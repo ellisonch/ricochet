@@ -22,7 +22,7 @@ namespace Ricochet {
     /// A server currently does not release its resources if things go bad.
     /// </summary>
     public class Server {
-        private readonly ILog l = LogManager.GetCurrentClassLogger();
+        private static readonly ILog l = LogManager.GetCurrentClassLogger();
 
         const int maxQueueSize = 2000;
         const int maxWorkerThreads = 16;
@@ -57,14 +57,14 @@ namespace Ricochet {
             this.port = port;
             this.serializer = serializer;
             // l.Log(Logger.Flag.Info, "Configuring server as {0}:{1}", address, port);
-            this.l.DebugFormat("Configuring server as {0}:{1}", address, port);
+            l.DebugFormat("Configuring server as {0}:{1}", address, port);
 
             int origMinWorkerThreads, origMinCompletionPortThreads, origMaxWorkerThreads, origMaxCompletionPortThreads;
             ThreadPool.GetMinThreads(out origMinWorkerThreads, out origMinCompletionPortThreads);
             ThreadPool.GetMaxThreads(out origMaxWorkerThreads, out origMaxCompletionPortThreads);
 
-            this.l.InfoFormat("min/max worker threads: {0} / {1}", origMinWorkerThreads, origMaxWorkerThreads);
-            this.l.InfoFormat("min/max completion port threads: {0} / {1}", origMinCompletionPortThreads, origMaxCompletionPortThreads);
+            l.InfoFormat("min/max worker threads: {0} / {1}", origMinWorkerThreads, origMaxWorkerThreads);
+            l.InfoFormat("min/max completion port threads: {0} / {1}", origMinCompletionPortThreads, origMaxCompletionPortThreads);
 
             //int newMinWorkerThreads = (minWorkerThreads == 0 ? origMinWorkerThreads : minWorkerThreads);
             //int newMinCompletionPortThreads = (maxCompletionPortThreads == 0 ? origMinCompletionPortThreads : maxCompletionPortThreads);

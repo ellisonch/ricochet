@@ -19,7 +19,7 @@ namespace Ricochet {
     /// sends the requests to that server.
     /// </summary>
     public class Client : IDisposable {
-        private readonly ILog l = LogManager.GetCurrentClassLogger();
+        private static readonly ILog l = LogManager.GetCurrentClassLogger();
 
         const int maxQueueSize = 2000;
         const int connectionTimeout = 50;

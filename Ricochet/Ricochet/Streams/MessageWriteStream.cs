@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace Ricochet {
     class MessageWriteStream : IDisposable {
-        private readonly ILog l = LogManager.GetCurrentClassLogger();
+        private static readonly ILog l = LogManager.GetCurrentClassLogger();
         readonly Stream stream;
 
         bool disposed = false;

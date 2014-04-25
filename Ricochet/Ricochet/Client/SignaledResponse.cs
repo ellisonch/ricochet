@@ -49,10 +49,14 @@ namespace Ricochet {
         }
 
         public async Task<Response> GetAsync(int remainingTime) {
-            var t = await Task.WhenAny(tcs.Task, Task.Delay(remainingTime));
+            var cts = new CancellationTokenSource();
+            var timeoutTask = Task.Delay(remainingTime, cts.Token);
+            var t = await Task.WhenAny(tcs.Task, timeoutTask);
             if (t == tcs.Task) {
+                cts.Cancel();
                 return await tcs.Task;
             } else {
+                tcs.SetCanceled();
                 return Response.Timeout(id);
             }
         }

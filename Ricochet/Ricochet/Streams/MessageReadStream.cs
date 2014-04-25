@@ -9,7 +9,7 @@ using Common.Logging;
 
 namespace Ricochet {
     internal class MessageReadStream : IDisposable {
-        private readonly ILog l = LogManager.GetCurrentClassLogger();
+        private static readonly ILog l = LogManager.GetCurrentClassLogger();
         Stream stream;
 
         bool disposed = false;

@@ -18,7 +18,7 @@ namespace Ricochet {
     /// </summary>
     /// <typeparam name="T"></typeparam>
     internal class BoundedQueue<T> : IBoundedQueue<T> {
-        private readonly ILog l = LogManager.GetCurrentClassLogger();
+        private static readonly ILog l = LogManager.GetCurrentClassLogger();
 
         /// <summary>
         /// Time to wait for a signal that something has been put into the queue

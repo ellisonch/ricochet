@@ -23,7 +23,7 @@ namespace Ricochet {
         private readonly string hostname;
         private readonly int port;
 
-        private readonly ILog l = LogManager.GetCurrentClassLogger();
+        private static readonly ILog l = LogManager.GetCurrentClassLogger();
 
         Serializer serializer;
         private TcpClient connection;

@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 namespace Ricochet {
     internal class PendingRequests {
         private ConcurrentDictionary<int, SignaledResponse> requests = new ConcurrentDictionary<int, SignaledResponse>();
-        private readonly ILog l = LogManager.GetCurrentClassLogger();
+        private static readonly ILog l = LogManager.GetCurrentClassLogger();
 
         internal Response Get(int ticket) {
             var sr = requests[ticket];

@@ -16,7 +16,7 @@ namespace Ricochet {
     /// to a single client.
     /// </summary>
     internal sealed class ClientManager : IDisposable {
-        private readonly ILog l = LogManager.GetCurrentClassLogger();
+        private static readonly ILog l = LogManager.GetCurrentClassLogger();
         const int maxQueueSize = 2000;
         //const int readTimeout = 500;
         //const int writeTimeout = 500;
