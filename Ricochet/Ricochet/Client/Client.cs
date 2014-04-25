@@ -149,6 +149,15 @@ namespace Ricochet {
             return ExtractResult<T2>(response);
         }
 
+        public bool TryCallThrowAway<T1, T2>(string name, T1 input) {
+            int? id = StartCall(name, input);
+            if (!id.HasValue) {
+                return false;
+            }
+            Response response = pendingRequests.Get(id.Value);
+            return response.OK && response.MessageData != null;
+        }
+
         /// <summary>
         /// Tries to make an RPC call.  May timeout or otherwise fail.
         /// </summary>

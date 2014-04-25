@@ -59,6 +59,18 @@ namespace ClientTestHelper {
             return result.OK;
         }
 
+        protected bool doCallThrowAway(Client client, long myCount) {
+            T1 request = requestGen(myCount);
+            bool result;
+            try {
+                result = client.TryCallThrowAway<T1, T2>(requestName, request);
+            } catch (Exception e) {
+                Console.WriteLine("Something really unexpected happened: {0}", e);
+                return false;
+            }
+            return result;
+        }
+
         protected async Task<bool> doCallAsync(Client client, long myCount) {
             T1 request = requestGen(myCount);
             Option<T2> result;
@@ -73,12 +85,12 @@ namespace ClientTestHelper {
 
         protected async Task<bool> doCallAsyncThrowAway(Client client, long myCount) {
             T1 request = requestGen(myCount);
-            bool result = false;
+            bool result;
             try {
                 result = await client.TryCallAsyncThrowAway<T1, T2>(requestName, request);
             } catch (Exception e) {
                 Console.WriteLine("Something really unexpected happened: {0}", e);
-                return result;
+                return false;
             }
             return result;
         }

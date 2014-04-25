@@ -78,7 +78,7 @@ namespace ClientTestHelper {
                 var mycount = Interlocked.Increment(ref count);
 
                 Stopwatch mysw = Stopwatch.StartNew();
-                bool success = doCall(client, mycount);
+                bool success = doCallThrowAway(client, mycount);
                 mysw.Stop();
 
                 long myfailures;
