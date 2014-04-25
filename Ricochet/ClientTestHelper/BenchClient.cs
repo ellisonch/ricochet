@@ -59,6 +59,30 @@ namespace ClientTestHelper {
             return result.OK;
         }
 
+        protected async Task<bool> doCallAsync(Client client, long myCount) {
+            T1 request = requestGen(myCount);
+            Option<T2> result;
+            try {
+                result = await client.TryCallAsync<T1, T2>(requestName, request);
+            } catch (Exception e) {
+                Console.WriteLine("Something really unexpected happened: {0}", e);
+                return false;
+            }
+            return result.OK;
+        }
+
+        protected async Task<bool> doCallAsyncThrowAway(Client client, long myCount) {
+            T1 request = requestGen(myCount);
+            bool result = false;
+            try {
+                result = await client.TryCallAsyncThrowAway<T1, T2>(requestName, request);
+            } catch (Exception e) {
+                Console.WriteLine("Something really unexpected happened: {0}", e);
+                return result;
+            }
+            return result;
+        }
+
         protected void ReportServerStats(object obj) {
             Client client = (Client)obj;
             while (client.IsAlive) {
