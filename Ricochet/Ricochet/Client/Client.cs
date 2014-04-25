@@ -166,6 +166,16 @@ namespace Ricochet {
             return ExtractResult<T2>(response);
         }
 
+        public async Task<bool> TryCallAsyncThrowAway<T1, T2>(string name, T1 input) {
+            int? id = StartCall(name, input);
+            if (!id.HasValue) {
+                return false;
+            }
+            Response response = await pendingRequests.GetAsync(id.Value);
+
+            return response.OK && response.MessageData != null;
+        }
+
         private int? StartCall<T1>(string name, T1 input) {
             if (disposed) { return null; }
             Query query = Query.CreateQuery<T1>(name, input, serializer);
