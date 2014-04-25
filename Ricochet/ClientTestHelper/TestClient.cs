@@ -27,7 +27,7 @@ namespace ClientTestHelper {
             this.requestName = requestName;
             this.serializer = serializer;
             OptionSet p = new OptionSet() {
-                { "m|mode=", "Which mode to use.  Either 'realistic' or 'flood'.  \nDefault is " + mode + ".",
+                { "m|mode=", "Which mode to use.  Either 'realistic', 'flood', or 'floodAsync'.  \nDefault is " + mode + ".",
                    v => mode = v },
                 { "rate=", "For realistic mode, the target rate in rps.  \nDefault is " + rate + ".",
                    (int v) => rate = v },
@@ -84,6 +84,9 @@ namespace ClientTestHelper {
                     break;
                 case "flood":
                     client = new BenchClientFlood<T1, T2>(address, port, serializer, QueryGen, requestName);
+                    break;
+                case "floodAsync":
+                    client = new BenchClientFloodAsync<T1, T2>(address, port, serializer, QueryGen, requestName);
                     break;
                 default:
                     throw new Exception("Didn't expect your mode");

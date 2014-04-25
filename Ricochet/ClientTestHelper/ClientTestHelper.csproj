@@ -49,6 +49,7 @@
   <ItemGroup>
     <Compile Include="BenchClient.cs" />
     <Compile Include="BenchClientFlood.cs" />
+    <Compile Include="BenchClientFloodAsync.cs" />
     <Compile Include="BenchClientRealistic.cs" />
     <Compile Include="TestClient.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
