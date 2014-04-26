@@ -30,6 +30,13 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Testing", "Testing", "{FBB72311-813B-4F34-89EA-1C386B704A13}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".nuget", ".nuget", "{015B3332-B520-4EF3-B4CC-FD2CEA0CF07F}"
+	ProjectSection(SolutionItems) = preProject
+		.nuget\NuGet.Config = .nuget\NuGet.Config
+		.nuget\NuGet.exe = .nuget\NuGet.exe
+		.nuget\NuGet.targets = .nuget\NuGet.targets
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -60,8 +67,5 @@ Global
 		{16FFE37B-D284-4260-9A4D-A5CF1D3C3CFD} = {FBB72311-813B-4F34-89EA-1C386B704A13}
 		{532992D4-AA21-4A9C-B05F-ACC3A4C9839E} = {FBB72311-813B-4F34-89EA-1C386B704A13}
 		{86DC828F-E8AB-42B0-9FFB-A0F318659A1C} = {FBB72311-813B-4F34-89EA-1C386B704A13}
-	EndGlobalSection
-	GlobalSection(Performance) = preSolution
-		HasPerformanceSessions = true
 	EndGlobalSection
 EndGlobal
