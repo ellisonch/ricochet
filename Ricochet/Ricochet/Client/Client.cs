@@ -141,7 +141,7 @@ namespace Ricochet {
         /// <param name="input">Input to function</param>
         /// <returns>An option type, possibly containing the result</returns>
         public Option<T2> TryCall<T1, T2>(string name, T1 input) {
-            int? id = StartCall(name, input);
+            int? id = StartCallSync(name, input);
             if (!id.HasValue) {
                 return Option<T2>.None();
             }
@@ -150,7 +150,7 @@ namespace Ricochet {
         }
 
         public bool TryCallThrowAway<T1, T2>(string name, T1 input) {
-            int? id = StartCall(name, input);
+            int? id = StartCallSync(name, input);
             if (!id.HasValue) {
                 return false;
             }
@@ -167,7 +167,7 @@ namespace Ricochet {
         /// <param name="input">Input to function</param>
         /// <returns>An option type, possibly containing the result</returns>
         public async Task<Option<T2>> TryCallAsync<T1, T2>(string name, T1 input) {
-            int? id = StartCall(name, input);
+            int? id = StartCallAsync(name, input);
             if (!id.HasValue) {
                 return Option<T2>.None();
             }
@@ -176,7 +176,7 @@ namespace Ricochet {
         }
 
         public async Task<bool> TryCallAsyncThrowAway<T1, T2>(string name, T1 input) {
-            int? id = StartCall(name, input);
+            int? id = StartCallAsync(name, input);
             if (!id.HasValue) {
                 return false;
             }
@@ -185,10 +185,23 @@ namespace Ricochet {
             return response.OK && response.MessageData != null;
         }
 
-        private int? StartCall<T1>(string name, T1 input) {
+        private int? StartCallSync<T1>(string name, T1 input) {
             if (disposed) { return null; }
             Query query = Query.CreateQuery<T1>(name, input, serializer);
-            pendingRequests.Add(query);
+            pendingRequests.AddSync(query);
+
+            if (!outgoingQueries.EnqueueIfRoom(query)) {
+                // l.Log(Logger.Flag.Warning, "Reached maximum queue size!  Query dropped.");
+                pendingRequests.Delete(query.Dispatch);
+                return null;
+            }
+            return query.Dispatch;
+        }
+
+        private int? StartCallAsync<T1>(string name, T1 input) {
+            if (disposed) { return null; }
+            Query query = Query.CreateQuery<T1>(name, input, serializer);
+            pendingRequests.AddAsync(query);
 
             if (!outgoingQueries.EnqueueIfRoom(query)) {
                 // l.Log(Logger.Flag.Warning, "Reached maximum queue size!  Query dropped.");

@@ -71,8 +71,11 @@ namespace Ricochet {
             }
         }
 
-        internal void Add(Query query) {
-            requests[query.Dispatch] = new SignaledResponse(query.Dispatch, query.SW);
+        internal void AddSync(Query query) {
+            requests[query.Dispatch] = new SignaledResponse(query.Dispatch, query.SW, false);
+        }
+        internal void AddAsync(Query query) {
+            requests[query.Dispatch] = new SignaledResponse(query.Dispatch, query.SW, true);
         }
 
         internal void Delete(int ticket) {

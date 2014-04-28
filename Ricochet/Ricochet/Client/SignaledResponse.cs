@@ -12,28 +12,34 @@ namespace Ricochet {
     class SignaledResponse {
         private static ILog l = LogManager.GetCurrentClassLogger();
 
-        private readonly ManualResetEvent barrier = new ManualResetEvent(false);
-        private readonly TaskCompletionSource<Response> tcs = new TaskCompletionSource<Response>();
+        private readonly ManualResetEvent barrier;
+        private readonly TaskCompletionSource<Response> tcs;
         // private SemaphoreSlim barrier2 = new SemaphoreSlim(0, 1);
 
+        private readonly bool isAsync;
         public readonly Stopwatch SW;
         private readonly int id;
 
         private Response response;
 
-        public SignaledResponse(int id, Stopwatch stopwatch) {
+        public SignaledResponse(int id, Stopwatch stopwatch, bool isAsync) {
             this.id = id;
             this.SW = stopwatch;
-            //if (isAsync) {
-            //    tcs = new TaskCompletionSource<Response>();
-            //} else {
-            //    barrier = new ManualResetEvent(false);
-            //}
+            this.isAsync = isAsync;
+
+            if (isAsync) {
+                tcs = new TaskCompletionSource<Response>();
+            } else {
+                barrier = new ManualResetEvent(false);
+            }
         }
         public void Set(Response response) {
             this.response = response;
-            tcs.SetResult(response);
-            barrier.Set();
+            if (isAsync) {
+                tcs.SetResult(response);
+            } else {
+                barrier.Set();
+            }
         }
 
         public Response Get(int remainingTime) {
