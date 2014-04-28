@@ -18,6 +18,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		Performance11.psess = Performance11.psess
 		Performance12.psess = Performance12.psess
 		Performance13.psess = Performance13.psess
+		Performance14.psess = Performance14.psess
 		Performance2.psess = Performance2.psess
 		Performance3.psess = Performance3.psess
 		Performance4.psess = Performance4.psess
@@ -67,5 +68,8 @@ Global
 		{16FFE37B-D284-4260-9A4D-A5CF1D3C3CFD} = {FBB72311-813B-4F34-89EA-1C386B704A13}
 		{532992D4-AA21-4A9C-B05F-ACC3A4C9839E} = {FBB72311-813B-4F34-89EA-1C386B704A13}
 		{86DC828F-E8AB-42B0-9FFB-A0F318659A1C} = {FBB72311-813B-4F34-89EA-1C386B704A13}
+	EndGlobalSection
+	GlobalSection(Performance) = preSolution
+		HasPerformanceSessions = true
 	EndGlobalSection
 EndGlobal

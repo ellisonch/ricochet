@@ -20,16 +20,33 @@ namespace Ricochet {
             // Length of handler (4 bytes)
             // handler
             // message data (rest of array)
-            byte[] handlerBytes = Encoding.Unicode.GetBytes(query.Handler);
 
-            int len = 4 + 4 + handlerBytes.Length + query.MessageData.Length;
+
+            int handlerBytesLen = Encoding.Unicode.GetByteCount(query.Handler);
+            int len = 4 + 4 + handlerBytesLen + query.MessageData.Length;
             byte[] bytes = new byte[len];
+            
+            // BitConverter.GetBytes(query.Dispatch).CopyTo(bytes, 0);
+            // intHolder[0] = query.Dispatch;
+            // Buffer.BlockCopy(query.Dispatch, 0, bytes, 0, 4);
+            FastIntToBytes(bytes, 0, query.Dispatch);
+            // BitConverter.GetBytes(handlerBytesLen).CopyTo(bytes, 4);
+            // intHolder[0] = handlerBytesLen;
+            // Buffer.BlockCopy(intHolder, 0, bytes, 4, 4);
+            FastIntToBytes(bytes, 4, handlerBytesLen);
 
-            BitConverter.GetBytes(query.Dispatch).CopyTo(bytes, 0);
-            BitConverter.GetBytes(handlerBytes.Length).CopyTo(bytes, 4);
-            handlerBytes.CopyTo(bytes, 8);
-            query.MessageData.CopyTo(bytes, 8 + handlerBytes.Length);
+            Encoding.Unicode.GetBytes(query.Handler, 0, query.Handler.Length, bytes, 8);
+            query.MessageData.CopyTo(bytes, 8 + handlerBytesLen);
             return bytes;
+        }
+
+        // from http://stackoverflow.com/questions/2036718/c-whats-the-fastest-way-of-reading-and-writing-binary by Marc Gravell
+        // used here with permission
+        static void FastIntToBytes(byte[] target, int index, int value) {
+            target[index++] = (byte)value;
+            target[index++] = (byte)(value >> 8);
+            target[index++] = (byte)(value >> 16);
+            target[index] = (byte)(value >> 24);
         }
 
         /// <summary>
