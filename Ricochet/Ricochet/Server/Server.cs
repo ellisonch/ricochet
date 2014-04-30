@@ -44,7 +44,7 @@ namespace Ricochet {
         /// </summary>
         private IBoundedQueue<QueryWithDestination> workQueue = new BoundedQueue<QueryWithDestination>(maxQueueSize);
         private ConcurrentBag<ClientManager> clients = new ConcurrentBag<ClientManager>();
-        private ConcurrentBag<Thread> workers = new ConcurrentBag<Thread>();
+        // private ConcurrentBag<Thread> workers = new ConcurrentBag<Thread>();
 
         /// <summary>
         /// Creates a new server that is not yet running.
@@ -60,6 +60,8 @@ namespace Ricochet {
             l.DebugFormat("Configuring server as {0}:{1}", address, port);
 
             int origMinWorkerThreads, origMinCompletionPortThreads, origMaxWorkerThreads, origMaxCompletionPortThreads;
+            l.InfoFormat("Set? : {0}", ThreadPool.SetMinThreads(8, 8));
+            l.InfoFormat("Set? : {0}", ThreadPool.SetMaxThreads(8, 8));
             ThreadPool.GetMinThreads(out origMinWorkerThreads, out origMinCompletionPortThreads);
             ThreadPool.GetMaxThreads(out origMaxWorkerThreads, out origMaxCompletionPortThreads);
 

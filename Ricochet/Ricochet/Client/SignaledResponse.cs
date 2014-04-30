@@ -22,6 +22,8 @@ namespace Ricochet {
 
         private Response response;
 
+        // private static CancellationTokenSource ct = new CancellationTokenSource(2000);
+
         public SignaledResponse(int id, Stopwatch stopwatch, bool isAsync) {
             this.id = id;
             this.SW = stopwatch;
@@ -29,6 +31,16 @@ namespace Ricochet {
 
             if (isAsync) {
                 tcs = new TaskCompletionSource<Response>();
+
+                //int remainingTime = (int)(Client.HardQueryTimeout - SW.ElapsedMilliseconds);
+                //if (remainingTime > Client.HardQueryTimeout) {
+                //    remainingTime = 0;
+                //}
+                //if (remainingTime < 0) {
+                //    remainingTime = 0;
+                //}
+                
+                //ct.Token.Register(() => tcs.TrySetCanceled(), useSynchronizationContext: false);
             } else {
                 barrier = new ManualResetEvent(false);
             }
@@ -55,9 +67,15 @@ namespace Ricochet {
         }
 
         public async Task<Response> GetAsync(int remainingTime) {
+            // Timer timer = new Timer((x) => {}, null, 2000, -1);
+            // timer.
             var cts = new CancellationTokenSource();
             var timeoutTask = Task.Delay(remainingTime, cts.Token);
+            // var timeoutTask = Task.Delay(remainingTime);
             var t = await Task.WhenAny(tcs.Task, timeoutTask);
+
+            // return await tcs.Task;
+
             if (t == tcs.Task) {
                 cts.Cancel();
                 return await tcs.Task;
