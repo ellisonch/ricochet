@@ -47,47 +47,19 @@ namespace ClientTestHelper {
             // Console.WriteLine("Warmed up.");
         }
 
-        protected bool doCall(Client client, long myCount) {
-            T1 request = requestGen(myCount);
-            Option<T2> result;
-            try {
-                result = client.TryCall<T1, T2>(requestName, request);
-            } catch (Exception e) {
-                Console.WriteLine("Something really unexpected happened: {0}", e);
-                return false;
-            }
-            return result.OK;
+        protected bool doCall(Client client, long myCount, bool deserializeResult = true) {
+            return doCallAsync(client, myCount, deserializeResult).Result;
         }
 
-        protected bool doCallThrowAway(Client client, long myCount) {
+        protected async Task<bool> doCallAsync(Client client, long myCount, bool deserializeResult = true) {
             T1 request = requestGen(myCount);
             bool result;
             try {
-                result = client.TryCallThrowAway<T1, T2>(requestName, request);
-            } catch (Exception e) {
-                Console.WriteLine("Something really unexpected happened: {0}", e);
-                return false;
-            }
-            return result;
-        }
-
-        protected async Task<bool> doCallAsync(Client client, long myCount) {
-            T1 request = requestGen(myCount);
-            Option<T2> result;
-            try {
-                result = await client.TryCallAsync<T1, T2>(requestName, request);
-            } catch (Exception e) {
-                Console.WriteLine("Something really unexpected happened: {0}", e);
-                return false;
-            }
-            return result.OK;
-        }
-
-        protected async Task<bool> doCallAsyncThrowAway(Client client, long myCount) {
-            T1 request = requestGen(myCount);
-            bool result;
-            try {
-                result = await client.TryCallAsyncThrowAway<T1, T2>(requestName, request);
+                if (deserializeResult) {
+                    result = (await client.TryCallAsync<T1, T2>(requestName, request)).OK;
+                } else {
+                    result = await client.TryCallAsyncThrowAway<T1, T2>(requestName, request);
+                }
             } catch (Exception e) {
                 Console.WriteLine("Something really unexpected happened: {0}", e);
                 return false;

@@ -62,7 +62,7 @@ namespace ClientTestHelper {
             }  
         }
 
-        private void ClientWorker(object obj) {
+        private async void ClientWorker(object obj) {
             int myThreadNum = (int)obj;
             numThreadsReady++;
 
@@ -74,17 +74,18 @@ namespace ClientTestHelper {
             }
             warmup(client);
 
+            Stopwatch mysw = new Stopwatch();
             while (true) {
                 var mycount = Interlocked.Increment(ref count);
 
-                Stopwatch mysw = Stopwatch.StartNew();
-                bool success = doCallThrowAway(client, mycount);
+                mysw.Restart();
+                bool success = await doCallAsync(client, mycount, false);
                 mysw.Stop();
 
                 long myfailures;
                 if (success) {
                     times.Add(mysw.ElapsedTicks);
-                    timeSums[myThreadNum] += mysw.ElapsedMilliseconds;
+                    timeSums[myThreadNum] += mysw.Elapsed.TotalMilliseconds;
                 } else {
                     myfailures = Interlocked.Increment(ref failures);
                 }

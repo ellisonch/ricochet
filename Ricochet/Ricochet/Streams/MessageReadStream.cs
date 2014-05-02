@@ -50,7 +50,7 @@ namespace Ricochet {
             do {
                 int got = stream.Read(buffer, done, remaining);
                 if (got == 0) {
-                    l.WarnFormat("Y stream.Read returned 0 bytes");
+                    // l.WarnFormat("Stream.Read returned 0 bytes");
                     throw new Exception("Stream was closed out from under us");
                 }
                 done += got;

@@ -128,7 +128,7 @@ namespace Ricochet {
                 }
 
                 int dispatch = response.Dispatch;
-                this.pendingRequests.Set(dispatch, response);
+                this.pendingRequests.SetResponse(dispatch, response);
             }
         }
         
@@ -141,21 +141,11 @@ namespace Ricochet {
         /// <param name="input">Input to function</param>
         /// <returns>An option type, possibly containing the result</returns>
         public Option<T2> TryCall<T1, T2>(string name, T1 input) {
-            int? id = StartCallSync(name, input);
-            if (!id.HasValue) {
-                return Option<T2>.None();
-            }
-            Response response = pendingRequests.Get(id.Value);
-            return ExtractResult<T2>(response);
+            return TryCallAsync<T1, T2>(name, input).Result;
         }
 
         public bool TryCallThrowAway<T1, T2>(string name, T1 input) {
-            int? id = StartCallSync(name, input);
-            if (!id.HasValue) {
-                return false;
-            }
-            Response response = pendingRequests.Get(id.Value);
-            return response.OK && response.MessageData != null;
+            return TryCallAsyncThrowAway<T1, T2>(name, input).Result;
         }
 
         /// <summary>
@@ -167,52 +157,38 @@ namespace Ricochet {
         /// <param name="input">Input to function</param>
         /// <returns>An option type, possibly containing the result</returns>
         public async Task<Option<T2>> TryCallAsync<T1, T2>(string name, T1 input) {
-            int? id = StartCallAsync(name, input);
-            if (!id.HasValue) {
-                return Option<T2>.None();
-            }
-            Response response = await pendingRequests.GetAsync(id.Value);
+            var response = await GetResponse(name, input);
             return ExtractResult<T2>(response);
         }
 
         public async Task<bool> TryCallAsyncThrowAway<T1, T2>(string name, T1 input) {
-            int? id = StartCallAsync(name, input);
-            if (!id.HasValue) {
-                return false;
-            }
-            Response response = await pendingRequests.GetAsync(id.Value);
-
-            return response.OK && response.MessageData != null;
+            var response = await GetResponse(name, input);
+            return response != null && response.OK && response.MessageData != null;
         }
 
-        private int? StartCallSync<T1>(string name, T1 input) {
-            if (disposed) { return null; }
-            Query query = Query.CreateQuery<T1>(name, input, serializer);
-            pendingRequests.AddSync(query);
-
-            if (!outgoingQueries.EnqueueIfRoom(query)) {
-                // l.Log(Logger.Flag.Warning, "Reached maximum queue size!  Query dropped.");
-                pendingRequests.Delete(query.Dispatch);
+        private async Task<Response> GetResponse<T1>(string name, T1 input) {
+            SignaledResponse sr = StartCall(name, input);
+            if (sr == null) {
                 return null;
             }
-            return query.Dispatch;
+            Response response = await sr.GetResponse();
+            return response;
         }
 
-        private int? StartCallAsync<T1>(string name, T1 input) {
+        private SignaledResponse StartCall<T1>(string name, T1 input) {
             if (disposed) { return null; }
             Query query = Query.CreateQuery<T1>(name, input, serializer);
-            pendingRequests.AddAsync(query);
+            var sr = pendingRequests.AddRequest(query);
 
             if (!outgoingQueries.EnqueueIfRoom(query)) {
-                // l.Log(Logger.Flag.Warning, "Reached maximum queue size!  Query dropped.");
-                pendingRequests.Delete(query.Dispatch);
+                pendingRequests.DeleteRequest(query.Dispatch);
                 return null;
             }
-            return query.Dispatch;
+            return sr;
         }
 
         private Option<T2> ExtractResult<T2>(Response response) {
-            if (!response.OK) {
+            if (response == null || !response.OK) {
                 return Option<T2>.None();
             }
 

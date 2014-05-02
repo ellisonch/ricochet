@@ -38,8 +38,6 @@ namespace ClientTestHelper {
             this.serializer = serializer;
         }
         public async override void Start() {
-            // TestClient tc = new TestClient();
-
             client = new Client(address, port, serializer);
             client.WaitUntilConnected();
 
@@ -55,19 +53,8 @@ namespace ClientTestHelper {
             for (int i = 0; i < 200; i++) {
                 Task t = OneWorkerGroup(8);
             }
-
-
-
-
-            //for (int i = 0; i < numThreads; i++) {
-            //    timeSums[i] = 0.0;
-            //    Thread t = new Thread(ClientWorker);
-            //    threads[i] = t;
-            //    t.Start(i);
-            //}
-            //foreach (var thread in threads.Values) {
-            //    thread.Join();
-            //}  
+            // return Task.Factory.StartNew(
+            await Task.Factory.StartNew(() => { });
         }
 
         private async Task OneWorkerGroup(int num) {
@@ -87,7 +74,7 @@ namespace ClientTestHelper {
             var mycount = Interlocked.Increment(ref count);
 
             Stopwatch mysw = Stopwatch.StartNew();
-            bool success = await doCallAsyncThrowAway(client, mycount);
+            bool success = await doCallAsync(client, mycount, false);
             mysw.Stop();
 
             if (success) {

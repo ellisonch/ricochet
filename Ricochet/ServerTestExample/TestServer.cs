@@ -25,7 +25,7 @@ namespace ServerTestExample {
 
             var server = new Server(IPAddress.Any, 11000, new MessagePackWithCustomMessageSerializer());
 
-            server.Register<AQuery, AResponse>("reverse", Reverse);
+            // server.Register<AQuery, AResponse>("reverse", Reverse);
             server.Register<AQuery, AResponse>("double", Double);
             try {
                 server.Start();
@@ -37,13 +37,13 @@ namespace ServerTestExample {
             Console.ReadLine();
         }
 
-        public static AResponse Reverse(AQuery s) {
-            char[] arr = s.msg.ToCharArray();
+        //public static AResponse Reverse(AQuery s) {
+        //    char[] arr = s.msg.ToCharArray();
             
-            Array.Reverse(arr);
-            var res = new string(arr);
-            return new AResponse(res);
-        }
+        //    Array.Reverse(arr);
+        //    var res = new string(arr);
+        //    return new AResponse(res);
+        //}
 
         public static Random r = new Random();
         public static AResponse Double(AQuery s) {
