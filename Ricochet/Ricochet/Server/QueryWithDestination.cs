@@ -21,8 +21,9 @@ namespace Ricochet {
                 return query;
             }
         }
-        internal IBoundedQueue<Tuple<byte[], Stopwatch>> Destination;
-        internal QueryWithDestination(byte[] bytes, IBoundedQueue<Tuple<byte[], Stopwatch>> destination, Serializer serializer) {
+        // internal IBoundedQueue<Tuple<byte[], Stopwatch>> Destination;
+        internal IBoundedQueue<byte[]> Destination;
+        internal QueryWithDestination(byte[] bytes, IBoundedQueue<byte[]> destination, Serializer serializer) {
             this.bytes = bytes;
             this.Destination = destination;
             this.serializer = serializer;

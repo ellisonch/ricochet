@@ -67,12 +67,12 @@ namespace ClientTestHelper {
             return result;
         }
 
-        protected void ReportServerStats(object obj) {
+        protected async void ReportServerStats(object obj) {
             Client client = (Client)obj;
             while (client.IsAlive) {
                 System.Threading.Thread.Sleep(reportServerStatsInterval);
                 // bool success;
-                var result = client.TryCall<bool, ServerStats>("_getStats", true);
+                var result = await client.TryCallAsync<bool, ServerStats>("_getStats", true);
                 if (!result.OK) { continue; }
                 ServerStats ss = result.Value;
                 // Console.WriteLine("My outgoing queue length: {0}", client.)

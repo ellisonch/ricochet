@@ -67,9 +67,9 @@ namespace Ricochet {
         /// Blocks until connected to the server and the server responds to a ping.
         /// Does not guarantee the server will still be connected when another query is sent.
         /// </summary>
-        public void WaitUntilConnected() {
+        public async Task WaitUntilConnected() {
             l.WarnFormat("Waiting...");
-            while (!Ping()) {
+            while (! await Ping()) {
                 if (disposed) { throw new ObjectDisposedException("Client was disposed, so can't connect"); }
                 // Console.Write(".");
                 System.Threading.Thread.Sleep(100);
@@ -81,9 +81,9 @@ namespace Ricochet {
         /// Pings the server once.
         /// </summary>
         /// <returns>Returns true on success, false on failure.</returns>
-        public bool Ping() {
+        public async Task<bool> Ping() {
             int pingVal = r.Next();
-            var pingResult = this.TryCall<int, int>("_ping", pingVal);
+            var pingResult = await this.TryCallAsync<int, int>("_ping", pingVal);
             if (!pingResult.OK) {
                 return false;
             }
@@ -140,13 +140,13 @@ namespace Ricochet {
         /// <param name="name">Name of function call</param>
         /// <param name="input">Input to function</param>
         /// <returns>An option type, possibly containing the result</returns>
-        public Option<T2> TryCall<T1, T2>(string name, T1 input) {
-            return TryCallAsync<T1, T2>(name, input).Result;
-        }
+        //public Option<T2> TryCall<T1, T2>(string name, T1 input) {
+        //    return TryCallAsync<T1, T2>(name, input).Result;
+        //}
 
-        public bool TryCallThrowAway<T1, T2>(string name, T1 input) {
-            return TryCallAsyncThrowAway<T1, T2>(name, input).Result;
-        }
+        //public bool TryCallThrowAway<T1, T2>(string name, T1 input) {
+        //    return TryCallAsyncThrowAway<T1, T2>(name, input).Result;
+        //}
 
         /// <summary>
         /// Tries to make an RPC call.  May timeout or otherwise fail.

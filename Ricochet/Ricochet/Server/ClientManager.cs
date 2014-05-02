@@ -44,7 +44,7 @@ namespace Ricochet {
         }
 
         readonly IBoundedQueue<QueryWithDestination> incomingQueries;
-        private IBoundedQueue<Tuple<byte[], Stopwatch>> outgoingResponses = new BoundedQueue<Tuple<byte[], Stopwatch>>(maxQueueSize);
+        private IBoundedQueue<byte[]> outgoingResponses = new BoundedQueue<byte[]>(maxQueueSize);
 
         Thread readerThread;
         Thread writerThread;
@@ -128,24 +128,25 @@ namespace Ricochet {
         private void WriteResponses() {
             try {
                 while (!disposed) {
-                    Tuple<byte[], Stopwatch> tup;
-                    if (!outgoingResponses.TryDequeue(out tup)) {
+                    // Tuple<byte[], Stopwatch> tup;
+                    byte[] bytes;
+                    if (!outgoingResponses.TryDequeue(out bytes)) {
                         continue;
                     }
-                    var sw = tup.Item2;
+                    // var sw = tup.Item2;
                     // Console.WriteLine(sw.Elapsed.TotalMilliseconds);
 
                     // TODO TimingHelper.Add("Response Queue", sw);
-                    var bytes = tup.Item1;
+                    // var bytes = tup.Item1;
                     writeStream.WriteToStream(bytes);
                     Interlocked.Increment(ref responsesReturned);
+                    l.DebugFormat("Wrote response of length {0} to network", bytes.Length);
                 }
             } catch (Exception e) {
                 l.WarnFormat("Error in WriteResponses()", e);
             } finally {
                 this.Dispose();
             }
-            // l.Log(Logger.Flag.Warning, "Finishing Writer");
         }
 
 

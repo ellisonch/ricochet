@@ -238,8 +238,9 @@ namespace Ricochet {
                 byte[] bytes = serializer.SerializeResponse(response);
                 // l.Log(Logger.Flag.Warning, "Response calculated by thread {0}", Thread.CurrentThread.ManagedThreadId);
                 // sw.Restart();
-                Stopwatch sw = Stopwatch.StartNew();
-                qwd.Destination.EnqueueIfRoom(new Tuple<byte[], Stopwatch>(bytes, sw));
+                // Stopwatch sw = Stopwatch.StartNew();
+                // qwd.Destination.EnqueueIfRoom(new Tuple<byte[], Stopwatch>(bytes, sw));
+                qwd.Destination.EnqueueIfRoom(bytes);
             } catch (Exception e) {
                 l.WarnFormat("Problem doing work:", e);
             } finally {
@@ -274,8 +275,7 @@ namespace Ricochet {
         private async Task<Response> GetResponseForQuery(Query query) {
             Response response;
             try {
-                
-                l.DebugFormat("Data is: {0}", query.MessageData);
+                l.DebugFormat("Data length is: {0}", query.MessageData.Length);
                 if (query.Handler == null) {
                     l.WarnFormat("No query name given: {0}", query.MessageData);
                     throw new RPCException(String.Format("Do not handle query {0}", query.Handler));
