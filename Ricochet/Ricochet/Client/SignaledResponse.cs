@@ -25,7 +25,9 @@ namespace Ricochet {
             tcs = new TaskCompletionSource<Response>();
         }
         public void SetResponse(Response response) {
-            tcs.SetResult(response);
+            if (!tcs.TrySetResult(response)) {
+                l.WarnFormat("Couldn't set response for {0}", response.Dispatch);
+            }
         }
 
         public async Task<Response> GetResponse() {
@@ -36,7 +38,7 @@ namespace Ricochet {
             if (remainingTime < 0) {
                 remainingTime = 0;
             }
-
+            // l.DebugFormat("Remaining time: {0}", remainingTime);
             var cts = new CancellationTokenSource();
             var timeoutTask = Task.Delay(remainingTime, cts.Token);
             var t = await Task.WhenAny(tcs.Task, timeoutTask);
@@ -47,6 +49,7 @@ namespace Ricochet {
                 tcs.SetCanceled();
                 return Response.Timeout(id);
             }
+
         }
     }
 }

@@ -8,10 +8,12 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using NDesk.Options;
+using Common.Logging.Configuration;
 
 namespace ClientTestHelper {
     public abstract class TestClient<T1, T2> {
         string mode = "realistic";
+        static string DebugLevel = "Info";
         int rate = 100;
         // string serializerName = "messagepack";
         readonly Serializer serializer;
@@ -47,21 +49,33 @@ namespace ClientTestHelper {
                     (int v) => port = v },
                 //{ "v", "increase debug message verbosity",
                 //   v => { if (v != null) ++verbosity; } },
+                { "q|quiet", "Quiet", (v) => DebugLevel = "Warn" },
+                { "v|verbose", "Verbose", (v) => DebugLevel = "Debug" },
                 { "help",  "Show this message and exit.", 
                    v => show_help = v != null },
             };
             try {
                 p.Parse(args);
             } catch (OptionException e) {
-                Console.Write("greet: ");
                 Console.WriteLine(e.Message);
                 Console.WriteLine("Try `TestClient --help' for more information.");
                 return;
             }
+            ChangeLogging(DebugLevel);
             if (show_help) {
                 p.WriteOptionDescriptions(Console.Out);
                 Environment.Exit(0);
             }
+        }
+
+        protected static void ChangeLogging(string debugLevel) {
+            //////// set up logging
+            // create properties
+            NameValueCollection properties = new NameValueCollection();
+            properties["showDateTime"] = "true";
+            properties["level"] = debugLevel;
+            // set Adapter
+            Common.Logging.LogManager.Adapter = new Common.Logging.Simple.ConsoleOutLoggerFactoryAdapter(properties);
         }
         
         protected void Start() {
