@@ -51,13 +51,14 @@ namespace ClientTestHelper {
             Console.ReadLine();
         }
 
-        private void OneClient() {
+        private async void OneClient() {
             Client client = new Client(address, port, serializer);
-            client.WaitUntilConnected();
+            await client.WaitUntilConnected();
             warmup(client);
 
             if (reportServerStatsInterval != 0) {
                 new Thread(ReportServerStats).Start(client);
+                // Task.Run(async () => await ReportServerStats(client));
             }
 
             TestObject ch = new TestObject() {

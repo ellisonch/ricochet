@@ -39,9 +39,10 @@ namespace ClientTestHelper {
         }
         public async override void Start() {
             client = new Client(address, port, serializer);
-            client.WaitUntilConnected();
+            await client.WaitUntilConnected();
 
             if (reportServerStatsInterval != 0) {
+                // Task.Run(async () => await ReportServerStats(client));
                 new Thread(ReportServerStats).Start(client);
             }
             if (reportClientStatsInterval != 0) {

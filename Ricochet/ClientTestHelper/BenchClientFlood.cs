@@ -37,14 +37,15 @@ namespace ClientTestHelper {
             : base(address, port, fun, name) {
             this.serializer = serializer;
         }
-        public override void Start() {
+        public async override void Start() {
             // TestClient tc = new TestClient();
 
             client = new Client(address, port, serializer);
-            client.WaitUntilConnected();
+            await client.WaitUntilConnected();
 
             if (reportServerStatsInterval != 0) {
                 new Thread(ReportServerStats).Start(client);
+                // Task.Run(async () => await ReportServerStats(client));
             }
             if (reportClientStatsInterval != 0) {
                 ReportClientStatsHeader();

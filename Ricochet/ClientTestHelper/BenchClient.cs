@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace ClientTestHelper {
@@ -70,7 +71,11 @@ namespace ClientTestHelper {
         protected async void ReportServerStats(object obj) {
             Client client = (Client)obj;
             while (client.IsAlive) {
-                System.Threading.Thread.Sleep(reportServerStatsInterval);
+                // Console.WriteLine("Before Threadid: {0}", Thread.CurrentThread.ManagedThreadId);
+                // System.Threading.Thread.Sleep(reportServerStatsInterval);
+                // Console.WriteLine("After Threadid: {0}", Thread.CurrentThread.ManagedThreadId);
+                
+                await Task.Delay(reportServerStatsInterval);
                 // bool success;
                 var result = await client.TryCallAsync<bool, ServerStats>("_getStats", true);
                 if (!result.OK) { continue; }
@@ -91,6 +96,8 @@ namespace ClientTestHelper {
                     Console.WriteLine("  Client total responses: {0}", cs.OutgoingTotal);
                 }
                 Console.WriteLine("----------------------------------------------");
+                //Console.Out.Flush();
+                //Console.ReadKey();
             }
         }
 

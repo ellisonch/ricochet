@@ -72,7 +72,8 @@ namespace Ricochet {
             while (! await Ping()) {
                 if (disposed) { throw new ObjectDisposedException("Client was disposed, so can't connect"); }
                 // Console.Write(".");
-                System.Threading.Thread.Sleep(100);
+                await Task.Delay(100);
+                // System.Threading.Thread.Sleep(100);
             }
             l.WarnFormat("Connected.");
         }

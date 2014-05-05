@@ -24,10 +24,18 @@ namespace Ricochet {
 
             tcs = new TaskCompletionSource<Response>();
         }
+        // static int count = 0;
         public void SetResponse(Response response) {
             if (!tcs.TrySetResult(response)) {
                 l.WarnFormat("Couldn't set response for {0}", response.Dispatch);
+            } else {
+                //count++;
+                //if (count % 100000 == 0) {
+                //    l.WarnFormat("Count Threadid: {0}", Thread.CurrentThread.ManagedThreadId);
+                //    l.WarnFormat("Done {0} queries", count);
+                //}
             }
+
         }
 
         public async Task<Response> GetResponse() {
@@ -49,6 +57,7 @@ namespace Ricochet {
                 tcs.SetCanceled();
                 return Response.Timeout(id);
             }
+            // return tcs.Task;
 
         }
     }
